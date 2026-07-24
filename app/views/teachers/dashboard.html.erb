@@ -378,30 +378,6 @@
   </div>
   <% end %>
 
-  <%# ── Sugestões de vídeo do dia ── %>
-  <% pending_suggestions = VideoSuggestion.for_teacher(current_user).today.pending %>
-  <% if pending_suggestions.any? %>
-    <div style="margin-bottom:2rem;">
-      <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:12px; flex-wrap:wrap; gap:8px;">
-        <div style="font-family:'Raleway',sans-serif; font-size:1rem; font-weight:700; color:var(--ink); display:flex; align-items:center; gap:8px;">
-          🎬 Sugestões de hoje
-          <span style="font-family:'Plus Jakarta Sans',sans-serif; font-size:0.75rem; font-weight:600; background:var(--warning-tint); color:var(--warning-ink); border:1.5px solid var(--warning-border); border-radius:20px; padding:2px 10px;">
-            <%= pending_suggestions.count %> pendente<%= pending_suggestions.count > 1 ? 's' : '' %>
-          </span>
-        </div>
-        <%= link_to video_suggestions_path,
-              style: "font-family:'Plus Jakarta Sans',sans-serif; font-size:0.8rem; font-weight:600; color:var(--brand); text-decoration:none;" do %>
-          Ver todas →
-        <% end %>
-      </div>
-      <div style="display:flex; flex-direction:column; gap:10px;">
-        <% pending_suggestions.each do |s| %>
-          <%= render 'video_suggestions/suggestion_card', suggestion: s %>
-        <% end %>
-      </div>
-    </div>
-  <% end %>
-
   <%# ── CTA Footer ── %>
   <div style="display:flex; justify-content:center; gap:12px; flex-wrap:wrap; padding-bottom:2rem;">
     <%= link_to activities_path,

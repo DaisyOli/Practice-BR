@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.1].define(version: 2026_07_23_175442) do
+ActiveRecord::Schema[7.1].define(version: 2026_07_24_083400) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
 
@@ -76,6 +76,18 @@ ActiveRecord::Schema[7.1].define(version: 2026_07_23_175442) do
     t.index ["user_id", "activity_id"], name: "index_activity_ratings_on_user_id_and_activity_id", unique: true
     t.index ["user_id"], name: "index_activity_ratings_on_user_id"
     t.check_constraint "stars >= 1 AND stars <= 5", name: "stars_range_check"
+  end
+
+  create_table "activity_suggestions", force: :cascade do |t|
+    t.string "title"
+    t.string "theme"
+    t.string "level_hint"
+    t.string "status", default: "pending", null: false
+    t.integer "activity_id"
+    t.integer "teacher_id"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.text "rationale"
   end
 
   create_table "ai_generations", force: :cascade do |t|
@@ -341,22 +353,6 @@ ActiveRecord::Schema[7.1].define(version: 2026_07_23_175442) do
     t.index ["invited_by_type", "invited_by_id"], name: "index_users_on_invited_by"
     t.index ["language"], name: "index_users_on_language"
     t.index ["reset_password_token"], name: "index_users_on_reset_password_token", unique: true
-  end
-
-  create_table "video_suggestions", force: :cascade do |t|
-    t.string "youtube_url"
-    t.string "title"
-    t.string "thumbnail_url"
-    t.string "channel_name"
-    t.string "topic"
-    t.string "level_hint"
-    t.string "status", default: "pending", null: false
-    t.text "transcript"
-    t.integer "activity_id"
-    t.integer "teacher_id"
-    t.datetime "created_at", null: false
-    t.datetime "updated_at", null: false
-    t.string "search_query"
   end
 
   add_foreign_key "active_storage_attachments", "active_storage_blobs", column: "blob_id"

@@ -86,11 +86,11 @@
           <div style="font-family:'Plus Jakarta Sans',sans-serif; font-size:0.72rem; color:rgba(255,255,255,0.75);">URL + transcrição → atividade</div>
         </div>
       <% end %>
-      <%= link_to video_suggestions_path,
+      <%= link_to admin_activity_suggestions_path,
             style: "flex:1; display:flex; align-items:center; gap:12px; background:var(--brand); border-radius:12px; padding:14px 20px; text-decoration:none;" do %>
-        <span style="font-size:1.1rem;">📋</span>
+        <span style="font-size:1.1rem;">🔎</span>
         <div>
-          <% pending_count = VideoSuggestion.pending.count %>
+          <% pending_count = ActivitySuggestion.pending.count %>
           <div style="font-family:'Plus Jakarta Sans',sans-serif; font-size:0.88rem; font-weight:700; color:var(--surface);">Sugestões do Dia</div>
           <div style="font-family:'Plus Jakarta Sans',sans-serif; font-size:0.72rem; color:rgba(255,255,255,0.75);"><%= pending_count %> pendente<%= pending_count != 1 ? 's' : '' %></div>
         </div>

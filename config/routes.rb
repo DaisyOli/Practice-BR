@@ -74,6 +74,16 @@ Rails.application.routes.draw do
     post "drafts/generate", to: "drafts#generate", as: :generate_draft
     post "trials/:id/send_reminder", to: "trials#send_reminder", as: :send_trial_reminder
     resources :activities, only: [:index]
+
+    resources :activity_suggestions, only: [:index] do
+      member do
+        post :approve
+        post :reject
+      end
+      collection do
+        post :generate_now
+      end
+    end
   end
 
   # API pública para trial
@@ -91,17 +101,6 @@ Rails.application.routes.draw do
   post "assinar/cancelar",     to: "billing#cancel_subscription", as: :billing_cancel_subscription
   post "webhooks/stripe",      to: "webhooks#stripe"
   resources :push_subscriptions, only: [:create, :destroy]
-
-  # Sugestões diárias de vídeo
-  resources :video_suggestions, only: [:index, :destroy] do
-    member do
-      post :approve
-      post :reject
-    end
-    collection do
-      post :generate_now
-    end
-  end
 
   # Página de acesso trial encerrado
   get "acesso-encerrado", to: "home#trial_expired", as: "trial_expired"
