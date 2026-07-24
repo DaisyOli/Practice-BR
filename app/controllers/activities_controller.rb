@@ -291,6 +291,10 @@ class ActivitiesController < ApplicationController
   end
 
   def destroy
+    unless current_user&.admin?
+      redirect_to activities_path, alert: t('messages.permission_denied') and return
+    end
+
     @activity.destroy
     redirect_to activities_url, notice: t('messages.activity_deleted')
   end

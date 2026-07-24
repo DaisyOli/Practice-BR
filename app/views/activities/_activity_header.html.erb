@@ -38,10 +38,12 @@
               style: "font-family:'Plus Jakarta Sans',sans-serif; font-size:0.78rem; font-weight:600; color:rgba(255,255,255,0.85); padding:6px 12px; border:1.5px solid rgba(255,255,255,0.25); border-radius:7px; text-decoration:none; background:rgba(255,255,255,0.1);" do %>
           Editar
         <% end %>
-        <%= link_to activity_path(activity),
-              data: { turbo_method: :delete, turbo_confirm: t('activities.confirm_delete') },
-              style: "font-family:'Plus Jakarta Sans',sans-serif; font-size:0.78rem; font-weight:600; color:var(--error-border); padding:6px 12px; border:1.5px solid rgba(252,165,165,0.35); border-radius:7px; text-decoration:none; background:rgba(185,28,28,0.2);" do %>
-          Excluir
+        <% if current_user.admin? %>
+          <%= link_to activity_path(activity),
+                data: { turbo_method: :delete, turbo_confirm: t('activities.confirm_delete') },
+                style: "font-family:'Plus Jakarta Sans',sans-serif; font-size:0.78rem; font-weight:600; color:var(--error-border); padding:6px 12px; border:1.5px solid rgba(252,165,165,0.35); border-radius:7px; text-decoration:none; background:rgba(185,28,28,0.2);" do %>
+            Excluir
+          <% end %>
         <% end %>
       </div>
     <% end %>

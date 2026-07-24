@@ -56,14 +56,41 @@ RSpec.describe DailySuggestionAgentService do
       end
     end
 
-    context 'quando já existe uma sugestão pendente hoje' do
-      before { create(:activity_suggestion, teacher: teacher, status: "pending") }
+    context 'quando já existe uma sugestão pendente (qualquer data)' do
+      before { create(:activity_suggestion, teacher: teacher, status: "pending", created_at: 30.days.ago) }
 
-      it 'não chama a IA e retorna skipped' do
+      it 'não chama a IA e retorna skipped, mesmo se a pendente for antiga' do
         result = described_class.new(teacher: teacher).call
 
         expect(result).to eq(skipped: true, reason: "already_has_suggestion")
         expect(client).not_to have_received(:messages)
+      end
+    end
+
+    context 'quando a última sugestão (já revisada) foi criada há menos de 7 dias' do
+      before { create(:activity_suggestion, teacher: teacher, status: "approved", created_at: 2.days.ago) }
+
+      it 'não gera outra ainda — respeita o intervalo semanal' do
+        result = described_class.new(teacher: teacher).call
+
+        expect(result).to eq(skipped: true, reason: "too_recent")
+        expect(client).not_to have_received(:messages)
+      end
+    end
+
+    context 'quando a última sugestão foi criada há mais de 7 dias' do
+      before { create(:activity_suggestion, teacher: teacher, status: "rejected", created_at: 8.days.ago) }
+      let(:final_call) do
+        response(stop_reason: :tool_use, content: [
+          tool_use_block(name: "propose_suggestion", input: { theme: "Novo tema", level: "A2", rationale: "Justificativa." })
+        ])
+      end
+
+      before { allow(messages_resource).to receive(:create).and_return(final_call) }
+
+      it 'gera uma nova sugestão normalmente' do
+        result = described_class.new(teacher: teacher).call
+        expect(result[:success]).to be true
       end
     end
 

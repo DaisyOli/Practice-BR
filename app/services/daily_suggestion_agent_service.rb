@@ -13,6 +13,12 @@ class DailySuggestionAgentService
   MAX_ITERATIONS = 6
   LEVELS = %w[A1 A2 B1 B2 C1].freeze
 
+  # Feature em fase de teste (Daisy não precisa de sugestão nova todo dia
+  # ainda) — o Scheduler do Heroku roda este job diariamente, mas o serviço
+  # se recusa a gerar mais de uma por semana, e nunca gera uma segunda
+  # enquanto houver uma pendente sem revisão.
+  MIN_INTERVAL = 7.days
+
   TOOLS = [
     {
       name: "recent_themes",
@@ -80,7 +86,10 @@ class DailySuggestionAgentService
   end
 
   def call
-    return { skipped: true, reason: "already_has_suggestion" } if ActivitySuggestion.for_teacher(@teacher).today.pending.any?
+    return { skipped: true, reason: "already_has_suggestion" } if ActivitySuggestion.for_teacher(@teacher).pending.any?
+
+    last = ActivitySuggestion.for_teacher(@teacher).order(created_at: :desc).first
+    return { skipped: true, reason: "too_recent" } if last && last.created_at > MIN_INTERVAL.ago
 
     proposal = run_agent_loop
     return { success: false, error: "Agente não retornou uma sugestão" } unless proposal

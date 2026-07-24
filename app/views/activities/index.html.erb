@@ -61,6 +61,41 @@
     <% end %>
   </div>
 
+  <%# ── Catálogo por nível: pra quem não sabe o que já foi feito ── %>
+  <% if current_user.teacher? %>
+    <% published_by_level = (@activities_by_level || {}).transform_values { |acts| acts.reject(&:draft?).map(&:title).sort } %>
+    <details style="background:var(--surface); border:1px solid var(--line); border-radius:14px; margin-bottom:1.5rem;">
+      <summary style="cursor:pointer; padding:14px 20px; font-family:'Plus Jakarta Sans',sans-serif; font-size:0.85rem; font-weight:700; color:var(--ink); list-style:none; display:flex; align-items:center; gap:8px;">
+        📚 Catálogo por nível — veja o que já existe antes de criar algo novo
+      </summary>
+      <div style="padding:0 20px 20px; display:flex; flex-direction:column; gap:14px;">
+        <% %w[A1 A2 B1 B2 C1].each do |lvl| %>
+          <% titles = published_by_level[lvl] || [] %>
+          <% c = cefr_colors(lvl) %>
+          <div>
+            <div style="display:flex; align-items:center; gap:8px; margin-bottom:6px;">
+              <span style="font-family:'DM Mono',monospace; font-size:0.7rem; font-weight:700; padding:2px 10px; border-radius:20px; background:<%= c[:bg] %>; color:<%= c[:text] %>; border:1.5px solid <%= c[:border] %>;">
+                <%= lvl %>
+              </span>
+              <span style="font-family:'Plus Jakarta Sans',sans-serif; font-size:0.78rem; color:var(--ink-faint);">
+                <%= titles.size %> <%= titles.size == 1 ? 'atividade' : 'atividades' %>
+              </span>
+            </div>
+            <% if titles.any? %>
+              <p style="font-family:'Plus Jakarta Sans',sans-serif; font-size:0.82rem; color:var(--ink-soft); line-height:1.7; margin:0;">
+                <%= titles.join(' · ') %>
+              </p>
+            <% else %>
+              <p style="font-family:'Plus Jakarta Sans',sans-serif; font-size:0.82rem; color:var(--ink-faint); font-style:italic; margin:0;">
+                Nada publicado ainda neste nível — boa oportunidade!
+              </p>
+            <% end %>
+          </div>
+        <% end %>
+      </div>
+    </details>
+  <% end %>
+
   <%# ── Barra de Filtros ── %>
   <%= form_with url: activities_path, method: :get, local: true do %>
     <div class="act-filter-bar" style="background:var(--surface); border:1px solid var(--line); border-radius:14px; padding:16px 20px; margin-bottom:1.5rem;">

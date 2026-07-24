@@ -9,7 +9,6 @@ class ActivitySuggestion < ApplicationRecord
   validates :level_hint, presence: true
 
   scope :pending,     -> { where(status: 'pending') }
-  scope :today,       -> { where(created_at: Time.zone.today.all_day) }
   scope :for_teacher, ->(teacher) { where(teacher_id: teacher.id) }
 
   def pending?;  status == 'pending';  end

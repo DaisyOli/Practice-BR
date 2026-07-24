@@ -25,8 +25,10 @@ class Admin::ActivitySuggestionsController < Admin::BaseController
 
   def generate_now
     result = DailySuggestionAgentService.new(teacher: teacher).call
-    if result[:skipped]
-      redirect_to admin_activity_suggestions_path, notice: "Você já tem uma sugestão para hoje."
+    if result[:skipped] && result[:reason] == "too_recent"
+      redirect_to admin_activity_suggestions_path, notice: "A última sugestão foi gerada há menos de uma semana — aguarde para manter o ritmo semanal."
+    elsif result[:skipped]
+      redirect_to admin_activity_suggestions_path, notice: "Você já tem uma sugestão pendente."
     elsif result[:success]
       redirect_to admin_activity_suggestions_path, notice: "Nova sugestão gerada!"
     else

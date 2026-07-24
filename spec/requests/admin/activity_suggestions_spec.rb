@@ -70,14 +70,24 @@ RSpec.describe "Admin::ActivitySuggestions", type: :request do
         expect(response.body).to include("Nova sugestão gerada!")
       end
 
-      it "avisa quando já existe sugestão hoje" do
+      it "avisa quando já existe sugestão pendente" do
         allow_any_instance_of(DailySuggestionAgentService).to receive(:call)
           .and_return(skipped: true, reason: "already_has_suggestion")
 
         post generate_now_admin_activity_suggestions_path
 
         follow_redirect!
-        expect(response.body).to include("já tem uma sugestão para hoje")
+        expect(response.body).to include("já tem uma sugestão pendente")
+      end
+
+      it "avisa quando a última sugestão foi recente demais (ritmo semanal)" do
+        allow_any_instance_of(DailySuggestionAgentService).to receive(:call)
+          .and_return(skipped: true, reason: "too_recent")
+
+        post generate_now_admin_activity_suggestions_path
+
+        follow_redirect!
+        expect(response.body).to include("ritmo semanal")
       end
     end
   end
