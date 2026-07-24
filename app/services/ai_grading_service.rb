@@ -6,33 +6,44 @@ require "anthropic"
 class AiGradingService
   # A exigência acompanha o nível QECR da atividade: no A1 celebra-se a
   # comunicação; a régua sobe progressivamente até o C1.
+  #
+  # IMPORTANTE: desde o crédito parcial (2026-07-21), este score vira
+  # DIRETAMENTE a fração de crédito da questão (credit_fraction = score/100)
+  # — não é mais só aprovado/reprovado (>=70 valendo 100%). Por isso as
+  # faixas abaixo foram recalibradas pra cima: uma resposta boa precisa
+  # valer perto de 100% de crédito, não 70-90%.
   LEVEL_EXPECTATIONS = {
     "A1" => <<~TXT,
-      Nível do aluno: A1 (iniciante). SEJA GENEROSO.
-      - Se a resposta comunica a ideia e responde à pergunta, o score fica entre 80 e 100 — MESMO com erros de conjugação, concordância, acento ou ortografia ("eu gosta de café" responde perfeitamente "do que você gosta?").
-      - Só desça de 70 se a resposta não responder à pergunta ou for incompreensível.
+      Nível do aluno: A1 (iniciante). SEJA MUITO GENEROSO.
+      - Se a resposta comunica a ideia e responde à pergunta, o score fica entre 90 e 100 — MESMO com erros de conjugação, concordância, acento ou ortografia ("eu gosta de café" responde perfeitamente "do que você gosta?").
+      - Resposta que responde só em parte à pergunta: 60-89, nunca menos só por isso.
+      - Só desça abaixo de 60 se a resposta não responder à pergunta ou for incompreensível.
       - Feedback: comece celebrando o acerto; depois, no máximo UMA correção gentil, a mais importante. Use português muito simples, frases curtas, que um A1 entenda.
     TXT
     "A2" => <<~TXT,
-      Nível do aluno: A2 (básico). Seja generoso, com um degrau a mais de atenção.
-      - Comunicação clara e vocabulário adequado valem mais que perfeição: resposta compreensível que responde à pergunta fica entre 75 e 100.
-      - Erros básicos recorrentes (ser/estar, concordância simples, presente dos verbos comuns) podem descontar um pouco, mas nunca reprovam sozinhos uma resposta que comunica.
+      Nível do aluno: A2 (básico). Seja muito generoso, com um degrau a mais de atenção.
+      - Comunicação clara e vocabulário adequado valem mais que perfeição: resposta compreensível que responde à pergunta fica entre 85 e 100.
+      - Erros básicos recorrentes (ser/estar, concordância simples, presente dos verbos comuns) descontam pouco (uns 10-15 pontos no máximo), nunca derrubam abaixo de 70 uma resposta que comunica.
+      - Só desça abaixo de 60 se a resposta não responder à pergunta ou for incompreensível.
       - Feedback: elogie o que funcionou e aponte no máximo DUAS correções, em português simples.
     TXT
     "B1" => <<~TXT,
-      Nível do aluno: B1 (intermediário). Exigência moderada.
-      - Espera-se controle das estruturas básicas: erros de presente, ser/estar e concordância simples já descontam de verdade.
-      - Erros em estruturas novas do nível (subjuntivo, tempos do passado em contraste) descontam pouco — estão em aquisição.
-      - Resposta que comunica bem com poucos erros básicos: 70-90. Feedback: reconheça o mérito e corrija até TRÊS pontos, explicando brevemente o porquê.
+      Nível do aluno: B1 (intermediário). Exigência moderada, sem ser avara.
+      - Resposta que comunica bem, mesmo com alguns erros básicos (presente, ser/estar, concordância simples), fica entre 80 e 95 — esses erros descontam pouco, não cortam a nota pela metade.
+      - Erros em estruturas novas do nível (subjuntivo, tempos do passado em contraste) quase não descontam — estão em aquisição.
+      - Reserve 96-100 para respostas praticamente sem erros. Só desça abaixo de 70 se a resposta não responder bem à pergunta ou tiver erros que atrapalham a compreensão.
+      - Feedback: reconheça o mérito e corrija até TRÊS pontos, explicando brevemente o porquê.
     TXT
     "B2" => <<~TXT,
-      Nível do aluno: B2 (avançado). Exigência alta.
-      - Espera-se precisão gramatical, vocabulário variado, conectivos e registro adequado. Erros básicos descontam bastante; imprecisões de nuance e naturalidade também contam.
-      - Reserve 90+ para respostas precisas E naturais. Feedback: rigoroso e específico, ainda construtivo — aponte os erros, sugira a forma natural que um falante usaria.
+      Nível do aluno: B2 (avançado). Exigência real, mas nunca aviltante.
+      - Resposta que comunica bem, com vocabulário e estrutura adequados mas alguma imprecisão de nuance, fica entre 75 e 90.
+      - Reserve 90+ para respostas precisas E naturais. Erros básicos (que não deveriam mais ocorrer neste nível) descontam mais, mas imprecisões pequenas isoladas não devem derrubar abaixo de 70.
+      - Feedback: rigoroso e específico, ainda construtivo — aponte os erros, sugira a forma natural que um falante usaria.
     TXT
     "C1" => <<~TXT
-      Nível do aluno: C1 (proficiente). Exigência de quase-nativo.
-      - Espera-se domínio: precisão, idiomaticidade, sutileza de registro. Qualquer erro estrutural desconta; o que diferencia o score é a naturalidade e a riqueza da resposta.
+      Nível do aluno: C1 (proficiente). Exigência de quase-nativo, mas o score ainda é crédito direto.
+      - Resposta idiomática e precisa: 95-100. Pequenas imprecisões de registro ou naturalidade: 80-94.
+      - Erros estruturais reais descontam de verdade, mas um erro isolado não deve derrubar abaixo de 65.
       - Feedback: trate como um par avançado — refinamentos de estilo e expressões mais idiomáticas.
     TXT
   }.freeze
@@ -86,6 +97,7 @@ class AiGradingService
 
       #{expectations}
       Regras gerais:
+      - O score vira DIRETAMENTE a fração de crédito da questão (um 70 vale 70% da questão, não é "aprovado"). Por isso notas baixas são reservadas para respostas que realmente não respondem ou são incompreensíveis — não para pequenos deslizes numa resposta que comunica bem.
       - Nunca desconte por resposta curta se a pergunta permite resposta curta.
       - Avalie o conteúdo da resposta, não a opinião do aluno.
       - O feedback fala COM o aluno (use "você"), em tom caloroso.
