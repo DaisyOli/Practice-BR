@@ -1,0 +1,36 @@
+<%
+  # Página servida só para rastreadores de preview de link (WhatsApp, etc.),
+  # ver ActivitiesController#crawler_request?. Não tem o layout normal nem o
+  # conteúdo da atividade — só as meta tags que viram o card do link.
+  cover = activity_cover(@activity)
+  og_image_url =
+    if cover[:type] == :image
+      cover[:url].start_with?("http") ? cover[:url] : "#{request.base_url}#{cover[:url]}"
+    else
+      "#{request.base_url}#{image_path('logo-mark-transparent-256x256.png')}"
+    end
+  og_description = @activity.description.to_s.strip.truncate(160, separator: " ")
+%>
+<!DOCTYPE html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="utf-8">
+    <title><%= @activity.title %> · Practice-BR</title>
+    <meta name="description" content="<%= og_description %>">
+
+    <meta property="og:type" content="website">
+    <meta property="og:site_name" content="Practice-BR">
+    <meta property="og:title" content="<%= @activity.title %>">
+    <meta property="og:description" content="<%= og_description %>">
+    <meta property="og:image" content="<%= og_image_url %>">
+    <meta property="og:url" content="<%= solve_activity_url(@activity) %>">
+
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="<%= @activity.title %>">
+    <meta name="twitter:description" content="<%= og_description %>">
+    <meta name="twitter:image" content="<%= og_image_url %>">
+  </head>
+  <body>
+    <p>Abra este link no Practice-BR para responder à atividade.</p>
+  </body>
+</html>

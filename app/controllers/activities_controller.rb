@@ -2,10 +2,23 @@ class ActivitiesController < ApplicationController
   include QuizManagement
   
   before_action :authenticate_user!
+  # Rastreadores de preview (WhatsApp, Facebook, etc.) buscam o link sem sessão
+  # nenhuma. Sem isto, caem no redirect pro login e o preview mostra a tela
+  # de login em vez do card da atividade.
+  # ATENÇÃO: `only:` + `if:` juntos no skip_before_action NÃO funcionam como
+  # "E" (o Rails trata como cláusulas independentes e o skip acaba valendo pra
+  # qualquer request de :resolve_quiz, com ou sem crawler). Por isso as duas
+  # condições vão dentro de uma única lambda.
+  skip_before_action :authenticate_user!, if: -> { action_name == "resolve_quiz" && crawler_request? }
   before_action :set_activity, only: [:show, :edit, :update, :destroy, :resolve_quiz, :submit_quiz, :quiz_results, :grading_status, :transcribe_audio, :clear_content, :clear_attempt_history, :review_draft, :publish_draft]
   before_action :preload_exercise_associations, only: [:show]
   before_action :authorize_teacher, only: [:new, :create, :edit, :update, :destroy, :generate_with_ai, :generate_from_video, :generation_wait, :generation_status, :review_draft, :publish_draft]
   before_action :check_trial_level_restriction!, only: [:show, :resolve_quiz, :submit_quiz]
+
+  # User-Agents dos rastreadores que geram o card de preview de link. Não é
+  # uma barreira de segurança (User-Agent pode ser falsificado) — por isso o
+  # preview mostra só título/descrição/capa, nunca as perguntas da atividade.
+  CRAWLER_USER_AGENTS = /facebookexternalhit|Facebot|WhatsApp|Twitterbot|LinkedInBot|Slackbot|TelegramBot|Discordbot|SkypeUriPreview|Google-InspectionTool|Pinterest/i
 
   def index
     service_result = ActivitiesIndexService.new(params: params, current_user: current_user).call
@@ -29,6 +42,10 @@ class ActivitiesController < ApplicationController
   end
 
   def resolve_quiz
+    if crawler_request?
+      render "activities/link_preview", layout: false and return
+    end
+
     if current_user.student_like? && @activity.draft?
       redirect_to student_dashboard_path, alert: "Esta atividade ainda não está disponível." and return
     end
@@ -334,6 +351,10 @@ class ActivitiesController < ApplicationController
 
   def set_activity
     @activity = Activity.find_by!(slug: params[:slug])
+  end
+
+  def crawler_request?
+    request.user_agent.present? && request.user_agent.match?(CRAWLER_USER_AGENTS)
   end
 
   def preload_exercise_associations

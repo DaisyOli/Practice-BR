@@ -1,7 +1,16 @@
 <!DOCTYPE html>
 <html lang="<%= I18n.locale %>" data-theme="practice-br">
   <head>
-    <title><%= t('app_name') %></title>
+    <%
+      # Cada view já define seu próprio <title> dentro de `content_for :head`.
+      # Sem esta checagem, toda página do site renderiza DOIS <title> (este
+      # default + o da view), o que é HTML inválido e confunde rastreadores
+      # de preview de link (WhatsApp, etc.) na hora de extrair o título.
+      page_head = content_for(:head)
+    %>
+    <% unless page_head.to_s.include?("<title") %>
+      <title><%= t('app_name') %></title>
+    <% end %>
     <meta name="viewport" content="width=device-width,initial-scale=1">
     <%= csrf_meta_tags %>
     <%= csp_meta_tag %>
@@ -43,7 +52,7 @@
     <script src="https://cdn.jsdelivr.net/npm/shepherd.js@11/dist/js/shepherd.min.js"></script>
 
     <!-- Analytics e metatags -->
-    <%= yield :head %>
+    <%= page_head %>
     
     <!-- jQuery carregado uma única vez -->
     <script src="https://code.jquery.com/jquery-3.7.1.min.js" 
