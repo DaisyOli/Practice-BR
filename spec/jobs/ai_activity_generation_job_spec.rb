@@ -78,4 +78,51 @@ RSpec.describe AiActivityGenerationJob, type: :job do
     expect(generation.reload.status).to eq("failed")
     expect(generation.error_message).to eq(I18n.t('ai.errors.generic'))
   end
+
+  # Regressão: o GoodJob reencontra sozinho um job "running" cujo processo
+  # morreu no meio (deploy, R12). Reprocessar do zero duplicaria a atividade
+  # e gastaria a geração de IA de novo — precisa falhar limpo, sem chamar o
+  # service de novo, pra professora só clicar em "tentar de novo".
+  it "não reprocessa uma geração já 'running' (processo anterior derrubado no meio) e marca failed" do
+    generation = AiGeneration.create!(teacher: teacher, kind: "prompt", request_params: { "prompt" => "verbos" },
+                                       status: "running")
+    expect(ActivityGenerationService).not_to receive(:new)
+
+    described_class.perform_now(generation.id)
+
+    generation.reload
+    expect(generation.status).to eq("failed")
+    expect(generation.error_message).to eq(I18n.t('ai.errors.interrupted'))
+    expect(generation.activity).to be_nil
+  end
+
+  # Um rate limit temporário TAMBÉM deixa o status em "running" até o rescue
+  # rodar — precisa voltar pra "queued" nesse caminho, senão a proteção acima
+  # (contra processo derrubado) impediria o próprio retry_on de funcionar.
+  it "erro temporário (rate limit) volta o status pra 'queued' e deixa o retry_on reagendar" do
+    generation = AiGeneration.create!(teacher: teacher, kind: "prompt", request_params: { "prompt" => "verbos" })
+    allow(ActivityGenerationService).to receive(:new).and_raise(
+      Anthropic::Errors::RateLimitError.new(url: URI("https://api.anthropic.com/v1/messages"),
+                                             status: 429, headers: {}, body: nil, request: nil, response: nil)
+    )
+
+    expect { described_class.perform_now(generation.id) }
+      .to have_enqueued_job(described_class).with(generation.id)
+
+    expect(generation.reload.status).to eq("queued")
+  end
+
+  it "depois do reset pra 'queued', a próxima tentativa roda normalmente (não trava como 'interrompida')" do
+    generation = AiGeneration.create!(teacher: teacher, kind: "prompt", request_params: { "prompt" => "verbos" },
+                                       status: "queued")
+    activity = create(:activity, teacher: teacher)
+    allow(ActivityGenerationService).to receive(:new)
+      .and_return(instance_double(ActivityGenerationService, call: { success: true, activity: activity }))
+
+    described_class.perform_now(generation.id)
+
+    generation.reload
+    expect(generation.status).to eq("done")
+    expect(generation.activity).to eq(activity)
+  end
 end

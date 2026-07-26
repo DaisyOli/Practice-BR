@@ -42,6 +42,7 @@ fr:
     errors:
       generic: "Impossible d'évaluer automatiquement pour le moment. Réessayez plus tard."
       timeout: "L'IA a mis trop de temps à répondre. Réessayez dans un instant."
+      interrupted: "La génération a été interrompue avant de se terminer. Réessayez."
   
   # Home page
   home:

@@ -45,6 +45,7 @@ pt:
       api: "Erro na API da IA: %{message}"
       invalid_format: "A IA retornou um formato inválido. Tente reformular o pedido."
       generic: "Não foi possível avaliar automaticamente no momento. Tente novamente mais tarde."
+      interrupted: "A geração foi interrompida antes de terminar. Tente novamente."
   
   # Common - Botões e textos comuns
   common:

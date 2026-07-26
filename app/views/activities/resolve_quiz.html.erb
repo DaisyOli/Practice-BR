@@ -680,7 +680,11 @@ function pollTranscription(qId, statusUrl, transcriptionId, attempt) {
     return;
   }
 
-  fetch(statusUrl + '?id=' + transcriptionId)
+  // statusUrl já vem com query string (?locale=pt); usa & pra não gerar uma
+  // segunda "?" (que jogaria o id pra dentro do valor de locale e o Rails
+  // nunca leria params[:id]).
+  var sep = statusUrl.indexOf('?') === -1 ? '?' : '&';
+  fetch(statusUrl + sep + 'id=' + transcriptionId)
     .then(function(r) { return r.json(); })
     .then(function(data) {
       if (data.status === 'done') {

@@ -41,9 +41,18 @@ if rails_env == "production"
   # Adiciona configuração para manter o aplicativo aquecido
   # GoodJob roda em modo :async dentro dos workers do Puma; os hooks abaixo
   # param/reiniciam os threadpools ao redor do fork (recomendação do README do GoodJob)
+  #
+  # GoodJob.shutdown sem argumento espera INDEFINIDAMENTE o job em andamento
+  # terminar (timeout: -1 é o default). Como o Heroku só dá 30s entre SIGTERM
+  # e o SIGKILL forçado (erro R12), um job de IA que demore mais que isso
+  # (é comum) travava o processo até ser morto à força no meio do deploy.
+  # Com um timeout de 20s aqui, é o próprio GoodJob que desiste a tempo e
+  # deixa o Puma encerrar limpo, em vez do Heroku matar o processo na marra.
+  GOOD_JOB_SHUTDOWN_TIMEOUT = 20
+
   before_fork do
     puts "Puma inicializando com #{worker_count} workers e #{max_threads_count} threads por worker"
-    GoodJob.shutdown if defined?(GoodJob)
+    GoodJob.shutdown(timeout: GOOD_JOB_SHUTDOWN_TIMEOUT) if defined?(GoodJob)
   end
 
   on_worker_boot do
@@ -51,12 +60,12 @@ if rails_env == "production"
   end
 
   on_worker_shutdown do
-    GoodJob.shutdown if defined?(GoodJob)
+    GoodJob.shutdown(timeout: GOOD_JOB_SHUTDOWN_TIMEOUT) if defined?(GoodJob)
   end
 
   MAIN_PID = Process.pid
   at_exit do
-    GoodJob.shutdown if defined?(GoodJob) && Process.pid == MAIN_PID
+    GoodJob.shutdown(timeout: GOOD_JOB_SHUTDOWN_TIMEOUT) if defined?(GoodJob) && Process.pid == MAIN_PID
   end
 end
 

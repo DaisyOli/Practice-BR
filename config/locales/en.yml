@@ -74,6 +74,7 @@ en:
       api: "AI API error: %{message}"
       invalid_format: "The AI returned an invalid format. Try rephrasing your request."
       generic: "Unable to evaluate automatically at this time. Please try again later."
+      interrupted: "The generation was interrupted before finishing. Please try again."
   
   # Common - Buttons and common text
   common:

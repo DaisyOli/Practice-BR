@@ -63,6 +63,18 @@ RSpec.describe "Transcrição de áudio em background", type: :request do
       expect(response.parsed_body["status"]).to eq("queued")
     end
 
+    # Regressão do bug de produção: o JS montava a URL como
+    # "...transcribe_status?locale=pt?id=1" (duas "?"), então o Rails lia
+    # locale="pt?id=1" e params[:id] ficava nil -> "Transcrição não encontrada".
+    # Aqui garantimos que a URL bem-formada (locale E id na MESMA query string,
+    # separados por &) é lida corretamente.
+    it "lê params[:id] quando a URL já tem locale na query string" do
+      transcription = AudioTranscription.create!(user: student, status: "queued")
+
+      get "/activities/#{activity.slug}/transcribe_status?locale=pt&id=#{transcription.id}"
+      expect(response.parsed_body["status"]).to eq("queued")
+    end
+
     it "devolve o texto quando o job termina com sucesso" do
       allow(WhisperTranscriptionService).to receive(:new)
         .and_return(double(call: { success: true, text: "Eu moro em Paris." }))

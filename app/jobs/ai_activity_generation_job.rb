@@ -12,7 +12,19 @@ class AiActivityGenerationJob < ApplicationJob
 
   def perform(generation_id)
     generation = AiGeneration.find_by(id: generation_id)
-    return unless generation && generation.status.in?(%w[queued running])
+    return unless generation
+
+    if generation.status == "running"
+      # O rescue de erro temporário logo abaixo sempre reseta pra "queued"
+      # antes de deixar o retry_on tentar de novo — então só chega "running"
+      # aqui se a execução anterior morreu no meio sem rodar rescue nenhum
+      # (processo derrubado durante um deploy, por exemplo). Não reprocessamos
+      # do zero: chamar o service de novo duplicaria a atividade e gastaria a
+      # geração de IA outra vez. A professora só clica em "tentar de novo".
+      generation.update!(status: "failed", error_message: I18n.t('ai.errors.interrupted'))
+      return
+    end
+    return unless generation.status == "queued"
 
     generation.update!(status: "running")
     params = generation.request_params
@@ -37,6 +49,10 @@ class AiActivityGenerationJob < ApplicationJob
       generation.update!(status: "failed", error_message: result[:error])
     end
   rescue Anthropic::Errors::RateLimitError, Anthropic::Errors::APITimeoutError, Anthropic::Errors::APIConnectionError
+    # Volta pra "queued" antes de deixar o retry_on reagendar — assim uma
+    # próxima tentativa normal não esbarra na trava de "running" acima, que
+    # existe só pra pegar processo derrubado no meio (sem rescue).
+    generation&.update!(status: "queued")
     raise # temporários: retry do job
   rescue => e
     Rails.logger.error "AiActivityGenerationJob: #{e.class} - #{e.message}"
