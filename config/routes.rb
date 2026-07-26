@@ -49,7 +49,8 @@ Rails.application.routes.draw do
       post :submit,     action: :submit_quiz
       get  :submit,     to: redirect { |params, _req| "/activities/#{params[:slug]}/solve" }
       get  :results,    action: :quiz_results
-      post :transcribe, action: :transcribe_audio
+      post :transcribe,        action: :transcribe_audio
+      get  :transcribe_status, action: :transcription_status
       match "clear/:content", action: :clear_content, via: [:patch, :post], as: :clear_content,
             constraints: { content: /statement|media|video|explanation|audio|image_file|video_file/ }
       delete :clear_attempt_history

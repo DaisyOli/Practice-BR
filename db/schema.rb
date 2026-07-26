@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.1].define(version: 2026_07_24_083400) do
+ActiveRecord::Schema[7.1].define(version: 2026_07_26_161136) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
 
@@ -101,6 +101,16 @@ ActiveRecord::Schema[7.1].define(version: 2026_07_24_083400) do
     t.datetime "updated_at", null: false
     t.index ["activity_id"], name: "index_ai_generations_on_activity_id"
     t.index ["teacher_id"], name: "index_ai_generations_on_teacher_id"
+  end
+
+  create_table "audio_transcriptions", force: :cascade do |t|
+    t.bigint "user_id", null: false
+    t.string "status", default: "queued", null: false
+    t.text "text"
+    t.text "error_message"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["user_id"], name: "index_audio_transcriptions_on_user_id"
   end
 
   create_table "column_matchings", force: :cascade do |t|
@@ -362,6 +372,7 @@ ActiveRecord::Schema[7.1].define(version: 2026_07_24_083400) do
   add_foreign_key "activity_ratings", "users"
   add_foreign_key "ai_generations", "activities"
   add_foreign_key "ai_generations", "users", column: "teacher_id"
+  add_foreign_key "audio_transcriptions", "users"
   add_foreign_key "column_matchings", "activities"
   add_foreign_key "matching_pairs", "column_matchings"
   add_foreign_key "paragraph_orderings", "activities"

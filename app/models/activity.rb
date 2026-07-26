@@ -110,7 +110,11 @@ class Activity < ApplicationRecord
   end
   
   def should_generate_slug?
-    title_changed? || slug.blank?
+    # O slug não pode mudar depois de gerado: ele fica embutido em formulários
+    # já carregados (aluno no meio do exercício) e em links compartilhados
+    # (WhatsApp, etc.). Se o slug mudasse a cada edição de título, qualquer
+    # sessão/link em andamento vira 404 quando o professor renomeia a atividade.
+    slug.blank?
   end
   
   def clear_cache

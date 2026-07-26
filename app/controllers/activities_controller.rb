@@ -97,11 +97,23 @@ class ActivitiesController < ApplicationController
     audio = params[:audio]
     return render json: { error: "Nenhum áudio recebido." }, status: :unprocessable_entity unless audio
 
-    result = WhisperTranscriptionService.new(audio).call
-    if result[:success]
-      render json: { text: result[:text] }
+    transcription = AudioTranscription.create!(user: current_user, status: "queued")
+    transcription.audio_file.attach(io: audio, filename: audio.original_filename, content_type: audio.content_type)
+    AudioTranscriptionJob.perform_later(transcription.id)
+
+    render json: { transcription_id: transcription.id }
+  end
+
+  def transcription_status
+    transcription = current_user.audio_transcriptions.find_by(id: params[:id])
+    return render json: { status: "failed", error: "Transcrição não encontrada." } unless transcription
+
+    if transcription.done?
+      render json: { status: "done", text: transcription.text }
+    elsif transcription.failed?
+      render json: { status: "failed", error: transcription.error_message }
     else
-      render json: { error: result[:error] }, status: :unprocessable_entity
+      render json: { status: "queued" }
     end
   end
 

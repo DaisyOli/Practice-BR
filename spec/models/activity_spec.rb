@@ -94,6 +94,32 @@ RSpec.describe Activity, type: :model do
     end
   end
 
+  describe 'slug' do
+    it 'gera o slug a partir do título na criação' do
+      activity = create(:activity, title: 'Mistério em Armação')
+      expect(activity.slug).to eq('misterio-em-armacao')
+    end
+
+    # Regressão: renomear a atividade mudava o slug, e quem já tinha a URL
+    # antiga aberta (aluno no meio do exercício, link do WhatsApp já enviado)
+    # caía em 404 na hora de enviar/abrir de novo.
+    it 'mantém o slug estável quando o título é editado depois' do
+      activity = create(:activity, title: 'Mistério em Armação')
+      original_slug = activity.slug
+
+      activity.update(title: 'Novo Título Completamente Diferente')
+
+      expect(activity.reload.slug).to eq(original_slug)
+    end
+
+    it 'gera slugs únicos para títulos iguais' do
+      first = create(:activity, title: 'Mesmo Título')
+      second = create(:activity, title: 'Mesmo Título')
+
+      expect(first.slug).not_to eq(second.slug)
+    end
+  end
+
   describe 'with questions' do
     let(:activity) { create(:activity) }
     
