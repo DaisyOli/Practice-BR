@@ -16,28 +16,41 @@ module Users
                             "criou continuam sendo usadas pelos alunos. Escreva para " \
                             "contato@practicebr.com que a gente cuida disso com você.".freeze
 
+    ACCOUNT_DELETED_NOTICE = "Sua conta foi apagada. Foi bom ter você por aqui — a porta fica aberta. 💚".freeze
+
     def destroy
       return refuse_teacher_self_deletion if resource.teacher?
 
-      # A ordem importa: cancelar ANTES de apagar. Se apagássemos primeiro e o
-      # Stripe falhasse, ficaríamos exatamente com o problema que este controller
-      # existe pra resolver — assinatura órfã cobrando um fantasma.
-      cancel_subscription!
+      user_id     = resource.id
+      role        = resource.role
+      customer_id = resource.stripe_customer_id
+
+      # Apagar e cancelar dentro da MESMA transação. Assim os dois só valem se os
+      # dois derem certo: se o Stripe falhar, o destroy volta atrás; se o destroy
+      # falhar (uma associação sem `dependent:` derrubando por chave estrangeira,
+      # por exemplo), o Stripe nem chega a ser chamado.
+      #
+      # Segurar uma transação aberta durante uma chamada de rede não é ideal, mas
+      # aqui o volume é ínfimo e a alternativa é pior: cancelar fora dela deixaria
+      # a pessoa sem acesso pago e com a conta de pé, ou com assinatura órfã.
+      ActiveRecord::Base.transaction do
+        resource.destroy!
+        cancel_subscription!
+      end
 
       AdminMailer.account_deleted_notification(
-        user_id:            resource.id,
-        role:               resource.role,
-        stripe_customer_id: resource.stripe_customer_id
+        user_id: user_id, role: role, stripe_customer_id: customer_id
       ).deliver_later
 
-      super
-    rescue Stripe::StripeError => e
+      sign_out(resource_name)
+      redirect_to root_path, notice: ACCOUNT_DELETED_NOTICE
+    rescue Stripe::StripeError, ActiveRecord::ActiveRecordError => e
       # Não apaga. Uma conta apagada com assinatura ativa é pior que uma conta que
       # sobreviveu: a segunda a pessoa pode tentar de novo, a primeira cobra em
       # silêncio. O RGPD dá até um mês pra atender o pedido, então esperar um dia
       # não é descumprimento.
-      Rails.logger.error "[Conta] Falha ao cancelar assinatura na exclusão · user ##{resource.id}: #{e.message}"
-      AdminMailer.account_deletion_failed_notification(resource.id, e.message).deliver_later
+      Rails.logger.error "[Conta] Exclusão abortada · user ##{user_id}: #{e.class} — #{e.message}"
+      AdminMailer.account_deletion_failed_notification(user_id, "#{e.class}: #{e.message}").deliver_later
       redirect_to student_dashboard_path, alert: STRIPE_FAILURE_ALERT
     end
 

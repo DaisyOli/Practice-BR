@@ -17,9 +17,10 @@ RSpec.describe "Exclusão de conta", type: :request do
   describe "aluno pagante" do
     before { sign_in aluno_pagante }
 
-    it "cancela a assinatura no Stripe e só então apaga a conta" do
-      expect(Stripe::Subscription).to receive(:cancel).with("sub_123").ordered
-      allow(AdminMailer).to receive(:account_deleted_notification).and_call_original
+    it "cancela a assinatura e apaga a conta — os dois ou nenhum" do
+      # Os dois acontecem na mesma transação, então não existe estado no meio:
+      # ou a conta some e a cobrança para, ou nada muda.
+      expect(Stripe::Subscription).to receive(:cancel).with("sub_123")
 
       expect { delete "/users" }.to change(User, :count).by(-1)
 
@@ -45,12 +46,37 @@ RSpec.describe "Exclusão de conta", type: :request do
       expect(enqueued_admin_mail).to be_present
     end
 
+    it "apaga junto tudo que estava pendurado na pessoa" do
+      # Cada uma destas tabelas tem chave estrangeira pra users. Sem
+      # `dependent: :destroy` na associação, o destroy levanta InvalidForeignKey
+      # e a exclusão quebra — foi o que aconteceu com activity_ratings.
+      atividade = create(:activity, draft: false)
+      create(:activity_rating, user: aluno_pagante, activity: atividade)
+      create(:quiz_attempt, user: aluno_pagante, activity: atividade)
+      allow(Stripe::Subscription).to receive(:cancel)
+
+      expect { delete "/users" }.to change(User, :count).by(-1)
+
+      expect(ActivityRating.where(user_id: aluno_pagante.id)).to be_empty
+      expect(QuizAttempt.where(user_id: aluno_pagante.id)).to be_empty
+    end
+
     context "quando o Stripe falha" do
       before { allow(Stripe::Subscription).to receive(:cancel).and_raise(Stripe::APIError.new("timeout")) }
 
       it "NÃO apaga a conta" do
         expect { delete "/users" }.not_to change(User, :count)
         expect(User.exists?(aluno_pagante.id)).to be(true)
+      end
+
+      it "desfaz o destroy junto com o resto — nada do histórico se perde" do
+        # A transação é o que garante isto: sem ela, o destroy já teria acontecido
+        # quando o Stripe falhasse, e a pessoa ficaria sem histórico E sem conta
+        # apagada.
+        atividade = create(:activity, draft: false)
+        create(:quiz_attempt, user: aluno_pagante, activity: atividade)
+
+        expect { delete "/users" }.not_to change(QuizAttempt, :count)
       end
 
       it "explica pro aluno e manda ele de volta" do

@@ -9,6 +9,11 @@ class User < ApplicationRecord
   has_many :quiz_attempts, dependent: :destroy
   has_many :push_subscriptions, dependent: :destroy
   has_many :audio_transcriptions, dependent: :destroy
+  # Estas duas faltavam, e a falta bloqueava a exclusão de conta: as tabelas têm
+  # chave estrangeira pra users, então o destroy levantava InvalidForeignKey.
+  # Na prática, quem já tinha avaliado uma atividade não conseguia se apagar.
+  has_many :activity_ratings, dependent: :destroy
+  has_many :ai_generations, foreign_key: :teacher_id, dependent: :destroy
   
   ROLES = %w[teacher student trial].freeze
   LANGUAGES = %w[en pt fr].freeze
