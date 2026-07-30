@@ -62,7 +62,12 @@ Rails.application.configure do
   # "info" includes generic and useful information about system operation, but avoids logging too much
   # information to avoid inadvertent exposure of personally identifiable information (PII). If you
   # want to log everything, set the level to "debug".
-  config.log_level = ENV.fetch("RAILS_LOG_LEVEL", "debug")  # Temporariamente em debug para mais informações
+  # Em "debug" o Rails loga cada query com os valores dentro — ou seja, email de
+  # aluno e o texto das respostas abertas iriam parar nos logs do Heroku. Isso é
+  # dado pessoal em lugar que não precisa dele. Para depurar um problema pontual,
+  # suba temporariamente com `heroku config:set RAILS_LOG_LEVEL=debug` e volte
+  # pra "info" logo depois.
+  config.log_level = ENV.fetch("RAILS_LOG_LEVEL", "info")
 
   # Use a different cache store in production.
   # config.cache_store = :mem_cache_store
