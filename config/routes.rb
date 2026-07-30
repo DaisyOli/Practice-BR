@@ -100,6 +100,8 @@ Rails.application.routes.draw do
   get  "assinar/sucesso",      to: "billing#success",          as: :billing_success
   get  "assinar/cancelado",    to: "billing#cancel",           as: :billing_cancel
   post "assinar/cancelar",     to: "billing#cancel_subscription", as: :billing_cancel_subscription
+  get  "assinar/pagamento",    to: "billing#payment_problem",  as: :billing_payment_problem
+  get  "assinar/atualizar",    to: "billing#update_payment",   as: :billing_update_payment
   post "webhooks/stripe",      to: "webhooks#stripe"
   resources :push_subscriptions, only: [:create, :destroy]
 

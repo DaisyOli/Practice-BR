@@ -11,6 +11,7 @@ class ApplicationController < ActionController::Base
   before_action :suppress_redundant_flash
   before_action :configure_permitted_parameters, if: :devise_controller?
   before_action :check_trial_restrictions!
+  before_action :check_payment_status!
   around_action :switch_locale
 
   def after_sign_in_path_for(resource)
@@ -61,6 +62,24 @@ class ApplicationController < ActionController::Base
       return if controller_name == "home" && action_name == "trial_expired"
       redirect_to trial_expired_path if current_user.trial_expired? || current_user.trial_exhausted?
     end
+  end
+
+  # Cartão recusado não corta o acesso na hora: o aluno tem
+  # User::PAYMENT_GRACE_DAYS pra atualizar o pagamento, avisado por email
+  # (StudentMailer#payment_failed) e pelo banner na dashboard. Vencida a
+  # tolerância, aí sim o acesso de pagante para.
+  #
+  # Antes disto o `subscription_status` era gravado mas nunca lido: um aluno com
+  # cartão recusado seguia com acesso completo até o Stripe desistir das
+  # tentativas, o que pode levar semanas.
+  def check_payment_status!
+    return unless current_user&.payment_grace_expired?
+    return if devise_controller?
+    # A própria tela do problema, a rota que leva pra fatura e o webhook precisam
+    # continuar acessíveis — senão o aluno fica sem caminho pra resolver.
+    return if controller_name.in?(%w[billing webhooks])
+
+    redirect_to billing_payment_problem_path
   end
 
   def switch_locale(&action)

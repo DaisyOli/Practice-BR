@@ -21,6 +21,14 @@ class AdminMailer < ApplicationMailer
     mail(to: DAISY_EMAIL, subject: "✅ Nova atividade #{activity.level} pronta para revisão — #{activity.title}")
   end
 
+  # Antes, falha de pagamento só existia como uma linha de log — ninguém era
+  # avisado, e o aluno seguia com acesso enquanto o Stripe tentava o cartão.
+  def payment_failed_notification(student)
+    @student   = student
+    @days_left = student.payment_grace_days_left || User::PAYMENT_GRACE_DAYS
+    mail(to: DAISY_EMAIL, subject: "💳 Falha de pagamento — #{student.display_name}")
+  end
+
   def draft_generation_failed(level, error_key)
     @level = level
     @error_key = error_key

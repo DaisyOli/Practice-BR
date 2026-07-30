@@ -1,0 +1,77 @@
+<% content_for :head do %>
+  <title>Pagamento pendente — <%= t('app_name') %></title>
+<% end %>
+
+<%# Tela de bloqueio por tolerância vencida. O aluno aqui já recebeu email na
+    primeira falha; esta página é a última parada e precisa ter um caminho de
+    saída óbvio, senão vira suporte pra Daisy. %>
+<div class="min-h-screen flex items-center justify-center px-4 py-16" style="background: var(--paper);">
+  <div class="max-w-md w-full text-center">
+
+    <div class="text-6xl mb-6">💳</div>
+
+    <h1 id="pp-title" class="text-2xl font-bold mb-3" style="color: var(--brand-deep);">
+      Seu pagamento ficou pendente
+    </h1>
+
+    <p id="pp-body" class="mb-8 leading-relaxed" style="color: var(--ink-soft);">
+      O seu banco recusou a última cobrança e o prazo para atualizar terminou.
+      Não perdemos nada do seu progresso — assim que o pagamento entrar, tudo
+      volta exatamente como estava.
+    </p>
+
+    <%= link_to billing_update_payment_path,
+          id: "pp-cta",
+          class: "btn btn-lg w-full mb-3",
+          style: "background:var(--brand); color:var(--surface); border-color:var(--brand); font-weight:700;" do %>
+      Atualizar pagamento
+    <% end %>
+
+    <a href="mailto:contato@practicebr.com?subject=Problema%20no%20pagamento%20-%20Practice-BR"
+       id="pp-help"
+       class="btn btn-outline btn-sm w-full mb-4">
+      Falar com a gente
+    </a>
+
+    <%# sign_out é GET neste app (config.sign_out_via = :get), e o data-turbo:false
+        segue o que as outras telas de billing fazem. %>
+    <%= link_to "Sair", destroy_user_session_path,
+          data: { turbo: false },
+          id: "pp-out",
+          class: "btn btn-ghost btn-sm",
+          style: "color: var(--ink-faint);" %>
+
+  </div>
+</div>
+
+<script>
+// Mesmo padrão de troca por navigator.language usado no resto do app: a interface
+// é em português, mas o aluno costuma ser francófono — e esta é a última tela
+// onde ele pode não entender o que precisa fazer.
+(function() {
+  var lang = (navigator.language || 'pt').toLowerCase().substring(0, 2);
+  var t = {
+    fr: {
+      title: "Votre paiement est en attente",
+      body:  "Votre banque a refusé le dernier prélèvement et le délai pour le mettre à jour est écoulé. Rien de votre progression n'est perdu — dès que le paiement passe, tout revient exactement comme avant.",
+      cta:   "Mettre à jour le paiement",
+      help:  "Nous contacter",
+      out:   "Se déconnecter"
+    },
+    en: {
+      title: "Your payment is pending",
+      body:  "Your bank declined the last charge and the window to update it has closed. None of your progress is lost — as soon as the payment goes through, everything comes back exactly as it was.",
+      cta:   "Update payment",
+      help:  "Get in touch",
+      out:   "Sign out"
+    }
+  }[lang];
+  if (!t) return;
+  var set = function(id, text) { var el = document.getElementById(id); if (el) el.textContent = text; };
+  set('pp-title', t.title);
+  set('pp-body',  t.body);
+  set('pp-cta',   t.cta);
+  set('pp-help',  t.help);
+  set('pp-out',   t.out);
+})();
+</script>

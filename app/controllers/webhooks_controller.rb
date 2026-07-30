@@ -56,10 +56,10 @@ class WebhooksController < ApplicationController
 
     if invoice["subscription"].present?
       subscription = Stripe::Subscription.retrieve(invoice["subscription"])
-      user.update!(
-        subscription_status:             "active",
-        subscription_current_period_end: Time.at(subscription["current_period_end"]).utc
-      )
+      user.update!(subscription_current_period_end: Time.at(subscription["current_period_end"]).utc)
+      # Pagou: encerra qualquer tolerância em curso e zera o contador, senão uma
+      # falha futura herdaria a data antiga e expiraria na hora.
+      user.clear_payment_past_due!(status: subscription["cancel_at_period_end"] ? "canceling" : "active")
     end
   end
 
@@ -67,30 +67,59 @@ class WebhooksController < ApplicationController
     user = User.find_by(stripe_customer_id: invoice["customer"])
     return unless user
 
-    user.update!(subscription_status: "past_due")
+    first_failure = user.past_due_since.nil?
+    user.mark_payment_past_due!
     Rails.logger.warn "[Webhook] ⚠️ Falha de pagamento · user ##{user.id}"
+
+    # Só avisa na primeira falha. O Stripe reenvia este evento a cada nova
+    # tentativa do cartão, e um email por tentativa viraria spam.
+    return unless first_failure
+
+    StudentMailer.payment_failed(user).deliver_later
+    AdminMailer.payment_failed_notification(user).deliver_later
   end
 
   def handle_subscription_updated(subscription)
     user = User.find_by(stripe_subscription_id: subscription["id"])
     return unless user
 
-    status = subscription["cancel_at_period_end"] ? "canceling" : "active"
-    user.update!(
-      subscription_status:             status,
-      subscription_current_period_end: Time.at(subscription["current_period_end"]).utc
-    )
-    Rails.logger.info "[Webhook] 🔄 Assinatura atualizada · user ##{user.id} → #{status}"
+    user.update!(subscription_current_period_end: Time.at(subscription["current_period_end"]).utc)
+
+    # O status vem do Stripe em vez de ser inferido: antes este handler assumia
+    # "active" sempre que não houvesse cancelamento agendado, então um
+    # subscription.updated qualquer apagava um past_due em curso e devolvia
+    # acesso a quem estava com o cartão recusado.
+    if subscription["cancel_at_period_end"]
+      user.clear_payment_past_due!(status: "canceling")
+    elsif %w[past_due unpaid].include?(subscription["status"])
+      user.mark_payment_past_due!
+    else
+      user.clear_payment_past_due!(status: "active")
+    end
+
+    Rails.logger.info "[Webhook] 🔄 Assinatura atualizada · user ##{user.id} → #{user.subscription_status}"
   end
 
   def handle_subscription_deleted(subscription)
     user = User.find_by(stripe_subscription_id: subscription["id"])
     return unless user
 
-    user.update!(
-      role:                "trial",
-      subscription_status: "canceled"
-    )
+    user.role = "trial"
+    user.subscription_status = "canceled"
+
+    # `validate: false` de propósito, por causa de uma armadilha na transição de
+    # papel: a validação de presença de `level` só vale `if: :trial?`, então um
+    # `student` com nível vazio é um estado válido — e alcançável (o professor
+    # pode limpar o nível em teachers#update_student_level, e o convite feito por
+    # admin não pergunta o nível). No instante em que o papel vira `trial`, aquele
+    # nível vazio passa a violar a validação.
+    #
+    # Com `update!`, o rebaixamento explodiria: o Stripe receberia 500, tentaria
+    # de novo, falharia igual — e o aluno ficaria com acesso de pagante pra
+    # sempre, de graça. São dois campos de estado vindos de um sistema externo;
+    # não há entrada de usuário pra validar aqui.
+    user.save!(validate: false)
+
     Rails.logger.info "[Webhook] ❌ Assinatura cancelada · user ##{user.id}"
   end
 end

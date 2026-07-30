@@ -813,6 +813,48 @@
 })();
 </script>
 
+<%# Aviso de pagamento em atraso, durante a tolerância. Sem isto o aluno depende
+    só do email pra saber que precisa agir — e email se perde. %>
+<% if current_user.payment_past_due? && !current_user.payment_grace_expired? %>
+  <% days = current_user.payment_grace_days_left %>
+  <div style="max-width:760px; margin:0 auto 1.5rem; padding:14px 18px; background:var(--warning-tint); border:1.5px solid var(--warning-border); border-radius:12px; display:flex; gap:12px; align-items:flex-start;">
+    <div style="font-size:1.2rem; line-height:1.2;">💳</div>
+    <div style="flex:1;">
+      <p id="pd-title" style="font-family:'Plus Jakarta Sans',sans-serif; font-size:0.86rem; font-weight:700; color:var(--warning-ink); margin:0 0 3px;">
+        Seu último pagamento não passou
+      </p>
+      <p id="pd-body" style="font-family:'Plus Jakarta Sans',sans-serif; font-size:0.8rem; line-height:1.5; color:var(--ink-soft); margin:0 0 8px;">
+        <% if days && days > 0 %>
+          Você tem <%= days %> dia<%= "s" if days != 1 %> pra atualizar o cartão sem perder o acesso.
+        <% else %>
+          Atualize o cartão para não perder o acesso.
+        <% end %>
+      </p>
+      <%= link_to "Atualizar pagamento", billing_update_payment_path,
+            id: "pd-cta",
+            style: "font-family:'Plus Jakarta Sans',sans-serif; font-size:0.8rem; font-weight:700; color:var(--brand); text-decoration:underline;" %>
+    </div>
+  </div>
+
+  <script>
+  (function() {
+    var lang = (navigator.language || 'pt').toLowerCase().substring(0, 2);
+    var days = <%= days.to_i %>;
+    var t = {
+      fr: { title: "Votre dernier paiement n'est pas passé",
+            body: days > 0 ? "Il vous reste " + days + " jour" + (days != 1 ? "s" : "") + " pour mettre votre carte à jour sans perdre l'accès." : "Mettez votre carte à jour pour ne pas perdre l'accès.",
+            cta: "Mettre à jour le paiement" },
+      en: { title: "Your last payment didn't go through",
+            body: days > 0 ? "You have " + days + " day" + (days != 1 ? "s" : "") + " to update your card without losing access." : "Update your card to keep your access.",
+            cta: "Update payment" }
+    }[lang];
+    if (!t) return;
+    var set = function(id, text) { var el = document.getElementById(id); if (el) el.textContent = text; };
+    set('pd-title', t.title); set('pd-body', t.body); set('pd-cta', t.cta);
+  })();
+  </script>
+<% end %>
+
 <%# Cancelamento de assinatura — apenas para alunos pagantes %>
 <% if current_user.student? && current_user.stripe_subscription_id.present? %>
   <div style="text-align:center; padding:2rem 1rem 3rem;">

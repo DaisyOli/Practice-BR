@@ -32,6 +32,23 @@ class StudentMailer < ApplicationMailer
     mail(to: student.email, subject: subject)
   end
 
+  # Cartão recusado. Este email é o que dá sentido à tolerância: sem ele o aluno
+  # não sabe que precisa agir e a tolerância só adia a surpresa.
+  def payment_failed(student)
+    @student   = student
+    @days_left = student.payment_grace_days_left || User::PAYMENT_GRACE_DAYS
+    @url       = billing_update_payment_url
+    @lang      = student.language.presence || "pt"
+
+    subject = case @lang
+              when "fr" then "Problème de paiement · problema no pagamento 💳"
+              when "en" then "Payment problem · problema no pagamento 💳"
+              else           "Tivemos um problema com seu pagamento 💳"
+              end
+
+    mail(to: student.email, subject: subject)
+  end
+
   # Levels that should receive a notification when an activity of `level` is published.
   # A B1 activity notifies B1 and B2 students (their level and one above).
   def self.notifiable_levels_for_activity(level)

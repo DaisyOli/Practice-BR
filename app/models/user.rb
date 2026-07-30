@@ -53,6 +53,42 @@ class User < ApplicationRecord
     trial? && (trial_expires_at.nil? || trial_expires_at < Time.current)
   end
 
+  # Cartão recusado não corta o acesso na hora: o aluno tem estes dias pra
+  # atualizar o pagamento. O Stripe segue tentando o cartão nesse período, então
+  # a maior parte dos casos se resolve sozinha (cartão vencido é a causa mais
+  # comum) sem ninguém perder acesso nem receita.
+  PAYMENT_GRACE_DAYS = 7
+
+  def payment_past_due?
+    subscription_status == "past_due"
+  end
+
+  # Marca o início da tolerância. Só na PRIMEIRA falha: o Stripe reenvia
+  # invoice.payment_failed a cada nova tentativa, e reiniciar a contagem em cada
+  # uma delas faria a tolerância nunca expirar.
+  def mark_payment_past_due!
+    update!(subscription_status: "past_due", past_due_since: past_due_since || Time.current)
+  end
+
+  def clear_payment_past_due!(status: "active")
+    update!(subscription_status: status, past_due_since: nil)
+  end
+
+  # Deliberadamente `false` quando past_due_since é nil: sem a data não há como
+  # contar a tolerância, e trancar um aluno pagante por falta de dado é pior que
+  # dar acesso a mais por alguns dias.
+  def payment_grace_expired?
+    payment_past_due? && past_due_since.present? &&
+      past_due_since < PAYMENT_GRACE_DAYS.days.ago
+  end
+
+  def payment_grace_days_left
+    return nil unless payment_past_due? && past_due_since.present?
+
+    remaining = ((past_due_since + PAYMENT_GRACE_DAYS.days) - Time.current) / 1.day
+    [remaining.ceil, 0].max
+  end
+
   def trial_exhausted?
     trial? && trial_activities_used.to_i >= 3
   end
