@@ -40,11 +40,17 @@
             média geral: <%= avg_all %>%
           </span>
         <% end %>
+        <%# Canário, não categoria normal: desde 2026-07-30 todo aluno tem nível
+            obrigatoriamente (validação no User, validate_on_invite, e o
+            update_student_level recusando branco). Se este selo acender, dado
+            torto entrou por fora do model — importação, console ou
+            update_columns — e alguém precisa olhar. %>
         <% if without_level > 0 %>
-          <span style="font-family:'DM Mono',monospace; font-size:0.72rem; font-weight:700;
+          <span title="Não deveria acontecer: todo aluno precisa ter nível. Avise a administração."
+                style="font-family:'DM Mono',monospace; font-size:0.72rem; font-weight:700;
                        background:var(--error-tint); color:var(--error); border:1.5px solid var(--error-border);
                        padding:3px 10px; border-radius:20px;">
-            ⚠️ <%= without_level %> sem nível
+            ⚠️ <%= without_level %> com nível faltando
           </span>
         <% end %>
       </div>

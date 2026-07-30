@@ -214,6 +214,30 @@ fluxo for usado de verdade pela primeira vez.
 
 ---
 
+## Contratos com os operadores (DPA)
+
+O RGPD (art. 28) e a LGPD exigem contrato com quem trata dados em nosso nome. A
+surpresa aqui é que, na maioria dos casos, **não há nada para assinar**: os DPAs
+se incorporam automaticamente aos termos de serviço quando você usa o produto.
+Não existe botão no painel.
+
+O que a *accountability* pede não é a assinatura — é a **prova**. Guarde um PDF
+datado da versão em vigor quando você conferiu, porque esses textos são
+atualizados unilateralmente (o da Stripe mudou em 18/11/2025).
+
+| Operador | DPA | Verificado |
+|---|---|---|
+| Stripe | Incorporado ao Services Agreement: *"forms part of the Agreement"*. Sem assinatura separada. [stripe.com/legal/dpa](https://stripe.com/legal/dpa) · subprocessadores em [/legal/service-providers](https://stripe.com/legal/service-providers) | 2026-07-30 ✅ |
+| Anthropic | Incorporado por referência às Commercial Terms: *"processed in accordance with the Anthropic Data Processing Addendum, which is incorporated into these Terms by reference"*. [anthropic.com/legal/data-processing-addendum](https://www.anthropic.com/legal/data-processing-addendum) | 2026-07-30 ✅ |
+| Heroku (Salesforce) | a verificar | — |
+| OpenAI | a verificar | — |
+| Resend | a verificar | — |
+| Cloudinary | a verificar | — |
+
+Ao adicionar um operador novo, este é o terceiro passo (depois de entrar na
+tabela da política e no registro do art. 30): achar o DPA, salvar cópia datada,
+anotar aqui.
+
 ## Estado atual e pendências
 
 Feito em 2026-07-29, nos dois apps:
@@ -231,7 +255,9 @@ Pendente, em ordem de risco:
       auto-exclui (as atividades dela são conteúdo da plataforma, não dado pessoal).
       **Falta portar pro practice-fr** — lá não há Stripe, então é bem mais simples.
 - [ ] **Política de retenção** — nada expira; trials que nunca converteram ficam para sempre
-- [ ] **DPAs** a aceitar/assinar com cada operador da tabela
+- [ ] **DPAs** — Stripe e Anthropic conferidos (incorporados automaticamente, nada a assinar);
+      faltam Heroku, OpenAI, Resend e Cloudinary. Ver a tabela acima e guardar cópia datada
+      de cada um.
 - [ ] **Idade mínima** — nenhum dos apps pergunta idade
 - [ ] **Detecção de incidente** — sem monitoramento de erro não há como notificar em 72h (RGPD) ou em prazo razoável (LGPD art. 48)
 - [ ] **Registre des traitements (RGPD art. 30)** — não existe. É uma peça **separada** da
