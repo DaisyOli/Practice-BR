@@ -1,0 +1,117 @@
+<% content_for :head do %>
+  <title>Meus dados — <%= t('app_name') %></title>
+<% end %>
+
+<%
+  # Resumo legível do que o JSON contém. A lei pede as duas coisas: informação
+  # inteligível (esta página) e formato de leitura automática (o download).
+  categorias = [
+    { icone: "👤", chave: :conta,                   rotulo: "Sua conta",                  contagem: nil },
+    { icone: "💳", chave: :assinatura,              rotulo: "Assinatura",                 contagem: nil },
+    { icone: "📝", chave: :atividades_respondidas,  rotulo: "Atividades respondidas",     contagem: :size },
+    { icone: "🎤", chave: :respostas_em_audio,      rotulo: "Respostas em áudio",         contagem: :size },
+    { icone: "⭐", chave: :avaliacoes_que_voce_deu, rotulo: "Avaliações que você deu",    contagem: :size },
+    { icone: "🔔", chave: :notificacoes,            rotulo: "Dispositivos com notificação", contagem: :size },
+    { icone: "📚", chave: :atividades_criadas,      rotulo: "Atividades que você criou",  contagem: :size }
+  ].select { |c| @export.key?(c[:chave]) }
+%>
+
+<div class="min-h-screen px-4 py-12" style="background: var(--paper);">
+  <div class="max-w-lg mx-auto">
+
+    <div class="text-center mb-8">
+      <div class="text-5xl mb-4">📦</div>
+      <h1 id="dx-title" class="text-2xl font-bold mb-3" style="color: var(--brand-deep);">
+        Seus dados
+      </h1>
+      <p id="dx-lead" class="leading-relaxed" style="color: var(--ink-soft);">
+        Isto é tudo que a Practice-BR guarda sobre você. Você pode baixar uma cópia
+        quando quiser.
+      </p>
+    </div>
+
+    <div class="rounded-2xl overflow-hidden mb-6" style="background: var(--surface); border: 1px solid var(--line);">
+      <% categorias.each_with_index do |cat, i| %>
+        <div class="flex items-center gap-3 p-4"
+             style="<%= "border-top: 1px solid var(--line-soft);" unless i.zero? %>">
+          <span aria-hidden="true" style="font-size:1.1rem;"><%= cat[:icone] %></span>
+          <span class="flex-1 text-sm" data-dx-label="<%= cat[:chave] %>" style="color: var(--ink);">
+            <%= cat[:rotulo] %>
+          </span>
+          <% if cat[:contagem] %>
+            <span style="font-family:'DM Mono',monospace; font-size:0.78rem; font-weight:700; color: var(--ink-faint);">
+              <%= @export[cat[:chave]].size %>
+            </span>
+          <% end %>
+        </div>
+      <% end %>
+    </div>
+
+    <p id="dx-note" class="text-xs mb-6 leading-relaxed" style="color: var(--ink-faint);">
+      Sua senha não entra no arquivo: ela é guardada apenas de forma criptografada
+      e não pode ser lida nem por nós. As credenciais técnicas das notificações
+      também ficam de fora, porque são material com que se pode enviar notificação
+      em seu nome — não são informação sobre você.
+    </p>
+
+    <%= link_to data_export_download_path,
+          id: "dx-download",
+          class: "btn btn-lg w-full mb-3",
+          style: "background:var(--brand); color:var(--surface); border-color:var(--brand); font-weight:700;" do %>
+      Baixar meus dados (JSON)
+    <% end %>
+
+    <%= link_to "Voltar", student_dashboard_path,
+          id: "dx-back",
+          class: "btn btn-ghost btn-sm w-full",
+          style: "color: var(--ink-faint);" %>
+
+  </div>
+</div>
+
+<script>
+(function() {
+  var lang = (navigator.language || 'pt').toLowerCase().substring(0, 2);
+  var t = {
+    fr: {
+      title: "Vos données",
+      lead: "Voici tout ce que Practice-BR conserve à votre sujet. Vous pouvez en télécharger une copie quand vous voulez.",
+      note: "Votre mot de passe ne figure pas dans le fichier : il est stocké uniquement sous forme chiffrée et nous ne pouvons pas le lire. Les identifiants techniques des notifications en sont également exclus : ce sont des identifiants permettant d'envoyer une notification en votre nom, pas des informations vous concernant.",
+      download: "Télécharger mes données (JSON)",
+      back: "Retour",
+      labels: {
+        conta: "Votre compte", assinatura: "Abonnement",
+        atividades_respondidas: "Exercices réalisés", respostas_em_audio: "Réponses audio",
+        avaliacoes_que_voce_deu: "Vos évaluations", notificacoes: "Appareils avec notifications",
+        atividades_criadas: "Activités que vous avez créées"
+      }
+    },
+    en: {
+      title: "Your data",
+      lead: "This is everything Practice-BR keeps about you. You can download a copy whenever you like.",
+      note: "Your password is not in the file: it is stored only as a hash and cannot be read, not even by us. The technical credentials for notifications are also left out — they are material for sending a notification in your name, not information about you.",
+      download: "Download my data (JSON)",
+      back: "Back",
+      labels: {
+        conta: "Your account", assinatura: "Subscription",
+        atividades_respondidas: "Exercises completed", respostas_em_audio: "Spoken answers",
+        avaliacoes_que_voce_deu: "Ratings you gave", notificacoes: "Devices with notifications",
+        atividades_criadas: "Activities you created"
+      }
+    }
+  }[lang];
+  if (!t) return;
+
+  var set = function(id, text) { var el = document.getElementById(id); if (el) el.textContent = text; };
+  set('dx-title', t.title);
+  set('dx-lead', t.lead);
+  set('dx-note', t.note);
+  set('dx-download', t.download);
+  set('dx-back', t.back);
+
+  document.querySelectorAll('[data-dx-label]').forEach(function(el) {
+    var rotulo = t.labels[el.getAttribute('data-dx-label')];
+    if (rotulo) el.textContent = rotulo;
+  });
+})();
+</script>

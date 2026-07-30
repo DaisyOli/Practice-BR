@@ -880,7 +880,12 @@
     de assinatura de propósito: são coisas diferentes, e a maioria de quem clica
     aqui só quer parar de pagar. A tela seguinte explica a diferença. %>
 <% if current_user.student_like? %>
-  <div style="text-align:center; padding:0 1rem 2.5rem;">
+  <div style="text-align:center; padding:0 1rem 2.5rem; display:flex; gap:16px; justify-content:center; flex-wrap:wrap;">
+    <%= link_to data_export_path,
+          id: "my-data-link",
+          style: "font-family:'Plus Jakarta Sans',sans-serif; font-size:0.74rem; color:var(--ink-faint); text-decoration:underline;" do %>
+      Meus dados
+    <% end %>
     <%= link_to account_deletion_path,
           id: "delete-account-link",
           style: "font-family:'Plus Jakarta Sans',sans-serif; font-size:0.74rem; color:var(--ink-faint); text-decoration:underline;" do %>
@@ -891,10 +896,13 @@
   <script>
   (function() {
     var lang = (navigator.language || 'pt').toLowerCase().substring(0, 2);
-    var el = document.getElementById('delete-account-link');
-    if (!el) return;
-    if (lang.startsWith('fr'))      el.textContent = "Supprimer mon compte";
-    else if (lang.startsWith('en')) el.textContent = "Delete my account";
+    var t = lang.startsWith('fr') ? { dados: "Mes données", excluir: "Supprimer mon compte" }
+          : lang.startsWith('en') ? { dados: "My data",     excluir: "Delete my account" }
+          : null;
+    if (!t) return;
+    var set = function(id, text) { var el = document.getElementById(id); if (el) el.textContent = text; };
+    set('my-data-link', t.dados);
+    set('delete-account-link', t.excluir);
   })();
   </script>
 <% end %>

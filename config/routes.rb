@@ -37,6 +37,10 @@ Rails.application.routes.draw do
   # (DELETE /users), tratado pelo Users::RegistrationsController.
   get "excluir-conta", to: "account_deletions#new", as: :account_deletion
 
+  # Acesso e portabilidade dos próprios dados (RGPD arts. 15 e 20 · LGPD art. 18).
+  get "meus-dados",          to: "data_exports#new",      as: :data_export
+  get "meus-dados/download", to: "data_exports#download", as: :data_export_download
+
   # Rotas para atividades e questões
   resources :activities, param: :slug do
     collection do

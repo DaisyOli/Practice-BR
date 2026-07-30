@@ -248,7 +248,10 @@ Feito em 2026-07-29, nos dois apps:
 
 Pendente, em ordem de risco:
 
-- [ ] **Exportação de dados** do titular (RGPD arts. 15 e 20 · LGPD art. 18) — não existe
+- [x] ~~**Exportação de dados**~~ — feita em 2026-07-30 no practice-br: `/meus-dados` mostra
+      o resumo (direito de acesso) e `/meus-dados/download` entrega JSON (portabilidade).
+      Uma spec de guarda-chuva quebra se alguém criar tabela com `user_id` e esquecer de
+      incluir. **Falta portar pro practice-fr.**
 - [x] ~~**Exclusão de conta de verdade**~~ — feito em 2026-07-30 no practice-br:
       `/excluir-conta` com confirmação, `Users::RegistrationsController` cancelando a
       assinatura **antes** de apagar, e abortando se o Stripe falhar. Professora não se
