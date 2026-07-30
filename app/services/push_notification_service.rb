@@ -19,7 +19,7 @@ class PushNotificationService
     rescue WebPush::ExpiredSubscription, WebPush::InvalidSubscription
       sub.destroy
     rescue => e
-      Rails.logger.error "[Push] Erro ao enviar para #{user.email}: #{e.message}"
+      Rails.logger.error "[Push] Erro ao enviar · user ##{user.id}: #{e.message}"
     end
   end
 end

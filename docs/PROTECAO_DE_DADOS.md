@@ -1,5 +1,22 @@
 # Practice · Proteção de Dados (RGPD + LGPD)
 
+> **In English, in short.** This is the data-protection contract for the Practice
+> apps. The controller is established in France, so the **GDPR** applies to every
+> app in the franchise regardless of where users are (Art. 3(1)); Brazil's **LGPD**
+> applies on top wherever there are Brazilian data subjects. The rules that keep
+> this from regressing: no third-party CDNs (self-hosted fonts, icons and JS, which
+> is what makes a cookie banner unnecessary); no personal data in production logs;
+> AI grading receives the answer text only, never a name or an email; audio is
+> deleted right after transcription; every new processor must be added to the
+> policy table before shipping; and legal copy is written in French first. The
+> privacy policy exists in three versions that are **not translations of each
+> other** — FR and EN follow the GDPR, PT follows the LGPD, and they diverge on
+> response deadlines, the list of data subject rights, the right to human review of
+> an automated decision, and the age of a minor. Open items are listed at the
+> bottom, under *Estado atual e pendências*.
+>
+> The rest of this document is in Portuguese, like the rest of this codebase.
+
 Contrato de privacidade compartilhado pelos apps da franquia Practice
 (**practice-br**, **practice-fr**, e os que vierem). Este arquivo é **portável**:
 copie-o tal qual para cada app da franquia e ajuste só a seção
@@ -91,6 +108,19 @@ ou `app/assets/stylesheets/vendor/`, e confira o hash quando o CDN publicar um
 Cuidado com o nome do parâmetro: o casamento é **por conteúdo da chave**.
 `:answers` não filtra um parâmetro chamado `answer`. Confira o nome real no
 controller antes de confiar no filtro.
+
+E cuidado maior: **`filter_parameters` só alcança parâmetros de requisição.**
+Ele não sabe nada sobre `Rails.logger` escrito à mão. Isto continua indo inteiro
+para o log, filtro ou não:
+
+```ruby
+Rails.logger.info "Aluno #{user.email} ativou assinatura"   # ❌
+Rails.logger.info "Assinatura ativada · user ##{user.id}"   # ✅
+```
+
+Foi assim que emails de aluno seguiram nos logs por um tempo depois de o filtro
+já estar no ar. **Em log, identifique pessoa por `id`** — serve igual para
+depurar e não é dado identificável fora do nosso banco.
 
 Para depurar um problema pontual em produção:
 
@@ -200,6 +230,17 @@ Pendente, em ordem de risco:
 - [ ] **DPAs** a aceitar/assinar com cada operador da tabela
 - [ ] **Idade mínima** — nenhum dos apps pergunta idade
 - [ ] **Detecção de incidente** — sem monitoramento de erro não há como notificar em 72h (RGPD) ou em prazo razoável (LGPD art. 48)
+- [ ] **Registre des traitements (RGPD art. 30)** — não existe. É uma peça **separada** da
+      política: a política é para o titular ler, este registro é para a CNIL pedir numa
+      fiscalização. Lista, por finalidade, as categorias de dados, os destinatários, os
+      prazos de conservação e as transferências internacionais.
+      A isenção do art. 30(5) para organizações com menos de 250 pessoas **não se aplica**
+      aqui, porque o tratamento é regular e não ocasional (dados de aluno tratados
+      continuamente).
+      **Precisa estar em francês e pronto de antemão** — é a única pendência desta lista que
+      não dá para produzir depois do pedido. O conteúdo em si já existe espalhado pela
+      política (finalidades, bases legais, operadores, transferências): montar o registro é
+      mais reorganizar do que descobrir.
 
 ---
 

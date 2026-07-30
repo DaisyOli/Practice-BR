@@ -47,7 +47,7 @@ class WebhooksController < ApplicationController
       subscription_status:          "active",
       subscription_current_period_end: Time.at(subscription["current_period_end"]).utc
     )
-    Rails.logger.info "[Webhook] ✅ Aluno #{user.email} ativou assinatura"
+    Rails.logger.info "[Webhook] ✅ Assinatura ativada · user ##{user.id}"
   end
 
   def handle_payment_succeeded(invoice)
@@ -68,7 +68,7 @@ class WebhooksController < ApplicationController
     return unless user
 
     user.update!(subscription_status: "past_due")
-    Rails.logger.warn "[Webhook] ⚠️ Falha de pagamento: #{user.email}"
+    Rails.logger.warn "[Webhook] ⚠️ Falha de pagamento · user ##{user.id}"
   end
 
   def handle_subscription_updated(subscription)
@@ -80,7 +80,7 @@ class WebhooksController < ApplicationController
       subscription_status:             status,
       subscription_current_period_end: Time.at(subscription["current_period_end"]).utc
     )
-    Rails.logger.info "[Webhook] 🔄 Assinatura atualizada: #{user.email} → #{status}"
+    Rails.logger.info "[Webhook] 🔄 Assinatura atualizada · user ##{user.id} → #{status}"
   end
 
   def handle_subscription_deleted(subscription)
@@ -91,6 +91,6 @@ class WebhooksController < ApplicationController
       role:                "trial",
       subscription_status: "canceled"
     )
-    Rails.logger.info "[Webhook] ❌ Assinatura cancelada: #{user.email}"
+    Rails.logger.info "[Webhook] ❌ Assinatura cancelada · user ##{user.id}"
   end
 end
