@@ -44,7 +44,11 @@ RSpec.describe WeeklyReminderJob, type: :job do
   end
 
   it 'não envia para alunos sem nível definido' do
-    create(:user, :student, weekly_reminder_email: true, level: nil)
+    # Todo aluno tem nível — o model valida isso. Este caso só existe se um dado
+    # torto entrar por importação ou console, e o job precisa aguentar: daí o
+    # update_columns, que grava sem passar pela validação.
+    aluno = create(:user, :student, weekly_reminder_email: true)
+    aluno.update_columns(level: nil)
     create(:activity, :B1, draft: false)
 
     expect {

@@ -38,6 +38,39 @@ RSpec.describe "Invitations", type: :request do
         expect(response).to redirect_to(new_user_session_path)
       end
     end
+
+    it "marca o nível como obrigatório e traz o aviso de validação" do
+      sign_in teacher
+      get new_user_invitation_path
+
+      expect(response.body).to include("Obrigatório. Define quais atividades")
+      expect(response.body).to include('id="level-error"')
+      expect(response.body).to include('id="invite-form"')
+    end
+  end
+
+  describe "POST /users/invitation — nível obrigatório" do
+    it "recusa convite de aluno sem nível" do
+      sign_in teacher
+
+      expect {
+        post user_invitation_path, params: { user: { email: "sem-nivel@email.com" } }
+      }.not_to change(User, :count)
+
+      # O JS barra antes de enviar, mas o model é a garantia de verdade — vale
+      # para convite feito por API, console ou JS desligado.
+      expect(response.body).to include("Level")
+    end
+
+    it "aceita convite de aluno com nível" do
+      sign_in teacher
+
+      expect {
+        post user_invitation_path, params: { user: { email: "com-nivel@email.com", level: "B1" } }
+      }.to change(User, :count).by(1)
+
+      expect(User.find_by(email: "com-nivel@email.com").level).to eq("B1")
+    end
   end
 
   describe "POST /users/invitation — força role trial para professoras" do

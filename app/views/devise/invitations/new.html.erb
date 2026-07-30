@@ -15,7 +15,7 @@
       O usuário receberá um email para criar sua conta.
     </p>
 
-    <%= form_for(resource, as: resource_name, url: invitation_path(resource_name), html: { method: :post }) do |f| %>
+    <%= form_for(resource, as: resource_name, url: invitation_path(resource_name), html: { method: :post, id: "invite-form" }) do |f| %>
 
       <% if resource.errors.any? %>
         <div style="background:var(--error-tint); border:1.5px solid var(--error-border); border-radius:10px; padding:14px 16px; margin-bottom:20px;">
@@ -77,7 +77,14 @@
         <%= f.label :level, "Nível do aluno",
               style: "font-family:'Plus Jakarta Sans',sans-serif; font-size:0.82rem; font-weight:600; color:var(--ink); display:block; margin-bottom:8px;" %>
         <p style="font-family:'Plus Jakarta Sans',sans-serif; font-size:0.78rem; color:var(--ink-faint); margin:0 0 10px;">
-          Define quais atividades o aluno pode acessar. C1 = acesso total.
+          Obrigatório. Define quais atividades o aluno pode acessar. C1 = acesso total.
+        </p>
+        <%# Aviso do JS de validação no submit. Não usamos `required: true` nos
+            radios porque eles estão com display:none — o navegador bloquearia o
+            envio sem conseguir exibir a mensagem, por não ter onde focar. %>
+        <p id="level-error" role="alert"
+           style="display:none; font-family:'Plus Jakarta Sans',sans-serif; font-size:0.78rem; font-weight:600; color:var(--error); margin:0 0 10px;">
+          Escolha um nível para o aluno.
         </p>
         <div style="display:flex; gap:8px; flex-wrap:wrap;">
           <% User::CEFR_LEVELS.each do |lvl| %>
@@ -130,6 +137,29 @@
     if (level)    level.style.display    = isStudent ? 'block' : 'none';
     if (profType) profType.style.display = isStudent ? 'block' : 'none';
   }
+
+  // Todo aluno tem nível. O model também valida, mas barrar aqui evita o
+  // ida-e-volta do formulário com erro. Convite de professora não precisa.
+  function invitingStudent() {
+    var select = document.getElementById('invite-role-select');
+    return select ? select.value === 'trial' : true; // sem select = professora convidando aluno
+  }
+
+  document.getElementById('invite-form').addEventListener('submit', function(event) {
+    var erro = document.getElementById('level-error');
+    if (!invitingStudent()) { if (erro) erro.style.display = 'none'; return; }
+
+    if (document.querySelector('input[name="user[level]"]:checked')) {
+      if (erro) erro.style.display = 'none';
+      return;
+    }
+
+    event.preventDefault();
+    if (erro) {
+      erro.style.display = 'block';
+      erro.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }
+  });
 
   function updateLevelButtons() {
     var radios = document.querySelectorAll('input[name="user[level]"]');

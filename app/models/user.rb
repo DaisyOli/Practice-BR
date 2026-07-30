@@ -23,7 +23,13 @@ class User < ApplicationRecord
   validates :role, presence: true, inclusion: { in: ROLES }
   validates :language, presence: true, inclusion: { in: LANGUAGES }
   validates :name, length: { maximum: 50 }, allow_blank: true
-  validates :level, presence: true, inclusion: { in: CEFR_LEVELS }, if: :trial?
+  # Todo aluno tem nível — vale para student e trial, não para professora.
+  #
+  # Antes isto era `if: :trial?`, e a inconsistência criava uma armadilha na
+  # transição de papel: um `student` sem nível era válido, mas o mesmo registro
+  # virava inválido no instante em que o papel mudava para `trial` (o que
+  # acontece quando a assinatura é cancelada). O rebaixamento então explodia.
+  validates :level, presence: true, inclusion: { in: CEFR_LEVELS }, if: :student_like?
   validates :professional_type, inclusion: { in: PROFESSIONAL_TYPES }, allow_blank: true
 
   before_validation :set_default_language, on: :create

@@ -147,11 +147,16 @@ class TeachersController < ApplicationController
   def update_student_level
     student = current_user.students.find(params[:id])
     new_level = params[:level].presence
-    if new_level.nil? || User::CEFR_LEVELS.include?(new_level)
+
+    # Nível em branco não passa mais: todo aluno tem nível. Antes o `nil` era
+    # aceito de propósito, e um aluno sem nível não vê atividade nenhuma no
+    # catálogo — ficava sem acesso sem ninguém entender por quê.
+    if User::CEFR_LEVELS.include?(new_level)
       student.update!(level: new_level)
       redirect_to teacher_student_profile_path(student), notice: "Nível atualizado."
     else
-      redirect_to teacher_student_profile_path(student), alert: "Nível inválido."
+      redirect_to teacher_student_profile_path(student),
+                  alert: "Todo aluno precisa de um nível. Escolha um entre A1 e C1."
     end
   rescue ActiveRecord::RecordNotFound
     redirect_to teacher_students_path

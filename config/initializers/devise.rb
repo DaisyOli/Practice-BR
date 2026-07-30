@@ -158,7 +158,13 @@ Devise.setup do |config|
   # Ensure that invited record is valid.
   # The invitation won't be sent if this check fails.
   # Default: false
-  # config.validate_on_invite = true
+  #
+  # Ligado de propósito. Com o padrão `false`, o devise_invitable grava o
+  # convidado SEM passar pelas validações do model — então a regra "todo aluno
+  # tem nível" era furada justamente no convite, que é como quase todo aluno
+  # entra na plataforma. O JS do formulário barra antes, mas isto é a garantia
+  # de verdade (vale para convite por console, API ou JS desligado).
+  config.validate_on_invite = true
 
   # Resend invitation if user with invited status is invited again
   # Default: true
