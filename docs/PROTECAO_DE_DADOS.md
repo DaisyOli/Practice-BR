@@ -225,7 +225,11 @@ Feito em 2026-07-29, nos dois apps:
 Pendente, em ordem de risco:
 
 - [ ] **Exportação de dados** do titular (RGPD arts. 15 e 20 · LGPD art. 18) — não existe
-- [ ] **Exclusão de conta de verdade** — hoje só o botão padrão do Devise, não linkado, e no BR ele **não cancela a assinatura na Stripe**
+- [x] ~~**Exclusão de conta de verdade**~~ — feito em 2026-07-30 no practice-br:
+      `/excluir-conta` com confirmação, `Users::RegistrationsController` cancelando a
+      assinatura **antes** de apagar, e abortando se o Stripe falhar. Professora não se
+      auto-exclui (as atividades dela são conteúdo da plataforma, não dado pessoal).
+      **Falta portar pro practice-fr** — lá não há Stripe, então é bem mais simples.
 - [ ] **Política de retenção** — nada expira; trials que nunca converteram ficam para sempre
 - [ ] **DPAs** a aceitar/assinar com cada operador da tabela
 - [ ] **Idade mínima** — nenhum dos apps pergunta idade
