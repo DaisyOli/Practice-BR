@@ -25,10 +25,17 @@ Rails.application.routes.draw do
   # Rota para atualização de idioma
   patch 'update_language', to: 'languages#update'
   
-  # Rotas do Devise para autenticação
+  # Rotas do Devise para autenticação.
+  # O registrations é sobrescrito porque o destroy padrão apagava a conta sem
+  # cancelar a assinatura no Stripe — ver Users::RegistrationsController.
   devise_for :users, controllers: {
-    invitations: 'invitations'
+    invitations: 'invitations',
+    registrations: 'users/registrations'
   }
+
+  # Tela de confirmação antes de apagar a conta. O DELETE em si é o do Devise
+  # (DELETE /users), tratado pelo Users::RegistrationsController.
+  get "excluir-conta", to: "account_deletions#new", as: :account_deletion
 
   # Rotas para atividades e questões
   resources :activities, param: :slug do

@@ -1,0 +1,129 @@
+<% content_for :head do %>
+  <title>Excluir conta — <%= t('app_name') %></title>
+<% end %>
+
+<%# Tela de confirmação da exclusão. O aluno costuma ser francófono, então o
+    texto troca por navigator.language — mesmo padrão do resto do app. %>
+<div class="min-h-screen flex items-center justify-center px-4 py-16" style="background: var(--paper);">
+  <div class="max-w-md w-full">
+
+    <div class="text-center mb-8">
+      <div class="text-5xl mb-4">🥺</div>
+      <h1 id="ad-title" class="text-2xl font-bold mb-3" style="color: var(--brand-deep);">
+        Excluir sua conta
+      </h1>
+      <p id="ad-lead" class="leading-relaxed" style="color: var(--ink-soft);">
+        Antes de confirmar, veja o que acontece. Isso não dá para desfazer.
+      </p>
+    </div>
+
+    <div class="rounded-2xl p-5 mb-6" style="background: var(--surface); border: 1px solid var(--line);">
+      <ul class="space-y-3 text-sm" style="color: var(--ink);">
+        <li class="flex gap-3">
+          <span aria-hidden="true">🗑️</span>
+          <span id="ad-item-data">
+            Sua conta e seu histórico são apagados
+            <% if @attempts_count.positive? %>
+              — inclusive as <strong><%= @attempts_count %></strong> atividades que você já respondeu
+            <% end %>.
+          </span>
+        </li>
+        <% if @has_subscription %>
+          <li class="flex gap-3">
+            <span aria-hidden="true">💳</span>
+            <span id="ad-item-sub">
+              <strong>Sua assinatura é cancelada na hora</strong>, e o cartão não é mais cobrado.
+              O tempo que resta do período já pago não é devolvido.
+            </span>
+          </li>
+        <% end %>
+        <li class="flex gap-3">
+          <span aria-hidden="true">👩‍🏫</span>
+          <span id="ad-item-teacher">
+            Sua professora deixa de ver seu progresso.
+          </span>
+        </li>
+      </ul>
+    </div>
+
+    <% if @has_subscription %>
+      <%# O texto em volta do link precisa dos próprios spans: sem eles o JS
+          traduziria só o link e a frase ficaria com dois idiomas misturados. %>
+      <p class="text-sm mb-6 p-4 rounded-xl" style="background: var(--brand-mist); border: 1px solid var(--brand-tint); color: var(--ink-soft);">
+        <span id="ad-hint-before">Só quer parar de pagar e manter o histórico? Dá para</span>
+        <%= link_to "cancelar apenas a assinatura", student_dashboard_path,
+              id: "ad-hint-link", class: "font-semibold underline", style: "color: var(--brand);" %>
+        <span id="ad-hint-after">na sua dashboard, sem apagar nada.</span>
+      </p>
+    <% end %>
+
+    <%# O rails-ujs não é iniciado neste app, então `data: { confirm: }` seria
+        ignorado em silêncio. O onclick é o padrão que funciona aqui — o mesmo do
+        botão de cancelar assinatura na dashboard. %>
+    <%= button_to "Sim, excluir minha conta", registration_path(:user),
+          method: :delete,
+          id: "ad-confirm",
+          form: { data: { turbo: false } },
+          onclick: "return confirm(window._deleteConfirm || 'Tem certeza? Isso não dá para desfazer.')",
+          class: "btn btn-lg w-full mb-3",
+          style: "background:var(--error); color:var(--surface); border-color:var(--error); font-weight:700;" %>
+
+    <%= link_to "Não, voltar", student_dashboard_path,
+          id: "ad-back",
+          class: "btn btn-ghost btn-sm w-full",
+          style: "color: var(--ink-faint);" %>
+
+  </div>
+</div>
+
+<script>
+(function() {
+  var lang = (navigator.language || 'pt').toLowerCase().substring(0, 2);
+  var attempts = <%= @attempts_count.to_i %>;
+  var t = {
+    fr: {
+      title: "Supprimer votre compte",
+      lead: "Avant de confirmer, voici ce qui se passe. C'est irréversible.",
+      data: "Votre compte et votre historique sont supprimés" + (attempts > 0 ? " — y compris les " + attempts + " exercices que vous avez déjà faits." : "."),
+      sub: "Votre abonnement est résilié immédiatement et votre carte n'est plus prélevée. Le temps restant de la période déjà payée n'est pas remboursé.",
+      teacher: "Votre professeur ne voit plus votre progression.",
+      hintBefore: "Vous voulez seulement arrêter de payer et garder votre historique ? Vous pouvez",
+      hintLink: "résilier seulement l'abonnement",
+      hintAfter: "depuis votre tableau de bord, sans rien supprimer.",
+      confirm: "Oui, supprimer mon compte",
+      confirmDialog: "Vous êtes sûr ? C'est irréversible.",
+      back: "Non, revenir"
+    },
+    en: {
+      title: "Delete your account",
+      lead: "Before you confirm, here is what happens. This cannot be undone.",
+      data: "Your account and your history are deleted" + (attempts > 0 ? " — including the " + attempts + " exercises you have already done." : "."),
+      sub: "Your subscription is cancelled immediately and your card is no longer charged. The remaining time on the period you already paid for is not refunded.",
+      teacher: "Your teacher can no longer see your progress.",
+      hintBefore: "Only want to stop paying and keep your history? You can",
+      hintLink: "cancel just the subscription",
+      hintAfter: "from your dashboard, without deleting anything.",
+      confirm: "Yes, delete my account",
+      confirmDialog: "Are you sure? This cannot be undone.",
+      back: "No, go back"
+    }
+  }[lang];
+  if (!t) return;
+
+  window._deleteConfirm = t.confirmDialog;
+
+  var set = function(id, text) { var el = document.getElementById(id); if (el) el.textContent = text; };
+  set('ad-title', t.title);
+  set('ad-lead', t.lead);
+  set('ad-item-data', t.data);
+  set('ad-item-sub', t.sub);
+  set('ad-item-teacher', t.teacher);
+  set('ad-hint-before', t.hintBefore);
+  set('ad-hint-link', t.hintLink);
+  set('ad-hint-after', t.hintAfter);
+  set('ad-back', t.back);
+
+  var confirmBtn = document.querySelector('#ad-confirm');
+  if (confirmBtn) confirmBtn.textContent = t.confirm;
+})();
+</script>

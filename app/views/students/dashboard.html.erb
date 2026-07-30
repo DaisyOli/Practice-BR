@@ -875,6 +875,30 @@
   </div>
 <% end %>
 
+<%# Excluir conta — direito do titular (RGPD art. 17 · LGPD art. 18), então
+    precisa ser exercível sem depender de email. Fica separado do cancelamento
+    de assinatura de propósito: são coisas diferentes, e a maioria de quem clica
+    aqui só quer parar de pagar. A tela seguinte explica a diferença. %>
+<% if current_user.student_like? %>
+  <div style="text-align:center; padding:0 1rem 2.5rem;">
+    <%= link_to account_deletion_path,
+          id: "delete-account-link",
+          style: "font-family:'Plus Jakarta Sans',sans-serif; font-size:0.74rem; color:var(--ink-faint); text-decoration:underline;" do %>
+      Excluir minha conta
+    <% end %>
+  </div>
+
+  <script>
+  (function() {
+    var lang = (navigator.language || 'pt').toLowerCase().substring(0, 2);
+    var el = document.getElementById('delete-account-link');
+    if (!el) return;
+    if (lang.startsWith('fr'))      el.textContent = "Supprimer mon compte";
+    else if (lang.startsWith('en')) el.textContent = "Delete my account";
+  })();
+  </script>
+<% end %>
+
 <script>
 (function() {
   var lang = (navigator.language || navigator.userLanguage || 'pt').toLowerCase().substring(0, 2);

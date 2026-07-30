@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta content="text/html; charset=UTF-8" http-equiv="Content-Type" />
+</head>
+<body style="margin:0; padding:0; background:#F7F5F0; font-family:'Helvetica Neue',Arial,sans-serif;">
+
+  <table width="100%" cellpadding="0" cellspacing="0" style="background:#F7F5F0; padding:40px 16px;">
+    <tr>
+      <td align="center">
+        <table width="520" cellpadding="0" cellspacing="0" style="background:#fff; border-radius:16px; border:1px solid #DDD9D2; overflow:hidden; max-width:520px;">
+
+          <tr>
+            <td style="background:#0F3826; padding:24px 32px;">
+              <div style="font-size:1.1rem; font-weight:800; color:#fff; letter-spacing:-0.02em;">Practice-BR</div>
+              <div style="font-size:0.7rem; color:#6EBD96; margin-top:3px;">Aviso interno</div>
+            </td>
+          </tr>
+
+          <tr>
+            <td style="padding:28px 32px 24px;">
+              <div style="font-size:1.8rem; margin-bottom:12px;">🗑️</div>
+              <div style="font-size:1.15rem; font-weight:700; color:#1C1917; margin-bottom:14px;">
+                Conta apagada pelo próprio usuário
+              </div>
+
+              <table width="100%" cellpadding="0" cellspacing="0" style="font-size:0.88rem; color:#5C5853;">
+                <tr>
+                  <td style="padding:6px 0; width:150px; color:#9C9892;">Usuário</td>
+                  <td style="padding:6px 0;"><strong>#<%= @user_id %></strong></td>
+                </tr>
+                <tr>
+                  <td style="padding:6px 0; color:#9C9892;">Papel</td>
+                  <td style="padding:6px 0;"><%= @role %></td>
+                </tr>
+                <tr>
+                  <td style="padding:6px 0; color:#9C9892;">Cliente Stripe</td>
+                  <td style="padding:6px 0;">
+                    <%= @stripe_customer_id.presence || "—  (não era pagante)" %>
+                  </td>
+                </tr>
+              </table>
+
+              <% if @stripe_customer_id.present? %>
+                <p style="font-size:0.88rem; line-height:1.6; color:#5C5853; margin:18px 0 0;">
+                  A assinatura foi <strong>cancelada antes</strong> de a conta ser apagada — se
+                  esse email chegou, o cancelamento deu certo. Vale conferir no painel do
+                  Stripe que o cliente não tem mais assinatura ativa.
+                </p>
+              <% end %>
+
+              <p style="font-size:0.82rem; line-height:1.5; color:#9C9892; margin:14px 0 0;">
+                Este aviso não traz nome nem email de propósito: a conta foi apagada a pedido,
+                e guardar o dado pessoal aqui contradiria a exclusão. O id de cliente do Stripe
+                é o suficiente pra reconciliar.
+              </p>
+            </td>
+          </tr>
+
+          <tr>
+            <td style="background:#F7F5F0; padding:18px 32px; border-top:1px solid #DDD9D2;">
+              <a href="https://dashboard.stripe.com/customers"
+                 style="font-size:0.82rem; color:#1A6B4A; text-decoration:underline;">
+                Ver no painel do Stripe
+              </a>
+            </td>
+          </tr>
+
+        </table>
+      </td>
+    </tr>
+  </table>
+
+</body>
+</html>

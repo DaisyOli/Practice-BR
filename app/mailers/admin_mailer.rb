@@ -29,6 +29,28 @@ class AdminMailer < ApplicationMailer
     mail(to: DAISY_EMAIL, subject: "💳 Falha de pagamento — #{student.display_name}")
   end
 
+  # Conta apagada pelo próprio aluno.
+  #
+  # Deliberadamente SEM o email nem o nome dele: a conta acabou de ser apagada
+  # a pedido, e guardar o dado pessoal numa caixa de entrada contradiz a
+  # exclusão. O id do usuário e o id de cliente do Stripe bastam pra você
+  # reconciliar com o painel, e não identificam a pessoa fora dos nossos
+  # sistemas.
+  def account_deleted_notification(user_id:, role:, stripe_customer_id:)
+    @user_id            = user_id
+    @role               = role
+    @stripe_customer_id = stripe_customer_id
+    mail(to: DAISY_EMAIL, subject: "🗑️ Conta apagada pelo próprio usuário — ##{user_id}")
+  end
+
+  # A exclusão foi abortada porque o cancelamento no Stripe falhou. Precisa de
+  # ação manual: cancelar a assinatura no painel e avisar a pessoa.
+  def account_deletion_failed_notification(user_id, error_message)
+    @user_id       = user_id
+    @error_message = error_message
+    mail(to: DAISY_EMAIL, subject: "⚠️ Exclusão de conta abortada — ##{user_id}")
+  end
+
   def draft_generation_failed(level, error_key)
     @level = level
     @error_key = error_key

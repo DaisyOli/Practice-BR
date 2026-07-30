@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta content="text/html; charset=UTF-8" http-equiv="Content-Type" />
+</head>
+<body style="margin:0; padding:0; background:#F7F5F0; font-family:'Helvetica Neue',Arial,sans-serif;">
+
+  <table width="100%" cellpadding="0" cellspacing="0" style="background:#F7F5F0; padding:40px 16px;">
+    <tr>
+      <td align="center">
+        <table width="520" cellpadding="0" cellspacing="0" style="background:#fff; border-radius:16px; border:1px solid #DDD9D2; overflow:hidden; max-width:520px;">
+
+          <tr>
+            <td style="background:#7C2D12; padding:24px 32px;">
+              <div style="font-size:1.1rem; font-weight:800; color:#fff; letter-spacing:-0.02em;">Practice-BR</div>
+              <div style="font-size:0.7rem; color:#FED7AA; margin-top:3px;">Precisa da sua ação</div>
+            </td>
+          </tr>
+
+          <tr>
+            <td style="padding:28px 32px 24px;">
+              <div style="font-size:1.8rem; margin-bottom:12px;">⚠️</div>
+              <div style="font-size:1.15rem; font-weight:700; color:#1C1917; margin-bottom:14px;">
+                Exclusão de conta abortada
+              </div>
+
+              <p style="font-size:0.9rem; line-height:1.6; color:#5C5853; margin:0 0 14px;">
+                O usuário <strong>#<%= @user_id %></strong> pediu para apagar a conta, mas o
+                cancelamento da assinatura no Stripe falhou. <strong>A conta NÃO foi
+                apagada</strong> — de propósito: apagar sem cancelar deixaria a cobrança
+                correndo sobre alguém que não teria mais como se defender.
+              </p>
+
+              <div style="background:#FFF7ED; border:1px solid #FED7AA; border-radius:10px; padding:12px 14px; margin-bottom:16px;">
+                <div style="font-size:0.72rem; font-weight:700; text-transform:uppercase; letter-spacing:0.06em; color:#7C2D12; margin-bottom:4px;">
+                  Erro do Stripe
+                </div>
+                <div style="font-size:0.84rem; color:#5C5853; font-family:monospace;">
+                  <%= @error_message %>
+                </div>
+              </div>
+
+              <div style="font-size:0.78rem; font-weight:700; text-transform:uppercase; letter-spacing:0.06em; color:#9C9892; margin-bottom:8px;">
+                O que fazer
+              </div>
+              <ol style="font-size:0.88rem; line-height:1.7; color:#5C5853; margin:0; padding-left:20px;">
+                <li>Cancelar a assinatura desse usuário no painel do Stripe.</li>
+                <li>Avisar a pessoa que ela pode tentar apagar a conta de novo.</li>
+              </ol>
+            </td>
+          </tr>
+
+          <tr>
+            <td style="background:#F7F5F0; padding:18px 32px; border-top:1px solid #DDD9D2;">
+              <a href="https://dashboard.stripe.com/subscriptions"
+                 style="font-size:0.82rem; color:#1A6B4A; text-decoration:underline;">
+                Abrir assinaturas no Stripe
+              </a>
+            </td>
+          </tr>
+
+        </table>
+      </td>
+    </tr>
+  </table>
+
+</body>
+</html>
