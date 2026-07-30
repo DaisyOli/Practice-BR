@@ -1,0 +1,159 @@
+<%# Version française de la politique — c'est la version par défaut : Practice-BR
+    est établie en France et l'autorité de contrôle est la CNIL. L'en-tête et le
+    sélecteur de langue sont dans home/privacy.html.erb. %>
+
+<div class="rounded-2xl p-6 mb-8" style="background: var(--brand-mist); border: 1px solid var(--brand-tint);">
+  <p class="leading-relaxed" style="color: var(--ink);">
+    En résumé : nous conservons le minimum nécessaire au fonctionnement de la
+    plateforme, nous ne vendons vos données à personne, nous n'utilisons aucun
+    traceur publicitaire et nous supprimons vos données dès que vous le demandez.
+    Le texte ci-dessous détaille tout cela — sans petites lignes.
+  </p>
+</div>
+
+<div style="color: var(--ink);">
+
+  <h2 class="text-xl font-bold mt-8 mb-3" style="color: var(--brand-deep);">1. Qui est responsable de vos données</h2>
+  <p class="mb-4 leading-relaxed">
+    Practice-BR est un service édité par <strong>Daisy Oliani</strong>, entrepreneur
+    individuel, 43 Clos des Cascades, 93160 Noisy-le-Grand, France —
+    SIRET 85 194 793 700 013.
+  </p>
+  <p class="mb-4 leading-relaxed">
+    Daisy Oliani est le responsable du traitement des données décrites ici, au sens
+    du Règlement général sur la protection des données (RGPD). Pour toute question
+    relative à vos données personnelles, écrivez à
+    <a href="mailto:contato@practicebr.com" class="font-semibold underline" style="color: var(--brand);">contato@practicebr.com</a>.
+  </p>
+
+  <h2 class="text-xl font-bold mt-8 mb-3" style="color: var(--brand-deep);">2. Les données que nous collectons</h2>
+  <ul class="mb-4 space-y-2 leading-relaxed list-disc pl-5">
+    <li><strong>Inscription :</strong> adresse email, prénom (facultatif), langue, niveau de portugais et votre rôle (élève ou professeur).</li>
+    <li><strong>Mot de passe :</strong> conservé uniquement sous forme chiffrée — nous-mêmes ne pouvons pas le lire.</li>
+    <li><strong>Utilisation de la plateforme :</strong> vos réponses aux exercices (y compris les textes que vous rédigez), vos notes, les dates de vos tentatives, les commentaires de votre professeur et les évaluations que vous donnez aux activités.</li>
+    <li><strong>Audio :</strong> si vous répondez à l'oral, l'enregistrement sert uniquement à produire la transcription et il est <strong>supprimé immédiatement après</strong>. Seul le texte transcrit est conservé.</li>
+    <li><strong>Paiement :</strong> les identifiants de votre abonnement Stripe et son statut. Les données de votre carte sont transmises directement à Stripe et <strong>ne passent jamais par nos serveurs</strong>.</li>
+    <li><strong>Notifications :</strong> si vous les autorisez dans votre navigateur, nous conservons l'adresse technique qui permet de vous les envoyer.</li>
+    <li><strong>Journaux techniques :</strong> les logs d'accès du serveur, utilisés pour la sécurité et le diagnostic des erreurs.</li>
+  </ul>
+
+  <h2 class="text-xl font-bold mt-8 mb-3" style="color: var(--brand-deep);">3. Pourquoi nous les utilisons (bases légales)</h2>
+  <ul class="mb-4 space-y-2 leading-relaxed list-disc pl-5">
+    <li><strong>Exécution du contrat :</strong> créer votre compte, afficher les activités, corriger les exercices et suivre votre progression.</li>
+    <li><strong>Obligation légale :</strong> facturation de l'abonnement et conservation des pièces comptables.</li>
+    <li><strong>Intérêt légitime :</strong> maintenir la plateforme sûre et prévenir la fraude et les abus.</li>
+    <li><strong>Consentement :</strong> l'envoi de notifications et de rappels — que vous pouvez désactiver à tout moment dans vos préférences.</li>
+  </ul>
+  <p class="mb-4 leading-relaxed">
+    Si vous êtes l'élève d'un professeur de la plateforme, ce professeur a accès à
+    vos activités, à vos réponses et à vos notes : c'est ainsi qu'il suit et
+    corrige votre travail.
+  </p>
+
+  <h2 class="text-xl font-bold mt-8 mb-3" style="color: var(--brand-deep);">4. Avec qui nous les partageons</h2>
+  <p class="mb-4 leading-relaxed">
+    Nous ne vendons ni ne cédons vos données à des fins publicitaires. Nous faisons
+    appel à des sous-traitants, chacun recevant uniquement les données nécessaires
+    à sa mission :
+  </p>
+  <%= render "home/privacy_subprocessors", service_label: "Sous-traitant", purpose_label: "Finalité",
+             purposes: {
+               "Heroku (Salesforce)" => "Hébergement de l'application et de la base de données",
+               "Anthropic (Claude)"  => "Correction des réponses écrites et génération des activités",
+               "OpenAI (Whisper)"    => "Transcription des réponses audio",
+               "Stripe"              => "Traitement des paiements",
+               "Resend"              => "Envoi des emails de la plateforme",
+               "Cloudinary"          => "Stockage des images et des audios des activités"
+             } %>
+  <p class="mb-4 leading-relaxed">
+    <strong>Transferts hors de l'Union européenne :</strong> ces prestataires
+    disposent de serveurs aux États-Unis, où vos données sont donc traitées. Nous
+    ne travaillons qu'avec des prestataires offrant les garanties contractuelles
+    prévues par le RGPD pour ce type de transfert.
+  </p>
+
+  <h2 class="text-xl font-bold mt-8 mb-3" style="color: var(--brand-deep);">5. Intelligence artificielle</h2>
+  <p class="mb-4 leading-relaxed">
+    Vos réponses écrites et orales sont corrigées automatiquement par une
+    intelligence artificielle. Deux points importants :
+  </p>
+  <ul class="mb-4 space-y-2 leading-relaxed list-disc pl-5">
+    <li>Nous transmettons à l'IA <strong>uniquement le texte de votre réponse</strong> et le critère d'évaluation de la question. Ni votre nom ni votre adresse email ne sont transmis.</li>
+    <li>La note de l'IA n'est pas le dernier mot : votre professeur consulte la correction, peut la commenter et peut rectifier ce que la machine a mal jugé. Si vous souhaitez qu'une personne réexamine une correction, demandez-le à votre professeur ou écrivez-nous.</li>
+  </ul>
+
+  <h2 class="text-xl font-bold mt-8 mb-3" style="color: var(--brand-deep);">6. Cookies</h2>
+  <p class="mb-4 leading-relaxed">
+    Nous n'utilisons que les cookies strictement nécessaires : ceux qui vous
+    maintiennent connecté et ceux qui protègent les formulaires contre la fraude.
+    <strong>Aucun Google Analytics, aucun pixel de réseau social, aucun cookie
+    publicitaire</strong> — et les polices, les icônes et les scripts de la
+    plateforme sont servis depuis notre propre domaine, de sorte qu'ouvrir une page
+    ici n'informe aucune autre société. C'est pourquoi il n'y a pas de bandeau
+    cookies.
+  </p>
+
+  <h2 class="text-xl font-bold mt-8 mb-3" style="color: var(--brand-deep);">7. Durée de conservation</h2>
+  <p class="mb-4 leading-relaxed">
+    Vos données sont conservées tant que votre compte existe, afin que vous et
+    votre professeur puissiez suivre votre progression dans le temps. Si vous
+    demandez la suppression, nous effaçons votre compte et votre historique
+    d'activités. Les pièces liées aux paiements peuvent être conservées pendant la
+    durée imposée par la législation comptable et fiscale.
+  </p>
+
+  <h2 class="text-xl font-bold mt-8 mb-3" style="color: var(--brand-deep);">8. Vos droits</h2>
+  <p class="mb-4 leading-relaxed">Vous pouvez à tout moment :</p>
+  <ul class="mb-4 space-y-2 leading-relaxed list-disc pl-5">
+    <li>savoir quelles données nous détenons sur vous et en recevoir une copie ;</li>
+    <li>faire rectifier ce qui est inexact ;</li>
+    <li>demander la suppression de votre compte et de vos données ;</li>
+    <li>vous opposer à un usage précis ou en demander la limitation ;</li>
+    <li>retirer votre consentement aux notifications, sans que cela affecte le reste du service.</li>
+  </ul>
+  <p class="mb-4 leading-relaxed">
+    Pour exercer l'un de ces droits, écrivez à
+    <a href="mailto:contato@practicebr.com" class="font-semibold underline" style="color: var(--brand);">contato@practicebr.com</a>.
+    Nous répondons dans un délai d'un mois. Si vous estimez que vos données ne sont
+    pas traitées correctement, vous avez le droit d'introduire une réclamation
+    auprès de la CNIL
+    (<a href="https://www.cnil.fr" target="_blank" rel="noopener" class="underline" style="color: var(--brand);">cnil.fr</a>).
+  </p>
+
+  <h2 class="text-xl font-bold mt-8 mb-3" style="color: var(--brand-deep);">9. Mineurs</h2>
+  <p class="mb-4 leading-relaxed">
+    Si l'élève a moins de 15 ans, le compte doit être créé et autorisé par un
+    représentant légal ou par l'établissement scolaire. Si nous constatons qu'un
+    compte de mineur a été ouvert sans cette autorisation, nous le supprimons.
+  </p>
+
+  <h2 class="text-xl font-bold mt-8 mb-3" style="color: var(--brand-deep);">10. Sécurité</h2>
+  <p class="mb-4 leading-relaxed">
+    L'ensemble du trafic est chiffré (HTTPS), les mots de passe sont stockés sous
+    forme de hash et l'accès à la base de données est restreint. Aucun système
+    n'est infaillible : en cas d'incident mettant vos données en danger, nous vous
+    en informons et notifions l'autorité compétente dans le délai légal.
+  </p>
+
+  <h2 class="text-xl font-bold mt-8 mb-3" style="color: var(--brand-deep);">11. Modifications</h2>
+  <p class="mb-6 leading-relaxed">
+    En cas de modification substantielle de cette politique, nous vous prévenons
+    par email avant son entrée en vigueur. La date affichée en haut de page
+    correspond toujours à la version applicable.
+  </p>
+
+</div>
+
+<div class="text-center mt-10 pt-8" style="border-top: 1px solid var(--line);">
+  <p class="mb-4" style="color: var(--ink-soft);">
+    Une question sur tout ceci ? Écrivez-nous — nous répondons vraiment. 💚
+  </p>
+  <a href="mailto:contato@practicebr.com?subject=Question%20sur%20la%20confidentialite%20-%20Practice-BR"
+     class="btn btn-sm"
+     style="background: var(--brand); color: var(--surface); border-color: var(--brand); font-weight: 600;">
+    Nous contacter
+  </a>
+  <div class="mt-6">
+    <%= link_to "Retour à l'accueil", root_path, class: "btn btn-ghost btn-sm", style: "color: var(--ink-faint);" %>
+  </div>
+</div>

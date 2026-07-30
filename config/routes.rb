@@ -106,6 +106,12 @@ Rails.application.routes.draw do
   # Página de acesso trial encerrado
   get "acesso-encerrado", to: "home#trial_expired", as: "trial_expired"
 
+  # Política de privacidade — pública, precisa ser legível antes do cadastro.
+  # Uma única URL: o idioma sai do Accept-Language (francês por padrão) e pode
+  # ser trocado com ?lang=fr|en|pt. As versões não são traduções — FR e EN seguem
+  # o RGPD, PT segue a LGPD. Ver docs/PROTECAO_DE_DADOS.md.
+  get "confidentialite", to: "home#privacy", as: "privacy"
+
   # Health check para monitoramento
   get "up" => "rails/health#show", as: :rails_health_check
 

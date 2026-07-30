@@ -66,6 +66,7 @@ Live in private beta at [app.practicebr.com](https://app.practicebr.com), with r
 - **Server-rendered UI with Hotwire** — no SPA, no API layer to maintain; Turbo handles interactivity.
 - **Role-based access** (admin / teacher / student / trial) enforced at controller level, with students scoped to the teacher who invited them.
 - **Graceful degradation**: AI, YouTube and Unsplash integrations are optional — the platform works without their API keys.
+- **Privacy engineering across two legal regimes (GDPR + LGPD)**: no third-party CDNs — fonts, icons and libraries are self-hosted, so no visitor IP reaches an outside company before consent, which is also what removes the need for a cookie banner; personal data is kept out of production logs; AI grading receives only the answer text, never a name or an email. The privacy policy is selected server-side from `Accept-Language` in three versions that are *not* translations of each other: FR and EN follow the GDPR, PT follows Brazil's LGPD, and the two diverge on response deadlines, the list of data subject rights, the right to human review of an automated decision, and the age at which someone counts as a minor. The decisions, the rules that keep them from regressing, and the still-open items — data export, one-click account deletion, retention policy — are tracked in [`docs/PROTECAO_DE_DADOS.md`](docs/PROTECAO_DE_DADOS.md).
 
 ## Technical roadmap
 

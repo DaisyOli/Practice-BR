@@ -1,0 +1,195 @@
+<%# Versão em português adaptada à LGPD (Lei 13.709/2018) — NÃO é uma tradução da
+    versão francesa. O que muda de verdade em relação ao RGPD:
+      • autoridade é a ANPD (art. 55-J), com canal do encarregado (art. 41)
+      • prazo de resposta é 15 dias (art. 19), não um mês
+      • art. 18 lista direitos mais granulares (anonimização, bloqueio, informação
+        sobre compartilhamento, revogação do consentimento)
+      • art. 20 dá direito EXPLÍCITO à revisão de decisão automatizada — é o que
+        cobre a correção por IA, e no RGPD isso é bem menos direto
+      • art. 14 define criança como menor de 12 anos, com consentimento específico
+        e em destaque de um dos pais — diferente dos 15 anos da França
+    Como a Practice-BR é operada da França, o RGPD também se aplica: por isso a
+    seção 10 cita as duas autoridades. %>
+
+<div class="rounded-2xl p-6 mb-8" style="background: var(--brand-mist); border: 1px solid var(--brand-tint);">
+  <p class="leading-relaxed" style="color: var(--ink);">
+    Em resumo: guardamos o mínimo para a plataforma funcionar, não vendemos nada
+    para ninguém, não usamos rastreadores de publicidade e apagamos seus dados
+    quando você pedir. O texto abaixo explica isso em detalhe — sem letra miúda.
+  </p>
+</div>
+
+<div style="color: var(--ink);">
+
+  <h2 class="text-xl font-bold mt-8 mb-3" style="color: var(--brand-deep);">1. Quem é o controlador dos seus dados</h2>
+  <p class="mb-4 leading-relaxed">
+    A Practice-BR é um serviço operado por <strong>Daisy Oliani</strong>, empresária
+    individual registrada na França (<em>entrepreneur individuel</em>),
+    43 Clos des Cascades, 93160 Noisy-le-Grand, França — SIRET 85 194 793 700 013.
+  </p>
+  <p class="mb-4 leading-relaxed">
+    Daisy Oliani é a <strong>controladora</strong> dos dados descritos aqui, nos
+    termos da Lei Geral de Proteção de Dados (Lei nº 13.709/2018), e também atua
+    como encarregada pelo tratamento. O canal para falar sobre seus dados é
+    <a href="mailto:contato@practicebr.com" class="font-semibold underline" style="color: var(--brand);">contato@practicebr.com</a>.
+  </p>
+  <p class="mb-4 leading-relaxed">
+    Como a plataforma é operada da França, o Regulamento Geral de Proteção de Dados
+    europeu (GDPR) também se aplica ao tratamento. Onde as duas leis pedem coisas
+    diferentes, seguimos a mais protetiva.
+  </p>
+
+  <h2 class="text-xl font-bold mt-8 mb-3" style="color: var(--brand-deep);">2. Quais dados coletamos</h2>
+  <ul class="mb-4 space-y-2 leading-relaxed list-disc pl-5">
+    <li><strong>Cadastro:</strong> email, nome (opcional), idioma, nível de português e se você é aluno ou professor.</li>
+    <li><strong>Senha:</strong> guardada apenas de forma criptografada — nem nós conseguimos lê-la.</li>
+    <li><strong>Uso da plataforma:</strong> suas respostas aos exercícios (incluindo textos que você escreve), notas, datas das tentativas, comentários do professor e as avaliações que você dá às atividades.</li>
+    <li><strong>Áudio:</strong> se você responder falando, a gravação é usada só para gerar a transcrição e é <strong>apagada logo em seguida</strong>. Fica guardado apenas o texto transcrito.</li>
+    <li><strong>Pagamento:</strong> identificadores da assinatura na Stripe e a situação dela. Os dados do seu cartão vão direto para a Stripe e <strong>nunca passam pelos nossos servidores</strong>.</li>
+    <li><strong>Notificações:</strong> se você autorizar notificações no navegador, guardamos o endereço técnico que permite enviá-las.</li>
+    <li><strong>Registros técnicos:</strong> logs de acesso do servidor, usados para segurança e para investigar erros.</li>
+  </ul>
+  <p class="mb-4 leading-relaxed">
+    Não coletamos dados sensíveis (origem racial, convicção religiosa, opinião
+    política, saúde, biometria) nem construímos perfis para publicidade.
+  </p>
+
+  <h2 class="text-xl font-bold mt-8 mb-3" style="color: var(--brand-deep);">3. Com que finalidade e com que base legal</h2>
+  <ul class="mb-4 space-y-2 leading-relaxed list-disc pl-5">
+    <li><strong>Execução do contrato:</strong> criar sua conta, mostrar atividades, corrigir exercícios e acompanhar seu progresso.</li>
+    <li><strong>Cumprimento de obrigação legal:</strong> cobrança da assinatura e guarda dos registros fiscais e contábeis.</li>
+    <li><strong>Legítimo interesse:</strong> manter a plataforma segura e prevenir fraude e abuso — sempre dentro do que você esperaria de um serviço como este.</li>
+    <li><strong>Consentimento:</strong> envio de notificações e lembretes, que você pode revogar quando quiser, sem prejuízo do resto do serviço.</li>
+  </ul>
+  <p class="mb-4 leading-relaxed">
+    Se você é aluno de um professor da plataforma, esse professor vê suas
+    atividades, suas respostas e suas notas — é assim que ele acompanha e corrige
+    o seu trabalho.
+  </p>
+
+  <h2 class="text-xl font-bold mt-8 mb-3" style="color: var(--brand-deep);">4. Com quem compartilhamos</h2>
+  <p class="mb-4 leading-relaxed">
+    Não vendemos e não cedemos seus dados para publicidade. Usamos operadores
+    (prestadores que tratam dados em nosso nome), cada um só com o dado necessário
+    para a função dele:
+  </p>
+  <%= render "home/privacy_subprocessors", service_label: "Operador", purpose_label: "Finalidade",
+             purposes: {
+               "Heroku (Salesforce)" => "Hospedagem da aplicação e do banco de dados",
+               "Anthropic (Claude)"  => "Correção das respostas escritas e geração de atividades",
+               "OpenAI (Whisper)"    => "Transcrição das respostas em áudio",
+               "Stripe"              => "Processamento dos pagamentos",
+               "Resend"              => "Envio dos emails da plataforma",
+               "Cloudinary"          => "Armazenamento de imagens e áudios das atividades"
+             } %>
+  <p class="mb-4 leading-relaxed">
+    <strong>Transferência internacional:</strong> esses operadores mantêm servidores
+    nos Estados Unidos, então seus dados são tratados fora do Brasil. A LGPD permite
+    isso quando há garantias contratuais adequadas (art. 33) — trabalhamos apenas
+    com fornecedores que oferecem cláusulas contratuais desse tipo.
+  </p>
+
+  <h2 class="text-xl font-bold mt-8 mb-3" style="color: var(--brand-deep);">5. Correção automatizada por IA e seu direito de revisão</h2>
+  <p class="mb-4 leading-relaxed">
+    Suas respostas escritas e faladas são corrigidas automaticamente por inteligência
+    artificial. Três coisas importantes:
+  </p>
+  <ul class="mb-4 space-y-2 leading-relaxed list-disc pl-5">
+    <li>Enviamos para a IA <strong>apenas o texto da sua resposta</strong> e o critério de avaliação da questão. Seu nome e seu email não são enviados.</li>
+    <li>A nota da IA não é a palavra final: o seu professor vê a correção, pode comentar e pode corrigir o que a máquina errou.</li>
+    <li><strong>Você tem direito a pedir a revisão dessa correção por uma pessoa</strong> (art. 20 da LGPD). Peça ao seu professor ou escreva para a gente — e, se quiser, explicamos quais critérios foram usados para chegar naquela nota.</li>
+  </ul>
+
+  <h2 class="text-xl font-bold mt-8 mb-3" style="color: var(--brand-deep);">6. Cookies</h2>
+  <p class="mb-4 leading-relaxed">
+    Usamos apenas os cookies necessários para você continuar logado e para proteger
+    os formulários contra fraude. <strong>Não temos Google Analytics, pixel de rede
+    social nem cookie de publicidade</strong> — e as fontes, os ícones e os scripts
+    da plataforma são servidos do nosso próprio domínio, de forma que abrir uma
+    página aqui não avisa nenhuma outra empresa. Por isso não existe banner de
+    cookies.
+  </p>
+
+  <h2 class="text-xl font-bold mt-8 mb-3" style="color: var(--brand-deep);">7. Por quanto tempo guardamos</h2>
+  <p class="mb-4 leading-relaxed">
+    Enquanto a sua conta existir, para que você e seu professor possam acompanhar
+    sua evolução ao longo do tempo. Se você pedir a eliminação, apagamos sua conta e
+    seu histórico de atividades. Registros de pagamento podem ser mantidos pelo
+    prazo que a legislação fiscal exige.
+  </p>
+
+  <h2 class="text-xl font-bold mt-8 mb-3" style="color: var(--brand-deep);">8. Seus direitos</h2>
+  <p class="mb-4 leading-relaxed">
+    A LGPD (art. 18) garante que você pode, a qualquer momento e gratuitamente:
+  </p>
+  <ul class="mb-4 space-y-2 leading-relaxed list-disc pl-5">
+    <li>confirmar se tratamos dados seus e acessar esses dados;</li>
+    <li>corrigir dados incompletos, inexatos ou desatualizados;</li>
+    <li>pedir a anonimização, o bloqueio ou a eliminação de dados desnecessários ou tratados em desconformidade com a lei;</li>
+    <li>pedir a portabilidade dos seus dados para outro fornecedor;</li>
+    <li>pedir a eliminação dos dados tratados com base no seu consentimento;</li>
+    <li>saber com quais entidades públicas e privadas compartilhamos seus dados;</li>
+    <li>saber que você pode não consentir e quais são as consequências disso;</li>
+    <li>revogar o consentimento a qualquer momento;</li>
+    <li>pedir a revisão de decisões tomadas automaticamente, como a correção por IA.</li>
+  </ul>
+  <p class="mb-4 leading-relaxed">
+    Para exercer qualquer um deles, escreva para
+    <a href="mailto:contato@practicebr.com" class="font-semibold underline" style="color: var(--brand);">contato@practicebr.com</a>.
+    Respondemos de imediato aos pedidos simples e, quando for necessário reunir uma
+    declaração completa sobre o tratamento, em até <strong>15 dias</strong>, como
+    manda o art. 19 da LGPD.
+  </p>
+
+  <h2 class="text-xl font-bold mt-8 mb-3" style="color: var(--brand-deep);">9. Crianças e adolescentes</h2>
+  <p class="mb-4 leading-relaxed">
+    O tratamento de dados de <strong>crianças (menores de 12 anos)</strong> só
+    acontece com consentimento específico e em destaque de pelo menos um dos pais ou
+    do responsável legal, conforme o art. 14 da LGPD, e sempre no melhor interesse
+    da criança. Para <strong>adolescentes (12 a 18 anos)</strong>, a conta deve ser
+    criada com a ciência do responsável ou da escola. Se descobrirmos que uma conta
+    foi aberta sem essa autorização, nós a apagamos.
+  </p>
+
+  <h2 class="text-xl font-bold mt-8 mb-3" style="color: var(--brand-deep);">10. Segurança e incidentes</h2>
+  <p class="mb-4 leading-relaxed">
+    Todo o tráfego é criptografado (HTTPS), as senhas são guardadas com hash e o
+    acesso ao banco de dados é restrito. Nenhum sistema é perfeito: se acontecer um
+    incidente de segurança que possa causar risco ou dano relevante a você,
+    comunicamos você e a autoridade competente em prazo razoável, como determina o
+    art. 48 da LGPD.
+  </p>
+
+  <h2 class="text-xl font-bold mt-8 mb-3" style="color: var(--brand-deep);">11. Reclamações</h2>
+  <p class="mb-4 leading-relaxed">
+    Se você achar que tratamos seus dados de forma indevida, fale com a gente
+    primeiro — a maioria das coisas se resolve rápido. Você também pode reclamar
+    diretamente à autoridade competente: a
+    <a href="https://www.gov.br/anpd" target="_blank" rel="noopener" class="underline" style="color: var(--brand);">ANPD</a>,
+    no Brasil, ou a
+    <a href="https://www.cnil.fr" target="_blank" rel="noopener" class="underline" style="color: var(--brand);">CNIL</a>,
+    na França, onde a plataforma é operada.
+  </p>
+
+  <h2 class="text-xl font-bold mt-8 mb-3" style="color: var(--brand-deep);">12. Mudanças</h2>
+  <p class="mb-6 leading-relaxed">
+    Se esta política mudar de forma relevante, avisamos por email antes de a mudança
+    entrar em vigor. A data no topo da página sempre indica a versão vigente.
+  </p>
+
+</div>
+
+<div class="text-center mt-10 pt-8" style="border-top: 1px solid var(--line);">
+  <p class="mb-4" style="color: var(--ink-soft);">
+    Ficou com dúvida sobre alguma coisa daqui? Escreva pra gente — a gente responde
+    de verdade. 💚
+  </p>
+  <a href="mailto:contato@practicebr.com?subject=Duvida%20sobre%20privacidade%20-%20Practice-BR"
+     class="btn btn-sm"
+     style="background: var(--brand); color: var(--surface); border-color: var(--brand); font-weight: 600;">
+    Falar com a gente
+  </a>
+  <div class="mt-6">
+    <%= link_to "Voltar para o início", root_path, class: "btn btn-ghost btn-sm", style: "color: var(--ink-faint);" %>
+  </div>
+</div>

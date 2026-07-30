@@ -15,14 +15,13 @@
     <%= csrf_meta_tags %>
     <%= csp_meta_tag %>
 
-    <!-- Google Fonts: Raleway + Plus Jakarta Sans + DM Mono -->
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Raleway:wght@400;500;600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
-    <!-- Font Awesome -->
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
-    <!-- Bootstrap Icons -->
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
+    <%#
+      Fontes, ícones e bibliotecas são todos auto-hospedados (app/assets/fonts,
+      app/assets/stylesheets/vendor, vendor/javascript). Não use CDN aqui: cada
+      tag externa envia o IP do visitante pra um terceiro antes de qualquer
+      consentimento, o que o RGPD não permite — e é o que dispensa o banner de
+      cookies. Ver docs/PROTECAO_DE_DADOS.md.
+    %>
     <%= stylesheet_link_tag "tailwind", "data-turbo-track": "reload" %>
     
     <%= stylesheet_link_tag "application", "data-turbo-track": "reload" %>
@@ -47,18 +46,15 @@
       }
     </script>
 
-    <!-- Shepherd.js onboarding tour -->
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/shepherd.js@11/dist/css/shepherd.css">
-    <script src="https://cdn.jsdelivr.net/npm/shepherd.js@11/dist/js/shepherd.min.js"></script>
+    <!-- Shepherd.js onboarding tour (CSS vai junto com application.scss) -->
+    <%= javascript_include_tag "shepherd.min", "data-turbo-track": "reload" %>
 
-    <!-- Analytics e metatags -->
+    <!-- Metatags da página -->
     <%= page_head %>
-    
+
     <!-- jQuery carregado uma única vez -->
-    <script src="https://code.jquery.com/jquery-3.7.1.min.js" 
-            integrity="sha256-/JqT3SQfawRcv/BIHPThkBvs0OEvtFFmqPF/lYI/Cxo=" 
-            crossorigin="anonymous"></script>
-    
+    <%= javascript_include_tag "jquery.min", "data-turbo-track": "reload" %>
+
     <!-- Importmap após jQuery -->
     <%= javascript_importmap_tags %>
 
@@ -179,6 +175,12 @@
     <% end %>
 
     <%= yield %>
+
+    <%# A atestação é um documento pra impressão — rodapé ali só atrapalha. %>
+    <% unless content_for?(:hide_navbar) %>
+      <%= render 'shared/footer' %>
+    <% end %>
+
     <!-- Toast Notifications Container -->
     <div id="toast-container" 
          class="toast-container position-fixed top-0 end-0 p-3" 

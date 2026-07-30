@@ -85,6 +85,25 @@
 
       <%= f.submit "Criar minha conta",
             style: "width:100%; background:var(--brand-deep); color:var(--surface); font-family:'Plus Jakarta Sans',sans-serif; font-size:0.9rem; font-weight:700; padding:12px; border:none; border-radius:12px; cursor:pointer; display:block;" %>
+
+      <%# O RGPD pede que a pessoa saiba o que acontece com os dados dela *antes*
+          de entregá-los — por isso o aviso fica aqui, no momento do cadastro. %>
+      <p style="margin-top:14px; text-align:center; font-family:'Plus Jakarta Sans',sans-serif; font-size:0.72rem; line-height:1.5; color:var(--ink-faint);">
+        <span id="privacy-consent-text">En créant votre compte, vous acceptez notre</span>
+        <a href="<%= privacy_path %>" id="privacy-consent-link" target="_blank" rel="noopener"
+           style="color:var(--brand); text-decoration:underline;">politique de confidentialité</a>.
+      </p>
+
+      <script>
+      (function() {
+        var lang = navigator.language || 'fr';
+        if (!lang.startsWith('en')) return;
+        var t = document.getElementById('privacy-consent-text');
+        var l = document.getElementById('privacy-consent-link');
+        if (t) t.textContent = "By creating your account, you agree to our";
+        if (l) l.textContent = "privacy policy";
+      })();
+      </script>
     <% end %>
 
   </div>

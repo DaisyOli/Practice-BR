@@ -1,0 +1,56 @@
+<%
+  fr = @privacy_lang == "fr"
+  title = { "fr" => "Politique de confidentialité",
+            "en" => "Privacy policy",
+            "pt" => "Política de privacidade" }[@privacy_lang]
+  updated = { "fr" => "Dernière mise à jour : 29 juillet 2026",
+              "en" => "Last updated: 29 July 2026",
+              "pt" => "Última atualização: 29 de julho de 2026" }[@privacy_lang]
+  description = { "fr" => "Quelles données Practice-BR conserve, pourquoi, avec qui elles sont partagées et comment tout faire supprimer.",
+                  "en" => "What data Practice-BR keeps, why, who it is shared with and how to have it all deleted.",
+                  "pt" => "Que dados a Practice-BR guarda, por quê, com quem compartilha e como você pede para apagar tudo." }[@privacy_lang]
+%>
+
+<% content_for :head do %>
+  <title><%= title %> — <%= t('app_name') %></title>
+  <meta name="description" content="<%= description %>">
+  <%# Diz aos buscadores que as versões são a mesma página em línguas diferentes. %>
+  <% HomeController::PRIVACY_LANGS.each do |code| %>
+    <link rel="alternate" hreflang="<%= code %>" href="<%= privacy_url(lang: code) %>">
+  <% end %>
+  <link rel="alternate" hreflang="x-default" href="<%= privacy_url %>">
+<% end %>
+
+<div class="min-h-screen px-4 py-12" style="background: var(--paper);">
+  <div class="max-w-2xl mx-auto">
+
+    <div class="text-center mb-8">
+      <div class="text-5xl mb-4">🔒</div>
+      <h1 class="text-3xl font-bold mb-3" style="color: var(--brand-deep);">
+        <%= title %>
+      </h1>
+      <p class="text-sm" style="color: var(--ink-faint);">
+        <%= updated %>
+      </p>
+    </div>
+
+    <%# Seletor de idioma. A página já chega no idioma do navegador (ver
+        HomeController#browser_privacy_lang); isto é só pra quem quiser trocar.
+        Atenção: as versões NÃO são traduções — a portuguesa segue a LGPD e as
+        outras duas o RGPD. Trocar de idioma aqui troca de regime jurídico. %>
+    <div class="flex justify-center gap-2 mb-8" role="group" aria-label="<%= fr ? "Langue du document" : "Document language" %>">
+      <% { "fr" => "Français", "en" => "English", "pt" => "Português" }.each do |code, label| %>
+        <% active = @privacy_lang == code %>
+        <%= link_to label, privacy_path(lang: code),
+              "aria-current": (active ? "true" : nil),
+              class: "btn btn-xs",
+              style: active ?
+                "background: var(--brand); color: var(--surface); border-color: var(--brand); font-weight: 600;" :
+                "background: var(--surface); color: var(--ink-soft); border-color: var(--line);" %>
+      <% end %>
+    </div>
+
+    <%= render "home/privacy_#{@privacy_lang}" %>
+
+  </div>
+</div>

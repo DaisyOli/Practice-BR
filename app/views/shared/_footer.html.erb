@@ -1,0 +1,25 @@
+<%# Rodapé discreto — existe sobretudo para deixar a política de privacidade
+    acessível de qualquer página, como o RGPD pede.
+    O link é sempre o mesmo: a própria página escolhe francês ou inglês pelo
+    Accept-Language. Aqui só o rótulo muda, pelo mesmo padrão de navigator.language
+    já usado no lembrete semanal em devise/invitations/edit. %>
+<footer class="mt-16 py-6 px-4" style="border-top: 1px solid var(--line-soft);">
+  <div class="max-w-2xl mx-auto flex flex-wrap items-center justify-center gap-x-4 gap-y-2 text-xs" style="color: var(--ink-faint);">
+    <span>© <%= Date.current.year %> <%= t('app_name') %></span>
+    <span aria-hidden="true">·</span>
+    <%= link_to "Politique de confidentialité", privacy_path,
+          id: "footer-privacy-link",
+          class: "underline hover:no-underline",
+          style: "color: var(--ink-soft);" %>
+    <span aria-hidden="true">·</span>
+    <a href="mailto:contato@practicebr.com" class="underline hover:no-underline" style="color: var(--ink-soft);">Contact</a>
+  </div>
+</footer>
+
+<script>
+(function() {
+  var lang = navigator.language || 'fr';
+  var link = document.getElementById('footer-privacy-link');
+  if (link && lang.startsWith('en')) link.textContent = "Privacy policy";
+})();
+</script>

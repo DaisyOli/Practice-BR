@@ -1,0 +1,155 @@
+<%# English version of the policy, for English-speaking students. French is the
+    reference version — Practice-BR is established in France and the supervisory
+    authority is the CNIL. Header and language switch live in home/privacy.html.erb.
+    Keep both versions in sync when the policy changes. %>
+
+<div class="rounded-2xl p-6 mb-8" style="background: var(--brand-mist); border: 1px solid var(--brand-tint);">
+  <p class="leading-relaxed" style="color: var(--ink);">
+    In short: we keep only what the platform needs to work, we never sell your data
+    to anyone, we use no advertising trackers, and we delete your data whenever you
+    ask us to. Everything below explains that in detail — no fine print.
+  </p>
+</div>
+
+<div style="color: var(--ink);">
+
+  <h2 class="text-xl font-bold mt-8 mb-3" style="color: var(--brand-deep);">1. Who is responsible for your data</h2>
+  <p class="mb-4 leading-relaxed">
+    Practice-BR is a service published by <strong>Daisy Oliani</strong>, sole trader
+    (<em>entrepreneur individuel</em>), 43 Clos des Cascades, 93160 Noisy-le-Grand,
+    France — SIRET 85 194 793 700 013.
+  </p>
+  <p class="mb-4 leading-relaxed">
+    Daisy Oliani is the data controller for the processing described here, within the
+    meaning of the General Data Protection Regulation (GDPR). For anything related to
+    your personal data, write to
+    <a href="mailto:contato@practicebr.com" class="font-semibold underline" style="color: var(--brand);">contato@practicebr.com</a>.
+  </p>
+
+  <h2 class="text-xl font-bold mt-8 mb-3" style="color: var(--brand-deep);">2. What we collect</h2>
+  <ul class="mb-4 space-y-2 leading-relaxed list-disc pl-5">
+    <li><strong>Sign-up:</strong> your email address, first name (optional), language, Portuguese level and your role (student or teacher).</li>
+    <li><strong>Password:</strong> stored only in hashed form — not even we can read it.</li>
+    <li><strong>Platform use:</strong> your answers to exercises (including the texts you write), your scores, the dates of your attempts, your teacher's comments and the ratings you give to activities.</li>
+    <li><strong>Audio:</strong> if you answer out loud, the recording is used only to produce the transcript and is <strong>deleted immediately afterwards</strong>. Only the transcribed text is kept.</li>
+    <li><strong>Payment:</strong> your Stripe subscription identifiers and its status. Your card details go straight to Stripe and <strong>never pass through our servers</strong>.</li>
+    <li><strong>Notifications:</strong> if you allow them in your browser, we store the technical address needed to send them.</li>
+    <li><strong>Technical logs:</strong> server access logs, used for security and to investigate errors.</li>
+  </ul>
+
+  <h2 class="text-xl font-bold mt-8 mb-3" style="color: var(--brand-deep);">3. Why we use it (legal bases)</h2>
+  <ul class="mb-4 space-y-2 leading-relaxed list-disc pl-5">
+    <li><strong>Performance of the contract:</strong> creating your account, showing activities, marking exercises and tracking your progress.</li>
+    <li><strong>Legal obligation:</strong> billing your subscription and keeping accounting records.</li>
+    <li><strong>Legitimate interest:</strong> keeping the platform secure and preventing fraud and abuse.</li>
+    <li><strong>Consent:</strong> sending notifications and reminders — which you can turn off at any time in your preferences.</li>
+  </ul>
+  <p class="mb-4 leading-relaxed">
+    If you are the student of a teacher on the platform, that teacher can see your
+    activities, your answers and your scores — that is how they follow and correct
+    your work.
+  </p>
+
+  <h2 class="text-xl font-bold mt-8 mb-3" style="color: var(--brand-deep);">4. Who we share it with</h2>
+  <p class="mb-4 leading-relaxed">
+    We do not sell or hand over your data for advertising. We rely on a few
+    processors, each receiving only the data needed for its job:
+  </p>
+  <%= render "home/privacy_subprocessors", service_label: "Processor", purpose_label: "Purpose",
+             purposes: {
+               "Heroku (Salesforce)" => "Hosting the application and the database",
+               "Anthropic (Claude)"  => "Marking written answers and generating activities",
+               "OpenAI (Whisper)"    => "Transcribing spoken answers",
+               "Stripe"              => "Processing payments",
+               "Resend"              => "Sending the platform's emails",
+               "Cloudinary"          => "Storing activity images and audio"
+             } %>
+  <p class="mb-4 leading-relaxed">
+    <strong>Transfers outside the European Union:</strong> these providers run
+    servers in the United States, so your data is processed there. We only work with
+    providers offering the contractual safeguards required by the GDPR for such
+    transfers.
+  </p>
+
+  <h2 class="text-xl font-bold mt-8 mb-3" style="color: var(--brand-deep);">5. Artificial intelligence</h2>
+  <p class="mb-4 leading-relaxed">
+    Your written and spoken answers are marked automatically by artificial
+    intelligence. Two things matter here:
+  </p>
+  <ul class="mb-4 space-y-2 leading-relaxed list-disc pl-5">
+    <li>We send the AI <strong>only the text of your answer</strong> and the marking criteria for the question. Neither your name nor your email address is sent.</li>
+    <li>The AI's score is not the final word: your teacher sees the correction, can comment on it and can override what the machine got wrong. If you want a human to review a correction, ask your teacher or write to us.</li>
+  </ul>
+
+  <h2 class="text-xl font-bold mt-8 mb-3" style="color: var(--brand-deep);">6. Cookies</h2>
+  <p class="mb-4 leading-relaxed">
+    We only use strictly necessary cookies: the ones that keep you signed in and the
+    ones that protect forms against fraud. <strong>No Google Analytics, no social
+    media pixel, no advertising cookie</strong> — and the platform's fonts, icons and
+    scripts are served from our own domain, so opening a page here tells no other
+    company about it. That is why there is no cookie banner.
+  </p>
+
+  <h2 class="text-xl font-bold mt-8 mb-3" style="color: var(--brand-deep);">7. How long we keep it</h2>
+  <p class="mb-4 leading-relaxed">
+    For as long as your account exists, so that you and your teacher can follow your
+    progress over time. If you ask us to delete it, we erase your account and your
+    activity history. Payment records may be kept for the period required by
+    accounting and tax law.
+  </p>
+
+  <h2 class="text-xl font-bold mt-8 mb-3" style="color: var(--brand-deep);">8. Your rights</h2>
+  <p class="mb-4 leading-relaxed">At any time, you can:</p>
+  <ul class="mb-4 space-y-2 leading-relaxed list-disc pl-5">
+    <li>find out what data we hold about you and get a copy of it;</li>
+    <li>have anything inaccurate corrected;</li>
+    <li>ask us to delete your account and your data;</li>
+    <li>object to a specific use, or ask for it to be restricted;</li>
+    <li>withdraw your consent to notifications, without this affecting the rest of the service.</li>
+  </ul>
+  <p class="mb-4 leading-relaxed">
+    To exercise any of these, write to
+    <a href="mailto:contato@practicebr.com" class="font-semibold underline" style="color: var(--brand);">contato@practicebr.com</a>.
+    We reply within one month. If you believe your data is not handled properly, you
+    have the right to lodge a complaint with the CNIL, the French data protection
+    authority (<a href="https://www.cnil.fr/en" target="_blank" rel="noopener" class="underline" style="color: var(--brand);">cnil.fr</a>),
+    or with the supervisory authority of the country where you live.
+  </p>
+
+  <h2 class="text-xl font-bold mt-8 mb-3" style="color: var(--brand-deep);">9. Minors</h2>
+  <p class="mb-4 leading-relaxed">
+    If the student is under 15, the account must be created and authorised by a
+    parent, legal guardian or school. If we find that a minor's account was opened
+    without that authorisation, we delete it.
+  </p>
+
+  <h2 class="text-xl font-bold mt-8 mb-3" style="color: var(--brand-deep);">10. Security</h2>
+  <p class="mb-4 leading-relaxed">
+    All traffic is encrypted (HTTPS), passwords are stored as hashes and access to
+    the database is restricted. No system is perfect: if an incident puts your data
+    at risk, we will inform you and notify the competent authority within the legal
+    deadline.
+  </p>
+
+  <h2 class="text-xl font-bold mt-8 mb-3" style="color: var(--brand-deep);">11. Changes</h2>
+  <p class="mb-6 leading-relaxed">
+    If this policy changes in any significant way, we will let you know by email
+    before the change takes effect. The date at the top of the page always shows the
+    version in force.
+  </p>
+
+</div>
+
+<div class="text-center mt-10 pt-8" style="border-top: 1px solid var(--line);">
+  <p class="mb-4" style="color: var(--ink-soft);">
+    Any questions about this? Write to us — we really do answer. 💚
+  </p>
+  <a href="mailto:contato@practicebr.com?subject=Privacy%20question%20-%20Practice-BR"
+     class="btn btn-sm"
+     style="background: var(--brand); color: var(--surface); border-color: var(--brand); font-weight: 600;">
+    Get in touch
+  </a>
+  <div class="mt-6">
+    <%= link_to "Back to home", root_path, class: "btn btn-ghost btn-sm", style: "color: var(--ink-faint);" %>
+  </div>
+</div>

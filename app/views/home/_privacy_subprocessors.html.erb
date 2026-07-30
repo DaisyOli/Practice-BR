@@ -1,0 +1,20 @@
+<%# Tabela de sous-traitants, compartilhada pelas duas versões da política —
+    assim não tem risco de a lista mudar num idioma e não no outro. %>
+<div class="overflow-x-auto mb-4 rounded-xl" style="border: 1px solid var(--line);">
+  <table class="w-full text-sm" style="background: var(--surface);">
+    <thead>
+      <tr style="background: var(--brand-tint); color: var(--brand-deep);">
+        <th class="text-left p-3 font-semibold"><%= service_label %></th>
+        <th class="text-left p-3 font-semibold"><%= purpose_label %></th>
+      </tr>
+    </thead>
+    <tbody>
+      <% purposes.each do |service, purpose| %>
+        <tr style="border-top: 1px solid var(--line-soft);">
+          <td class="p-3 font-semibold"><%= service %></td>
+          <td class="p-3"><%= purpose %></td>
+        </tr>
+      <% end %>
+    </tbody>
+  </table>
+</div>

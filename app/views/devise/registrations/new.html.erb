@@ -28,6 +28,14 @@
         <div class="d-grid">
           <%= f.button :submit, "Sign up", class: "btn btn-primary btn-block" %>
         </div>
+
+        <%# Aviso de privacidade no momento do cadastro, como o RGPD exige. %>
+        <p class="mt-3 text-center" style="font-size:0.72rem; line-height:1.5; color:var(--ink-faint);">
+          En créant votre compte, vous acceptez notre
+          <%= link_to "politique de confidentialité", privacy_path,
+                target: "_blank", rel: "noopener",
+                style: "color:var(--brand); text-decoration:underline;" %>.
+        </p>
       <% end %>
 
       <!-- Links adicionais -->
