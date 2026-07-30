@@ -168,6 +168,22 @@ app/views/home/_privacy_subprocessors.html.erb → tabela compartilhada
 app/views/shared/_footer.html.erb             → link global
 ```
 
+Os direitos do titular que são exercíveis pela própria pessoa:
+
+```
+GET  /meus-dados            → data_exports#new       resumo legível (acesso)
+GET  /meus-dados/download   → data_exports#download  JSON (portabilidade)
+     app/services/data_export_service.rb             o que entra na exportação
+GET  /excluir-conta         → account_deletions#new  confirmação
+DELETE /users               → users/registrations#destroy  apaga + cancela Stripe
+```
+
+**Ao criar uma tabela que guarde dado ligado a uma pessoa, são três passos:**
+`dependent: :destroy` na associação (senão a exclusão quebra por chave
+estrangeira), inclusão no `DataExportService` (senão a exportação fica
+incompleta) e a linha na política. A spec de cobertura em
+`spec/requests/data_export_spec.rb` falha se o segundo for esquecido.
+
 **A escolha do idioma acontece no servidor**, pelo `Accept-Language`, não em
 JavaScript — o texto certo precisa estar no HTML para um auditor, um leitor de
 tela ou um buscador. `?lang=fr|en|pt` força uma versão. A resposta manda
