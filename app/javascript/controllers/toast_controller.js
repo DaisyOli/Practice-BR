@@ -113,13 +113,13 @@ export default class extends Controller {
   // Retorna ícone apropriado para cada tipo
   getIcon(type) {
     const iconMap = {
-      'success': 'fas fa-check-circle',
-      'error': 'fas fa-exclamation-circle',
-      'warning': 'fas fa-exclamation-triangle',
-      'info': 'fas fa-info-circle',
-      'danger': 'fas fa-exclamation-circle'
+      'success': 'bi bi-check-circle-fill',
+      'error': 'bi bi-exclamation-circle-fill',
+      'warning': 'bi bi-exclamation-triangle-fill',
+      'info': 'bi bi-info-circle-fill',
+      'danger': 'bi bi-exclamation-circle-fill'
     }
-    return iconMap[type] || 'fas fa-info-circle'
+    return iconMap[type] || 'bi bi-info-circle-fill'
   }
 
   // Classes CSS para posicionamento

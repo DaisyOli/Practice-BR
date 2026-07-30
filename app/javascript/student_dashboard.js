@@ -180,7 +180,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
             if (data.has_more) {
               this.dataset.offset = data.next_offset;
-              this.innerHTML = `<i class="fas fa-plus"></i> Carregar mais (${data.remaining} restantes)`;
+              this.innerHTML = `<i class="bi bi-plus-lg"></i> Carregar mais (${data.remaining} restantes)`;
               this.style.display = 'inline-block';
             } else {
               this.style.display = 'none';
@@ -252,7 +252,7 @@ document.addEventListener('turbo:load', function() {
             
             if (data.has_more) {
               this.dataset.offset = data.next_offset;
-              this.innerHTML = `<i class="fas fa-plus"></i> Carregar mais (${data.remaining} restantes)`;
+              this.innerHTML = `<i class="bi bi-plus-lg"></i> Carregar mais (${data.remaining} restantes)`;
               this.style.display = 'inline-block';
             } else {
               this.style.display = 'none';

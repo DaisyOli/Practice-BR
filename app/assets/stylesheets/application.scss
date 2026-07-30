@@ -3,6 +3,7 @@
 // ==============================================
 
 // 🎯 1. FUNDAÇÕES (ordem importa!)
+@import "fonts";                  // 🔤 @font-face das fontes auto-hospedadas (nada vem do Google)
 @import "tokens";                 // 🎨 Design tokens da franquia Practice (fonte de verdade)
 @import "variables";              // CSS variables legadas (tema escolar antigo — aposentar junto com components/)
 @import "globals";                // Reset, tipografia, utilities
@@ -17,6 +18,10 @@
 @import "components/quiz";               // 🧩 Estilos do quiz e responsividade móvel
 @import "components/column_matching";    // 🔗 Exercício: associar colunas
 @import "components/dashboard";          // 📊 Responsividade dos dashboards
+
+// 📦 BIBLIOTECAS DE TERCEIROS (auto-hospedadas — nada carrega de CDN)
+@import "vendor/bootstrap-icons";     // 🎨 Ícones bi-*
+@import "vendor/shepherd";            // 🚶 CSS base do tour (customização logo abaixo)
 
 // Shepherd.js onboarding tour — design system customization
 .shepherd-element {
