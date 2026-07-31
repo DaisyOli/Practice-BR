@@ -128,6 +128,13 @@ Rails.application.configure do
       inactivity_nudge: {
         cron: "0 */6 * * *",
         class: "InactivityNudgeJob"
+      },
+      # 1x/dia e de madrugada: é o único job que apaga dado de gente, então roda
+      # longe do horário de uso. Um dia de atraso num prazo de 3 anos não é
+      # descumprimento de nada.
+      account_retention: {
+        cron: "30 3 * * * Europe/Paris",
+        class: "AccountRetentionJob"
       }
     }
   }

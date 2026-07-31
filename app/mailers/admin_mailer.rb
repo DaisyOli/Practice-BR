@@ -51,6 +51,19 @@ class AdminMailer < ApplicationMailer
     mail(to: DAISY_EMAIL, subject: "⚠️ Exclusão de conta abortada — ##{user_id}")
   end
 
+  # Relatório da varredura de retenção. Chega só nos dias em que houve alguma
+  # coisa — ver AccountRetentionJob#report. Serve de olho humano sobre o único
+  # processo do app que apaga dado sozinho: se um dia aparecerem 40 exclusões,
+  # você quer descobrir por email e não por um aluno reclamando.
+  def retention_report(warned:, deleted:, failed:)
+    @warned  = warned
+    @deleted = deleted
+    @failed  = failed
+    subject  = "🌱 Retenção · #{deleted.size} apagada(s), #{warned.size} avisada(s)"
+    subject += " · #{failed.size} FALHA(S)" if failed.any?
+    mail(to: DAISY_EMAIL, subject: subject)
+  end
+
   def draft_generation_failed(level, error_key)
     @level = level
     @error_key = error_key

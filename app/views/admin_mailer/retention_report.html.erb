@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta content="text/html; charset=UTF-8" http-equiv="Content-Type" />
+</head>
+<body style="margin:0; padding:0; background:#F7F5F0; font-family:'Helvetica Neue',Arial,sans-serif;">
+
+  <table width="100%" cellpadding="0" cellspacing="0" style="background:#F7F5F0; padding:40px 16px;">
+    <tr>
+      <td align="center">
+        <table width="520" cellpadding="0" cellspacing="0" style="background:#fff; border-radius:16px; border:1px solid #DDD9D2; overflow:hidden; max-width:520px;">
+
+          <tr>
+            <td style="background:#0F3826; padding:24px 32px;">
+              <div style="font-size:1.1rem; font-weight:800; color:#fff; letter-spacing:-0.02em;">Practice-BR</div>
+              <div style="font-size:0.7rem; color:#6EBD96; margin-top:3px;">Aviso interno</div>
+            </td>
+          </tr>
+
+          <tr>
+            <td style="padding:28px 32px 24px;">
+              <div style="font-size:1.8rem; margin-bottom:12px;">🌱</div>
+              <div style="font-size:1.15rem; font-weight:700; color:#1C1917; margin-bottom:6px;">
+                Varredura de retenção
+              </div>
+              <p style="font-size:0.85rem; color:#5C5853; line-height:1.55; margin:0 0 18px;">
+                Contas abandonadas nos prazos do registre des traitements
+                (3 anos sem atividade · 12 meses de teste não convertido).
+              </p>
+
+              <table width="100%" cellpadding="0" cellspacing="0" style="font-size:0.88rem; color:#5C5853;">
+                <tr>
+                  <td style="padding:6px 0; width:150px; color:#9C9892;">Avisadas</td>
+                  <td style="padding:6px 0;"><strong><%= @warned.size %></strong></td>
+                </tr>
+                <tr>
+                  <td style="padding:6px 0; color:#9C9892;">Apagadas</td>
+                  <td style="padding:6px 0;"><strong><%= @deleted.size %></strong></td>
+                </tr>
+                <% if @failed.any? %>
+                  <tr>
+                    <td style="padding:6px 0; color:#9C9892;">Falhas</td>
+                    <td style="padding:6px 0; color:#B4342A;"><strong><%= @failed.size %></strong> — ids <%= @failed.join(", ") %></td>
+                  </tr>
+                <% end %>
+              </table>
+
+              <% if @deleted.any? %>
+                <%# Só o id: o email da pessoa não pode ficar guardado na sua caixa
+                    de entrada depois de a conta ter sido apagada. %>
+                <p style="font-size:0.78rem; color:#9C9892; line-height:1.5; margin:18px 0 0;">
+                  Ids apagados: <%= @deleted.join(", ") %>
+                </p>
+              <% end %>
+
+              <% if @failed.any? %>
+                <table width="100%" cellpadding="0" cellspacing="0" style="background:#FDF2F1; border-radius:10px; margin-top:18px;">
+                  <tr>
+                    <td style="padding:14px 16px; font-size:0.82rem; color:#B4342A; line-height:1.5;">
+                      Exclusão falhou nessas contas — o caso mais provável é o Stripe
+                      ter recusado o cancelamento. Elas não foram apagadas e entram
+                      na varredura de novo amanhã; se insistir, vale olhar o log.
+                    </td>
+                  </tr>
+                </table>
+              <% end %>
+            </td>
+          </tr>
+
+          <tr>
+            <td style="background:#F7F5F0; border-top:1px solid #EAE7E2; padding:16px 32px; text-align:center;">
+              <p style="font-size:0.72rem; color:#9C9892; margin:0;">
+                © Practice-BR · Este email só chega nos dias em que houve movimento.
+              </p>
+            </td>
+          </tr>
+
+        </table>
+      </td>
+    </tr>
+  </table>
+
+</body>
+</html>

@@ -104,6 +104,73 @@ class User < ApplicationRecord
     trial? && trial_activities_used.to_i >= 3
   end
 
+  # ---- Retenção de dados (RGPD art. 5.1.e) -----------------------------------
+  #
+  # Os prazos abaixo estão declarados no registre des traitements
+  # (docs/REGISTRE_DES_TRAITEMENTS.md) e na seção 7 da política. Mudar um número
+  # aqui sem mudar os dois textos faz a plataforma apagar dado num prazo
+  # diferente do que ela promete — que é pior do que não apagar.
+  INACTIVITY_RETENTION   = 3.years
+  TRIAL_RETENTION        = 12.months
+  RETENTION_WARNING_LEAD = 30.days
+
+  # Assinatura em curso é contrato em curso, e contrato em curso é base legal pra
+  # continuar guardando. "canceling" e "past_due" contam: nos dois a relação
+  # ainda não terminou.
+  ONGOING_SUBSCRIPTION_STATUSES = %w[active canceling past_due].freeze
+
+  def subscription_ongoing?
+    ONGOING_SUBSCRIPTION_STATUSES.include?(subscription_status)
+  end
+
+  # "Última atividade" é a tentativa de quiz mais recente, não o último login.
+  # O `:trackable` do Devise nem está ativado, mas mesmo que estivesse: login
+  # mede aba aberta, tentativa mede uso de verdade. Quem nunca respondeu nada
+  # cai na data de criação da conta.
+  def last_activity_at
+    quiz_attempts.maximum(:created_at) || created_at
+  end
+
+  # Quem nunca chegou a pagar. O papel `trial` sozinho não serve pra isso: o
+  # aluno VOLTA a ser `trial` quando cancela a assinatura, e aí o
+  # `trial_expires_at` dele é o do teste original, de anos atrás. Usar só o papel
+  # apagaria em 12 meses quem foi aluno pagante — pelo prazo de quem nunca foi.
+  def never_converted_trial?
+    trial? && stripe_customer_id.blank?
+  end
+
+  # Data a partir da qual a conta pode ser apagada por inatividade.
+  # `nil` = nunca: professora, admin e assinatura em curso ficam de fora.
+  def retention_deadline
+    return nil if teacher? || admin?
+    return nil if subscription_ongoing?
+
+    if never_converted_trial?
+      (trial_expires_at || created_at) + TRIAL_RETENTION
+    else
+      last_activity_at + INACTIVITY_RETENTION
+    end
+  end
+
+  def retention_expired?
+    deadline = retention_deadline
+    deadline.present? && deadline <= Time.current
+  end
+
+  # Janela do aviso: falta menos que a carência pro prazo vencer.
+  def retention_warning_due?
+    deadline = retention_deadline
+    deadline.present? && deadline <= RETENTION_WARNING_LEAD.from_now
+  end
+
+  # Só apaga quem foi avisado e teve a carência inteira pra voltar. Um aviso
+  # recente segura a exclusão mesmo com o prazo vencido — é o que garante que
+  # ninguém é apagado sem ter tido chance de reagir.
+  def retention_warning_matured?
+    retention_warning_sent_at.present? &&
+      retention_warning_sent_at <= RETENTION_WARNING_LEAD.ago
+  end
+
   DAILY_STUDENT_LIMIT = 5
 
   def trial_access_active?

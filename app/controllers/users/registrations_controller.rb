@@ -21,26 +21,12 @@ module Users
     def destroy
       return refuse_teacher_self_deletion if resource.teacher?
 
-      user_id     = resource.id
-      role        = resource.role
-      customer_id = resource.stripe_customer_id
+      user_id = resource.id
 
-      # Apagar e cancelar dentro da MESMA transação. Assim os dois só valem se os
-      # dois derem certo: se o Stripe falhar, o destroy volta atrás; se o destroy
-      # falhar (uma associação sem `dependent:` derrubando por chave estrangeira,
-      # por exemplo), o Stripe nem chega a ser chamado.
-      #
-      # Segurar uma transação aberta durante uma chamada de rede não é ideal, mas
-      # aqui o volume é ínfimo e a alternativa é pior: cancelar fora dela deixaria
-      # a pessoa sem acesso pago e com a conta de pé, ou com assinatura órfã.
-      ActiveRecord::Base.transaction do
-        resource.destroy!
-        cancel_subscription!
-      end
-
-      AdminMailer.account_deleted_notification(
-        user_id: user_id, role: role, stripe_customer_id: customer_id
-      ).deliver_later
+      # O como está em AccountDeletionService — o mesmo caminho que o
+      # AccountRetentionJob usa pra apagar conta abandonada. Aqui fica só o que é
+      # HTTP: recusa da professora, sessão e mensagem.
+      AccountDeletionService.new(resource).call
 
       sign_out(resource_name)
       redirect_to root_path, notice: ACCOUNT_DELETED_NOTICE
@@ -55,18 +41,6 @@ module Users
     end
 
     private
-
-    # Cancelamento imediato, não `cancel_at_period_end`. A conta está sendo
-    # apagada: deixar a assinatura agendada manteria, num plano anual, uma
-    # assinatura "ativa" no Stripe por meses pra alguém que não existe mais.
-    def cancel_subscription!
-      sub_id = resource.stripe_subscription_id
-      return if sub_id.blank?
-      return if resource.subscription_status == "canceled"
-
-      Stripe::Subscription.cancel(sub_id)
-      Rails.logger.info "[Conta] Assinatura cancelada antes de apagar · user ##{resource.id}"
-    end
 
     def refuse_teacher_self_deletion
       redirect_to teacher_dashboard_path, alert: TEACHER_REFUSAL_ALERT
