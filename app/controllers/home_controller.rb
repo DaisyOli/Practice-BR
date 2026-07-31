@@ -14,7 +14,15 @@ class HomeController < ApplicationController
   def index
   end
 
+  # Fim do trial. Esta tela virou o momento da conversão — é onde a pessoa chega
+  # depois de gastar as 3 atividades —, então ela fala a língua de quem lê.
+  #
+  # O idioma sai do navegador e não da conta: quem entra pela landing tem o
+  # `language` no default (português), e mostrar português pra um visitante
+  # francês na hora de pedir dinheiro é o pior lugar possível pra errar.
   def trial_expired
+    @lang = browser_lang || PRIVACY_LANGS.first
+    response.headers["Vary"] = "Accept-Language"
   end
 
   def privacy
@@ -31,12 +39,16 @@ class HomeController < ApplicationController
   def requested_privacy_lang
     return params[:lang] if PRIVACY_LANGS.include?(params[:lang])
 
-    browser_privacy_lang || PRIVACY_LANGS.first
+    browser_lang || PRIVACY_LANGS.first
   end
 
   # "fr-FR,fr;q=0.9,en-US;q=0.8" → primeiro idioma da lista que a gente publica,
   # respeitando a ordem de preferência (o q=) declarada pelo navegador.
-  def browser_privacy_lang
+  #
+  # A escolha acontece **no servidor**, não em JavaScript: o texto certo precisa
+  # já estar no HTML, senão a página pisca no idioma errado e um leitor de tela
+  # anuncia a versão que ninguém queria.
+  def browser_lang
     request.env["HTTP_ACCEPT_LANGUAGE"].to_s
            .split(",")
            .map do |part|

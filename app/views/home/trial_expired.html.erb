@@ -1,29 +1,57 @@
+<%# Fim do trial: um CTA só, e na língua de quem lê.
+    O idioma vem do servidor (@lang, definido no HomeController a partir do
+    Accept-Language) e não de JavaScript — assim a página não pisca no idioma
+    errado antes de acertar. %>
+<%
+  copy = {
+    "fr" => {
+      title:  "Votre essai est terminé",
+      body:   "Vous avez utilisé toutes vos activités d'essai, ou les 7 jours sont écoulés.",
+      cta:    "S'abonner maintenant",
+      back:   "Retour à l'accueil"
+    },
+    "en" => {
+      title:  "Your trial has ended",
+      body:   "You've used all of your trial activities, or the 7 days have run out.",
+      cta:    "Subscribe now",
+      back:   "Back to home"
+    },
+    "pt" => {
+      title:  "Seu acesso de teste encerrou",
+      body:   "Você já usou todas as suas atividades de teste ou o prazo de 7 dias expirou.",
+      cta:    "Assinar agora",
+      back:   "Voltar para o início"
+    }
+  }.fetch(@lang, nil) || {
+      title: "Votre essai est terminé",
+      body:  "Vous avez utilisé toutes vos activités d'essai, ou les 7 jours sont écoulés.",
+      cta:   "S'abonner maintenant",
+      back:  "Retour à l'accueil"
+  }
+%>
 <div class="min-h-screen flex items-center justify-center bg-base-200 px-4 py-16">
   <div class="max-w-md w-full text-center">
 
     <div class="text-6xl mb-6">⏰</div>
 
     <h1 class="text-2xl font-bold text-base-content mb-3">
-      Seu acesso de teste encerrou
+      <%= copy[:title] %>
     </h1>
 
     <p class="text-base-content/70 mb-8 leading-relaxed">
-      Você já usou todas as suas atividades de teste ou o prazo de 7 dias expirou.<br>
-      Para continuar aprendendo português, fale com um professor da Practice-BR.
+      <%= copy[:body] %>
     </p>
 
+    <%# Um único caminho a partir daqui. O preço não aparece no botão porque a
+        escolha entre mensal e anual acontece na tela seguinte — anunciar só o
+        mensal aqui esconderia o plano mais barato por mês. %>
     <%= link_to billing_new_path,
-          class: "btn btn-lg w-full mb-3",
+          class: "btn btn-lg w-full mb-4",
           style: "background:var(--brand); color:var(--surface); border-color:var(--brand); font-weight:700;" do %>
-      Assinar agora — €9,99/mês
+      <%= copy[:cta] %>
     <% end %>
 
-    <a href="mailto:contato@practicebr.com?subject=Quero%20continuar%20aprendendo%20-%20Practice-BR"
-       class="btn btn-outline btn-sm w-full mb-4">
-      Falar com um professor
-    </a>
-
-    <%= link_to "Voltar para o início", root_path,
+    <%= link_to copy[:back], root_path,
           class: "btn btn-ghost btn-sm text-base-content/50" %>
 
   </div>
