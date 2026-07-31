@@ -39,4 +39,21 @@ RSpec.describe "Renderização das páginas principais", type: :request do
     get solve_activity_path(activity)
     expect(response).to have_http_status(:ok)
   end
+
+  # A política é pública e é o que um auditor abre primeiro: precisa renderizar
+  # deslogada, nas três versões. Cada uma segue um regime jurídico diferente, daí
+  # conferir uma marca do texto e não só o 200.
+  %w[fr en pt].each do |lang|
+    it "política de privacidade (#{lang}), sem estar logada" do
+      get privacy_path(lang: lang)
+      expect(response).to have_http_status(:ok)
+    end
+  end
+
+  it "a política declara os prazos de conservação nas três versões" do
+    { "fr" => "3 ans", "en" => "3 years", "pt" => "3 anos" }.each do |lang, prazo|
+      get privacy_path(lang: lang)
+      expect(response.body).to include(prazo), "versão #{lang} não declara o prazo de retenção"
+    end
+  end
 end
