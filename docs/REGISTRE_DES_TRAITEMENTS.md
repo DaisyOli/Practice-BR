@@ -363,10 +363,18 @@ Applicables à l'ensemble des traitements :
   sauvegardes ne sont jamais consultées à d'autres fins que la restauration après
   incident.
 
-**Limite connue et assumée.** La plateforme ne dispose pas encore d'un outil de
-détection et d'alerte sur incident. La notification à la CNIL dans les 72 heures
-(art. 33) repose donc aujourd'hui sur la constatation manuelle. La mise en place
-d'une supervision des erreurs est identifiée comme le prochain chantier de sécurité.
+**Procédure de violation de données.** Une procédure écrite est en place depuis le
+31/07/2026 : délais applicables, arbre de décision sur l'obligation de notifier,
+registre interne des violations au titre de l'article 33(5) — y compris celles qui
+ne sont pas notifiées —, scénarios de défaillance propres à cette plateforme, et
+modèles de notification déjà rédigés, pour la CNIL comme pour les personnes
+concernées.
+
+**Limite connue et assumée.** La plateforme ne dispose pas encore d'un outil
+automatique de détection et d'alerte. La constatation d'un incident repose donc sur
+l'observation du responsable du traitement. La mise en place d'une supervision des
+erreurs est le prochain chantier de sécurité ; la procédure ci-dessus a été établie
+en premier, parce qu'elle est ce qui ne peut pas être improvisé le jour venu.
 
 ---
 

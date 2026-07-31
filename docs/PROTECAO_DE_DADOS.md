@@ -167,6 +167,7 @@ portuguesa segue a LGPD e não é tradução.
 
 ```
 docs/REGISTRE_DES_TRAITEMENTS.md              → registro do art. 30 (para a CNIL, não pro titular)
+docs/PROCEDIMENTO_DE_INCIDENTE.md             → o que fazer no dia do vazamento (prazos, modelos)
 config/routes.rb                              → GET /confidentialite (pública)
 app/controllers/home_controller.rb            → #privacy + escolha de idioma
 app/views/home/privacy.html.erb               → casca: título, data, seletor
@@ -349,7 +350,14 @@ Pendente, em ordem de risco:
       único cuja mecânica de aceite não deu para confirmar, porque a Salesforce bloqueia
       leitura automatizada. Ver a tabela acima.
 - [ ] **Idade mínima** — nenhum dos apps pergunta idade
-- [ ] **Detecção de incidente** — sem monitoramento de erro não há como notificar em 72h (RGPD) ou em prazo razoável (LGPD art. 48)
+- [ ] **Detecção de incidente** — o **procedimento** existe desde 2026-07-31
+      (`docs/PROCEDIMENTO_DE_INCIDENTE.md`): prazos, árvore de decisão, registro do art. 33(5),
+      cenários reais deste app e os modelos de notificação já redigidos em francês. Falta a
+      **ferramenta**: sem monitoramento de erro, a detecção depende de você reparar. A ordem foi
+      essa de propósito — o procedimento é o que não dá para improvisar no dia, a ferramenta
+      dá para adicionar quando quiser.
+      **Descoberta ao escrever:** o prazo que aperta **não é** o de 72h da CNIL, é o brasileiro —
+      a Resolução CD/ANPD nº 15/2024 fixa **3 dias úteis** para avisar a ANPD **e o titular**.
 - [x] ~~**Registre des traitements (RGPD art. 30)**~~ — escrito em 2026-07-31, em francês, em
       `docs/REGISTRE_DES_TRAITEMENTS.md`. Oito tratamentos: contas, serviço pedagógico,
       correção por IA, transcrição de áudio, assinatura, comunicações, segurança/logs e
@@ -363,6 +371,11 @@ Pendente, em ordem de risco:
 
 ## Histórico
 
+- **2026-07-31 (tarde)** — Escrito o `PROCEDIMENTO_DE_INCIDENTE.md`. Apareceu de
+  imediato uma coisa que a lista de pendências dizia errado: o prazo apertado não é
+  o de 72h da CNIL, é o da ANPD — **3 dias úteis**, para a autoridade *e* para o
+  titular (Resolução CD/ANPD nº 15/2024). Retenção, política e registre deployados
+  na v184.
 - **2026-07-31** — Escrito o `REGISTRE_DES_TRAITEMENTS.md` (art. 30), em francês.
   Montá-lo revelou que os prazos de conservação nunca tinham sido decididos — e a
   decisão virou código no mesmo dia: `AccountRetentionJob` apaga conta abandonada
