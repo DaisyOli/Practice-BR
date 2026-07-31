@@ -349,7 +349,16 @@ Pendente, em ordem de risco:
       que a *accountability* pede, e (b) olhar o da Salesforce/Heroku com olho humano — é o
       único cuja mecânica de aceite não deu para confirmar, porque a Salesforce bloqueia
       leitura automatizada. Ver a tabela acima.
-- [ ] **Idade mínima** — nenhum dos apps pergunta idade
+- [x] ~~**Idade mínima**~~ — **decidido em 2026-07-31: não perguntar.** O público do practice-br
+      é adulto — formação profissional, aluno entra por convite de professora, não é serviço
+      aberto a menor. O art. 8 do RGPD, além disso, só morde quando a base legal é
+      **consentimento**, e aqui a base do serviço é contrato (ver o registre); consentimento
+      cobre só notificação e lembrete.
+      A proporcionalidade é o próprio critério da CNIL: pedir documento para um app de idiomas
+      seria desproporcional, e desproporcional também é infração. A política já diz o que fazer
+      se uma conta de menor aparecer sem autorização — é apagada.
+      **Reabrir se o público mudar** (turma de escola, adolescente, serviço aberto a qualquer
+      um sem convite). Aí a decisão muda junto.
 - [ ] **Detecção de incidente** — o **procedimento** existe desde 2026-07-31
       (`docs/PROCEDIMENTO_DE_INCIDENTE.md`): prazos, árvore de decisão, registro do art. 33(5),
       cenários reais deste app e os modelos de notificação já redigidos em francês. Falta a
