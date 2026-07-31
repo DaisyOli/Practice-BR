@@ -104,6 +104,37 @@ class User < ApplicationRecord
     trial? && trial_activities_used.to_i >= 3
   end
 
+  # ---- O caminho de volta do trial -------------------------------------------
+  #
+  # Pra quem entra pela landing, o link do email **não é** um "esqueci minha
+  # senha": é o único jeito de voltar, porque a pessoa nunca criou senha. Com as
+  # 6 horas padrão do Devise, quem se cadastrava à noite e voltava no dia
+  # seguinte encontrava um link morto — e um "esqueci minha senha" que não faz
+  # sentido pra quem nunca teve uma.
+  #
+  # O prazo é maior que o teste (7 dias) de propósito: link vencido no meio do
+  # teste é pior que link vivo depois dele. E depois que o teste acaba, entrar
+  # leva à tela de assinatura, que é justamente onde a gente quer essa pessoa.
+  #
+  # Vale **só pro trial**. Aluno pagante segue com as 6 horas: ali o link é uma
+  # recuperação de senha de verdade, e prazo curto é a proteção certa.
+  TRIAL_PASSWORD_LINK_VALIDITY = 8.days
+
+  # Gancho do Devise::Models::Recoverable. Sobrescrever aqui é o que permite um
+  # prazo por tipo de conta sem tocar no `config.reset_password_within`, que é
+  # global.
+  #
+  # **Precisa ser público.** No Devise este método é público e é chamado de fora,
+  # pelo `User.reset_password_by_token`. Movê-lo pra baixo de um `protected`
+  # daqui quebra a redefinição de senha do app inteiro — com um NoMethodError que
+  # não diz nada sobre visibilidade à primeira vista.
+  def reset_password_period_valid?
+    return super unless trial?
+
+    reset_password_sent_at.present? &&
+      reset_password_sent_at.utc >= TRIAL_PASSWORD_LINK_VALIDITY.ago
+  end
+
   # ---- Retenção de dados (RGPD art. 5.1.e) -----------------------------------
   #
   # Os prazos abaixo estão declarados no registre des traitements

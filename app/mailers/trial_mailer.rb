@@ -18,7 +18,7 @@ class TrialMailer < ApplicationMailer
       count:   "Jusqu'à <strong>3 activités</strong> à votre niveau",
       until:   "Valable jusqu'au",
       cta:     "Retourner sur Practice-BR →",
-      note:    "En cliquant, vous créerez un mot de passe pour garder votre progression. Ce lien est valable 6 heures ; passé ce délai, utilisez « mot de passe oublié » sur la page de connexion.",
+      note:    "En cliquant, vous créerez un mot de passe pour garder votre progression. Ce lien reste valable pendant toute la durée de votre essai.",
       after:   "Une fois les 3 activités terminées, vous pourrez vous abonner pour continuer.",
       footer:  "© Practice-BR · Ceci est un message automatique, merci de ne pas y répondre."
     },
@@ -31,7 +31,7 @@ class TrialMailer < ApplicationMailer
       count:   "Up to <strong>3 activities</strong> at your level",
       until:   "Valid until",
       cta:     "Back to Practice-BR →",
-      note:    "Clicking will let you create a password to keep your progress. This link is valid for 6 hours; after that, use \"forgot password\" on the sign-in page.",
+      note:    "Clicking will let you create a password to keep your progress. This link stays valid for the whole length of your trial.",
       after:   "Once you've done the 3 activities, you can subscribe to keep going.",
       footer:  "© Practice-BR · This is an automated message, please do not reply."
     },
@@ -44,7 +44,7 @@ class TrialMailer < ApplicationMailer
       count:   "Até <strong>3 atividades</strong> no seu nível",
       until:   "Válido até",
       cta:     "Voltar para a Practice-BR →",
-      note:    "Ao clicar, você vai criar uma senha para guardar seu progresso. O link vale por 6 horas; depois disso, use \"esqueci minha senha\" na tela de entrada.",
+      note:    "Ao clicar, você vai criar uma senha para guardar seu progresso. O link continua valendo durante todo o seu teste.",
       after:   "Quando terminar as 3 atividades, você pode assinar para continuar.",
       footer:  "© Practice-BR · Este é um email automático, por favor não responda."
     }

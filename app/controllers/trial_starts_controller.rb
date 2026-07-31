@@ -30,6 +30,13 @@ class TrialStartsController < ApplicationController
     user = TrialStartToken.redeem(params[:token])
 
     if user
+      # "Lembrar de mim" sem a pessoa pedir, e de propósito: ela não tem senha
+      # pra digitar se a sessão morrer. Sem isto, fechar o navegador significava
+      # depender do link do email — que é o caminho mais frágil dos dois.
+      #
+      # Marcar no objeto **antes** do sign_in é o que dispara o hook do Devise
+      # que grava o cookie. Não existe um `remember_me` de controller aqui.
+      user.remember_me = true
       sign_in(user)
       redirect_to student_dashboard_path, notice: WELCOME.fetch(user.language, WELCOME["fr"])
     elsif user_signed_in?

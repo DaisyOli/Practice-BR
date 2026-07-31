@@ -72,6 +72,15 @@ RSpec.describe "Entrada do trial pela landing", type: :request do
       expect(flash[:notice]).to include("Bienvenue")
     end
 
+    it "deixa a sessão lembrada, pra fechar o navegador não custar a conta" do
+      get trial_start_path(token: token)
+
+      # A pessoa não tem senha pra digitar de novo: sem o "lembrar de mim", a
+      # única volta seria o link do email.
+      expect(user.reload.remember_created_at).to be_present
+      expect(response.cookies["remember_user_token"]).to be_present
+    end
+
     it "entrar não gasta nada do trial" do
       get trial_start_path(token: token)
 
