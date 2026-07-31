@@ -35,7 +35,21 @@ module Api
         TrialMailer.welcome_email(user, raw_token).deliver_later
         TrialMailer.notification_email(user).deliver_later
 
-        render json: { ok: true }, status: :created
+        # `start_url` é a mudança que importa: a landing redireciona pra ele em
+        # vez de mostrar "confira seu email", e a pessoa cai dentro do app já
+        # logada. O email segue saindo acima — ele agora é o caminho de volta,
+        # não o portão de entrada.
+        render json: { ok: true, start_url: start_url_for(user) }, status: :created
+      end
+
+      private
+
+      def start_url_for(user)
+        trial_start_url(
+          token: TrialStartToken.generate(user),
+          host:  Rails.application.config.action_mailer.default_url_options[:host],
+          protocol: "https"
+        )
       end
     end
   end

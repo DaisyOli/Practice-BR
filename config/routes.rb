@@ -105,6 +105,10 @@ Rails.application.routes.draw do
     end
   end
 
+  # Entrada do trial: a landing manda a pessoa pra cá com o token que a API
+  # acabou de devolver, e ela entra já logada. Sem passar pela caixa de entrada.
+  get "comecar", to: "trial_starts#show", as: :trial_start
+
   # Assinatura Stripe
   get  "assinar",              to: "billing#new",              as: :billing_new
   post "assinar/checkout",     to: "billing#create_checkout",  as: :billing_checkout
