@@ -140,12 +140,20 @@ A gravação serve só para gerar a transcrição e é apagada em seguida
 (`purge_later` no `ensure` do job, para apagar também quando falha). Só o texto
 fica.
 
-### 5. Todo terceiro novo entra na tabela
+### 5. Todo terceiro novo entra em três lugares
 
-Adicionou Stripe, um serviço de email, um storage? Ele vira uma linha em
-`_privacy_subprocessors.html.erb` **antes** de ir para produção. A tabela é um
-partial compartilhado pelas versões justamente para não desatualizar num idioma e
-não no outro.
+Adicionou Stripe, um serviço de email, um storage? **Antes** de ir para produção
+ele vira:
+
+1. uma linha em `_privacy_subprocessors.html.erb` — a tabela é um partial
+   compartilhado pelas versões justamente para não desatualizar num idioma e não
+   no outro;
+2. uma linha na tabela de sous-traitants do `REGISTRE_DES_TRAITEMENTS.md`, e uma
+   menção na fiche do tratamento que o usa;
+3. uma linha na tabela de DPAs deste arquivo, com a cópia datada guardada.
+
+Esquecer o item 2 é o mais fácil, porque o registre não aparece em lugar nenhum
+do app — nada quebra, ele só fica mentindo.
 
 ### 6. Texto legal nasce em francês
 
@@ -158,6 +166,7 @@ portuguesa segue a LGPD e não é tradução.
 ## Onde está cada coisa
 
 ```
+docs/REGISTRE_DES_TRAITEMENTS.md              → registro do art. 30 (para a CNIL, não pro titular)
 config/routes.rb                              → GET /confidentialite (pública)
 app/controllers/home_controller.rb            → #privacy + escolha de idioma
 app/views/home/privacy.html.erb               → casca: título, data, seletor
@@ -176,7 +185,15 @@ GET  /meus-dados/download   → data_exports#download  JSON (portabilidade)
      app/services/data_export_service.rb             o que entra na exportação
 GET  /excluir-conta         → account_deletions#new  confirmação
 DELETE /users               → users/registrations#destroy  apaga + cancela Stripe
+     app/services/account_deletion_service.rb        o COMO da exclusão (transação + Stripe)
 ```
+
+**A exclusão tem um caminho só.** `AccountDeletionService` é usado tanto pelo
+pedido da pessoa quanto pela retenção automática. Isso é de propósito: já
+aconteceu de conta ser apagada sem cancelar a assinatura, e o cartão seguir sendo
+cobrado de quem não tinha mais como entrar e cancelar. Duas cópias dessa lógica
+significam essa correção existir num caminho e faltar no outro. **Não reimplemente
+exclusão em lugar nenhum** — chame o serviço.
 
 **Ao criar uma tabela que guarde dado ligado a uma pessoa, são três passos:**
 `dependent: :destroy` na associação (senão a exclusão quebra por chave
@@ -191,6 +208,49 @@ tela ou um buscador. `?lang=fr|en|pt` força uma versão. A resposta manda
 
 Para adicionar um idioma: crie `_privacy_<código>.html.erb`, acrescente o código
 em `PRIVACY_LANGS` e o rótulo no seletor. O `hreflang` se atualiza sozinho.
+
+---
+
+## Como a retenção funciona
+
+Guardar dado para sempre viola o art. 5.1.e do RGPD, e é o que a plataforma fazia
+até 2026-07-31. Agora `AccountRetentionJob` roda todo dia às 3h30 e apaga conta
+abandonada.
+
+```
+app/jobs/account_retention_job.rb        a varredura (avisa → espera → apaga)
+app/models/user.rb                       os prazos e quem é candidato
+app/mailers/retention_mailer.rb          o aviso, nos três idiomas
+spec/jobs/account_retention_job_spec.rb  metade dos testes prova quem NÃO é apagado
+```
+
+| Situação | Prazo |
+|---|---|
+| Conta sem atividade | 3 anos depois da última tentativa de quiz |
+| Trial que nunca converteu | 12 meses depois de `trial_expires_at` |
+| Assinatura em curso (`active`, `canceling`, `past_due`) | não apaga — contrato em curso é base legal |
+| Professora, admin | não apaga, nunca |
+
+**"Última atividade" é a `quiz_attempts.created_at` mais recente, não o login.**
+O `:trackable` do Devise não está ativado, mas essa nem é a razão principal:
+login mede aba aberta, tentativa mede uso de verdade.
+
+**Ninguém é apagado sem aviso.** O job manda um email 30 dias antes e só apaga
+quando esse aviso tem 30 dias completos. Se a pessoa voltar a praticar no meio,
+`retention_warning_sent_at` volta a `nil` e a contagem recomeça. São três estados,
+não dois — mexer nisso sem entender isso apaga gente cedo demais.
+
+**A armadilha que quase passou:** o papel `trial` não quer dizer "nunca
+converteu". O aluno volta a ser `trial` quando cancela a assinatura, e o
+`trial_expires_at` dele continua sendo o do teste original, de anos atrás. Usar só
+o papel apagaria um ex-aluno pagante em 12 meses, pelo prazo de quem nunca pagou.
+Daí `never_converted_trial?` olhar também o `stripe_customer_id`. Tem teste pra
+isso.
+
+**Ao mudar qualquer prazo, mude em três lugares:** as constantes no `User`, a
+fiche 1 do `REGISTRE_DES_TRAITEMENTS.md` e a seção 7 das **três** versões da
+política. Apagar num prazo diferente do que a política promete é pior do que não
+apagar.
 
 ---
 
@@ -245,14 +305,19 @@ atualizados unilateralmente (o da Stripe mudou em 18/11/2025).
 |---|---|---|
 | Stripe | Incorporado ao Services Agreement: *"forms part of the Agreement"*. Sem assinatura separada. [stripe.com/legal/dpa](https://stripe.com/legal/dpa) · subprocessadores em [/legal/service-providers](https://stripe.com/legal/service-providers) | 2026-07-30 ✅ |
 | Anthropic | Incorporado por referência às Commercial Terms: *"processed in accordance with the Anthropic Data Processing Addendum, which is incorporated into these Terms by reference"*. [anthropic.com/legal/data-processing-addendum](https://www.anthropic.com/legal/data-processing-addendum) | 2026-07-30 ✅ |
-| Heroku (Salesforce) | a verificar | — |
-| OpenAI | a verificar | — |
-| Resend | a verificar | — |
-| Cloudinary | a verificar | — |
+| Resend | Vinculação automática, sem assinatura: *"This Addendum shall become legally binding upon Customer entering into the Agreement or upon execution of this Addendum."* Certificada no EU-US Data Privacy Framework, com SCCs de reserva. Versão de 2025-12-31. [resend.com/legal/dpa](https://resend.com/legal/dpa) · subprocessadores em [/legal/subprocessors](https://resend.com/legal/subprocessors) | 2026-07-31 ✅ |
+| OpenAI | Incorporado por referência aos Business Terms do uso pago da API — mesma mecânica de Anthropic e Stripe, sem assinatura separada. Certificada no EU-US Data Privacy Framework (reconfirmado em junho/2026). [openai.com/policies/data-processing-addendum](https://openai.com/policies/data-processing-addendum/) | 2026-07-31 ✅ |
+| Cloudinary | *"forms part of the Cloudinary Subscription Agreement"*, com as SCCs da Decisão (UE) 2021/914 incorporadas por referência. Versão de junho/2026. [cloudinary.com/gdpr/dpa](https://cloudinary.com/gdpr/dpa) (redireciona pro PDF datado) | 2026-07-31 ✅ |
+| Heroku (Salesforce) | **Não existe DPA específico da Heroku** — a palavra é da própria Heroku: *"there is not a Heroku specific DPA (we have a DPA that covers all service offered by Salesforce, including Heroku)"*. O documento é o [DPA da Salesforce](https://www.salesforce.com/company/legal/agreements/) (revisão de abril/2026), que incorpora por referência as BCR de processador e as SCCs. **Falta confirmar se basta o aceite dos termos ou se pede contra-assinatura** — a Salesforce bloqueia leitura automatizada do PDF, então essa parte tem que ser olhada por gente. [Artigo da Heroku](https://help.heroku.com/B4E5QFQQ/where-do-i-get-copy-of-dpa-from-heroku) | 2026-07-31 ⚠️ parcial |
 
 Ao adicionar um operador novo, este é o terceiro passo (depois de entrar na
 tabela da política e no registro do art. 30): achar o DPA, salvar cópia datada,
 anotar aqui.
+
+**O que falta, e que só você pode fazer:** salvar o **PDF datado** de cada um dos
+seis. A conferência acima é a leitura do texto em vigor hoje; a prova que a
+*accountability* pede é a cópia. Todos os links levam ao PDF ou têm botão de
+imprimir. E olhar o DPA da Salesforce com olho humano, pela razão da linha acima.
 
 ## Estado atual e pendências
 
@@ -273,28 +338,40 @@ Pendente, em ordem de risco:
       assinatura **antes** de apagar, e abortando se o Stripe falhar. Professora não se
       auto-exclui (as atividades dela são conteúdo da plataforma, não dado pessoal).
       **Falta portar pro practice-fr** — lá não há Stripe, então é bem mais simples.
-- [ ] **Política de retenção** — nada expira; trials que nunca converteram ficam para sempre
-- [ ] **DPAs** — Stripe e Anthropic conferidos (incorporados automaticamente, nada a assinar);
-      faltam Heroku, OpenAI, Resend e Cloudinary. Ver a tabela acima e guardar cópia datada
-      de cada um.
+- [x] ~~**Política de retenção**~~ — feita em 2026-07-31. Prazos: conta sem atividade some
+      depois de **3 anos**, trial que nunca converteu some **12 meses** depois de o teste
+      expirar, peça contábil fica **10 anos** (obrigação legal, sobrevive ao pedido de
+      exclusão). Assinatura em curso segura a conta. Ver a seção *Como a retenção funciona*.
+      **Falta portar pro practice-fr.**
+- [ ] **DPAs** — os seis conferidos em 2026-07-30/31: todos se incorporam automaticamente aos
+      termos, **nada a assinar**. Falta (a) guardar a cópia datada de cada um, que é a prova
+      que a *accountability* pede, e (b) olhar o da Salesforce/Heroku com olho humano — é o
+      único cuja mecânica de aceite não deu para confirmar, porque a Salesforce bloqueia
+      leitura automatizada. Ver a tabela acima.
 - [ ] **Idade mínima** — nenhum dos apps pergunta idade
 - [ ] **Detecção de incidente** — sem monitoramento de erro não há como notificar em 72h (RGPD) ou em prazo razoável (LGPD art. 48)
-- [ ] **Registre des traitements (RGPD art. 30)** — não existe. É uma peça **separada** da
-      política: a política é para o titular ler, este registro é para a CNIL pedir numa
-      fiscalização. Lista, por finalidade, as categorias de dados, os destinatários, os
-      prazos de conservação e as transferências internacionais.
-      A isenção do art. 30(5) para organizações com menos de 250 pessoas **não se aplica**
-      aqui, porque o tratamento é regular e não ocasional (dados de aluno tratados
-      continuamente).
-      **Precisa estar em francês e pronto de antemão** — é a única pendência desta lista que
-      não dá para produzir depois do pedido. O conteúdo em si já existe espalhado pela
-      política (finalidades, bases legais, operadores, transferências): montar o registro é
-      mais reorganizar do que descobrir.
+- [x] ~~**Registre des traitements (RGPD art. 30)**~~ — escrito em 2026-07-31, em francês, em
+      `docs/REGISTRE_DES_TRAITEMENTS.md`. Oito tratamentos: contas, serviço pedagógico,
+      correção por IA, transcrição de áudio, assinatura, comunicações, segurança/logs e
+      pedidos de exercício de direitos. Serve também ao art. 37 da LGPD.
+      É uma peça **separada** da política — a política é para o titular ler, o registre é para
+      a CNIL pedir numa fiscalização — e **precisa continuar de pé**: quando mudar finalidade,
+      operador ou prazo, ele muda junto. A isenção do art. 30(5) para organizações com menos
+      de 250 pessoas não se aplica aqui, porque o tratamento é regular e não ocasional.
 
 ---
 
 ## Histórico
 
+- **2026-07-31** — Escrito o `REGISTRE_DES_TRAITEMENTS.md` (art. 30), em francês.
+  Montá-lo revelou que os prazos de conservação nunca tinham sido decididos — e a
+  decisão virou código no mesmo dia: `AccountRetentionJob` apaga conta abandonada
+  com aviso 30 dias antes, e a seção 7 das três versões da política passou a
+  declarar os prazos. De quebra, a exclusão virou `AccountDeletionService`, para o
+  pedido da pessoa e a purga automática não divergirem.
+- **2026-07-30** — Direitos exercíveis pelo próprio aluno: `/meus-dados` (acesso e
+  portabilidade) e `/excluir-conta` (exclusão real, com a assinatura cancelada na
+  Stripe antes). DPAs de Stripe e Anthropic conferidos.
 - **2026-07-29** — Primeira adequação. Removidos 5 CDNs do practice-br e 2 do
   practice-fr; `log_level` de produção do BR voltou de `debug` para `info`;
   criadas as políticas nos dois apps (FR/EN sob RGPD, PT sob LGPD). Descoberto e
