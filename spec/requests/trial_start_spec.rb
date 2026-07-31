@@ -17,6 +17,35 @@ RSpec.describe "Entrada do trial pela landing", type: :request do
       expect(body["start_url"]).to include("/comecar?token=")
     end
 
+    it "guarda o idioma que a landing mandou" do
+      post "/api/v1/trials", params: { email: "fr@email.com", level: "B1", language: "fr" }, as: :json
+
+      expect(User.find_by(email: "fr@email.com").language).to eq("fr")
+    end
+
+    it "cai no padrão quando a landing não manda idioma, em vez de recusar" do
+      post "/api/v1/trials", params: { email: "sem@email.com", level: "B1" }, as: :json
+
+      expect(response).to have_http_status(:created)
+      expect(User.find_by(email: "sem@email.com").language).to eq(User::DEFAULT_LANGUAGE)
+    end
+
+    it "ignora idioma que a gente não publica, sem derrubar o cadastro" do
+      post "/api/v1/trials", params: { email: "de@email.com", level: "B1", language: "de" }, as: :json
+
+      expect(response).to have_http_status(:created)
+      expect(User.find_by(email: "de@email.com").language).to eq(User::DEFAULT_LANGUAGE)
+    end
+
+    it "manda o email de boas-vindas no idioma do cadastro" do
+      perform_enqueued_jobs do
+        post "/api/v1/trials", params: { email: "fr2@email.com", level: "B1", language: "fr" }, as: :json
+      end
+
+      boas_vindas = ActionMailer::Base.deliveries.find { |m| m.to == ["fr2@email.com"] }
+      expect(boas_vindas.subject).to include("Votre lien pour revenir")
+    end
+
     it "continua mandando o email — ele virou o caminho de volta, não sumiu" do
       expect {
         perform_enqueued_jobs do

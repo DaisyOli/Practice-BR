@@ -25,34 +25,34 @@
           <%# Corpo %>
           <tr>
             <td style="padding:36px 36px 28px;">
-              <div style="font-size:2rem; margin-bottom:16px;">🎉</div>
+              <div style="font-size:2rem; margin-bottom:16px;">🔖</div>
               <h1 style="font-size:1.2rem; font-weight:700; color:#1C1917; margin:0 0 12px;">
-                Seu acesso de teste está pronto!
+                <%= @copy[:title] %>
               </h1>
               <p style="font-size:0.9rem; color:#5C5853; line-height:1.6; margin:0 0 20px;">
-                Olá! Preparamos um acesso especial para você explorar a Practice-BR.
+                <%= @copy[:lead] %>
               </p>
 
               <%# Resumo do acesso %>
               <table cellpadding="0" cellspacing="0" width="100%" style="background:#F0F7F4; border-radius:10px; padding:20px; margin-bottom:24px;">
                 <tr>
                   <td style="padding:0 0 10px 0;">
-                    <span style="font-size:0.8rem; font-weight:700; color:#0F3826; text-transform:uppercase; letter-spacing:0.05em;">Seu acesso inclui</span>
+                    <span style="font-size:0.8rem; font-weight:700; color:#0F3826; text-transform:uppercase; letter-spacing:0.05em;"><%= @copy[:includes] %></span>
                   </td>
                 </tr>
                 <tr>
                   <td style="padding:4px 0;">
-                    <span style="font-size:0.9rem; color:#1C1917;">📚 Nível cadastrado: <strong><%= @user.level %></strong></span>
+                    <span style="font-size:0.9rem; color:#1C1917;">📚 <%= @copy[:level] %>: <strong><%= @user.level %></strong></span>
                   </td>
                 </tr>
                 <tr>
                   <td style="padding:4px 0;">
-                    <span style="font-size:0.9rem; color:#1C1917;">✅ Até <strong>3 atividades</strong> no nível <%= @user.level %></span>
+                    <span style="font-size:0.9rem; color:#1C1917;">✅ <%= @copy[:count].html_safe %></span>
                   </td>
                 </tr>
                 <tr>
                   <td style="padding:4px 0;">
-                    <span style="font-size:0.9rem; color:#1C1917;">⏰ Válido até <strong><%= l(@expires_at, format: :long) %></strong></span>
+                    <span style="font-size:0.9rem; color:#1C1917;">⏰ <%= @copy[:until] %> <strong><%= @expires_at %></strong></span>
                   </td>
                 </tr>
               </table>
@@ -65,17 +65,17 @@
                        style="display:inline-block; background:#1A6B4A; color:#fff;
                               font-size:0.92rem; font-weight:700;
                               padding:14px 36px; border-radius:10px; text-decoration:none;">
-                      Acessar a Practice-BR →
+                      <%= @copy[:cta] %>
                     </a>
                   </td>
                 </tr>
               </table>
 
               <p style="font-size:0.8rem; color:#9C9892; line-height:1.55; margin:0 0 12px;">
-                Ao clicar no botão, você vai criar uma senha e entrar na plataforma. O link é válido por 6 horas.
+                <%= @copy[:note] %>
               </p>
               <p style="font-size:0.8rem; color:#9C9892; line-height:1.55; margin:0;">
-                Depois que as 3 atividades ou os 7 dias acabarem, fale com um professor para continuar aprendendo português!
+                <%= @copy[:after] %>
               </p>
             </td>
           </tr>
@@ -84,7 +84,7 @@
           <tr>
             <td style="background:#F7F5F0; border-top:1px solid #EAE7E2; padding:18px 36px; text-align:center;">
               <p style="font-size:0.75rem; color:#9C9892; margin:0;">
-                © Practice-BR · Este é um email automático, por favor não responda.
+                <%= @copy[:footer] %>
               </p>
             </td>
           </tr>

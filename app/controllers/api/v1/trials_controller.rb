@@ -16,6 +16,7 @@ module Api
           email: email,
           level: level,
           role: "trial",
+          language: requested_language,
           password: SecureRandom.hex(12),
           trial_activities_used: 0,
           trial_expires_at: 7.days.from_now,
@@ -43,6 +44,17 @@ module Api
       end
 
       private
+
+      # A landing sabe o idioma da pessoa — ela está navegando em /fr, /en ou
+      # /pt — e passa junto. Sem isso toda conta nascia em português, inclusive
+      # a de visitante francês, e o email de boas-vindas saía no idioma errado.
+      #
+      # Não dá pra usar o Accept-Language aqui: quem chama esta API é o servidor
+      # da Vercel, não o navegador da pessoa. O cabeçalho seria o de um robô.
+      def requested_language
+        lang = params[:language].to_s.strip.downcase[0, 2]
+        User::LANGUAGES.include?(lang) ? lang : User::DEFAULT_LANGUAGE
+      end
 
       def start_url_for(user)
         trial_start_url(

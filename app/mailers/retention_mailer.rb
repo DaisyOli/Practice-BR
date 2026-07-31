@@ -50,13 +50,4 @@ class RetentionMailer < ApplicationMailer
 
     mail(to: user.email, subject: format(@copy[:subject], date: @deadline))
   end
-
-  private
-
-  # Sem nome de mês de propósito nas versões fr e pt: `%B` sai em inglês a menos
-  # que se troque o locale, e "15 August" num email em francês fica pior que
-  # 15/08.
-  def format_date(date, language)
-    language == "en" ? date.strftime("%B %-d, %Y") : date.strftime("%d/%m/%Y")
-  end
 end
