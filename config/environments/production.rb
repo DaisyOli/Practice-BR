@@ -122,6 +122,13 @@ Rails.application.configure do
         cron: "0 7 * * 1 Europe/Paris",
         class: "WeeklyReminderJob"
       },
+      # Meia hora depois do lembrete do 3º dia, de propósito: os dois nunca
+      # falam com a mesma pessoa (um é de quem começou, outro de quem não),
+      # mas se um dia se cruzarem, chegam em horas diferentes.
+      trial_sequence: {
+        cron: "30 7 * * * Europe/Paris",
+        class: "TrialSequenceJob"
+      },
       # A cada 6h (não 1x/dia): o gatilho é "48h desde a última atividade",
       # então precisa rodar várias vezes ao dia pra não deixar passar de
       # 48h + quase 1 dia inteiro por causa do agendamento.

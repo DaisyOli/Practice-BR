@@ -1,0 +1,93 @@
+<%#
+  Moldura compartilhada dos emails do teste (ativação, lembrete, fim, volta).
+
+  Os quatro têm a mesma anatomia — emoji, título, texto, uma atividade concreta
+  (quando faz sentido), botão e observação — e o que muda de verdade é o texto,
+  que mora nas constantes do TrialMailer. Um arquivo por email significaria
+  quatro lugares pra corrigir o mesmo `<td>` errado.
+
+  Locais: emoji, title, lead, cta, url, note (opcional), activity (opcional),
+  footer (opcional).
+%>
+<table width="100%" cellpadding="0" cellspacing="0" style="background:#F7F5F0; padding:40px 16px; font-family:'Helvetica Neue',Arial,sans-serif;">
+  <tr>
+    <td align="center">
+      <table width="520" cellpadding="0" cellspacing="0" style="background:#fff; border-radius:16px; border:1px solid #DDD9D2; overflow:hidden; max-width:520px;">
+
+        <%# Cabeçalho %>
+        <tr>
+          <td style="background:#0F3826; padding:24px 32px;">
+            <div style="font-size:1.1rem; font-weight:800; color:#fff; letter-spacing:-0.02em;">Practice-BR</div>
+            <div style="font-size:0.7rem; color:#6EBD96; margin-top:3px;">
+              <% if user.language == "fr" %>Plateforme de Portugais pour Étrangers
+              <% elsif user.language == "en" %>Portuguese Learning Platform
+              <% else %>Plataforma de Português para Estrangeiros
+              <% end %>
+            </div>
+          </td>
+        </tr>
+
+        <%# Corpo %>
+        <tr>
+          <td style="padding:28px 32px 8px;">
+            <div style="font-size:1.8rem; margin-bottom:12px;"><%= emoji %></div>
+
+            <div style="font-size:1.15rem; font-weight:700; color:#1C1917; margin-bottom:10px;">
+              <%= title %><%= ", #{user.greeting_name}" if user.greeting_name.present? %>
+            </div>
+            <p style="font-size:0.92rem; line-height:1.6; color:#5C5853; margin:0 0 20px;">
+              <%= lead %>
+            </p>
+
+            <%# A atividade concreta. Sem ela o email vira "volte quando puder",
+                e a pessoa fecha sem saber por onde começaria. %>
+            <% if local_assigns[:activity].present? %>
+              <table cellpadding="0" cellspacing="0" width="100%" style="background:#F0F7F4; border-radius:10px; margin-bottom:20px;">
+                <tr>
+                  <td style="padding:18px 20px;">
+                    <div style="font-family:'DM Mono',monospace; font-size:0.7rem; font-weight:700; color:#0F3826; margin-bottom:6px;">
+                      <%= activity.level %>
+                    </div>
+                    <div style="font-size:1rem; font-weight:700; color:#1C1917; line-height:1.35;">
+                      <%= activity.title %>
+                    </div>
+                    <% if activity.description.present? %>
+                      <div style="font-size:0.85rem; color:#5C5853; line-height:1.5; margin-top:6px;">
+                        <%= truncate(activity.description, length: 100) %>
+                      </div>
+                    <% end %>
+                  </td>
+                </tr>
+              </table>
+            <% end %>
+
+            <a href="<%= url %>"
+               style="display:inline-block; background:#1A6B4A; color:#fff; text-decoration:none; font-size:0.92rem; font-weight:700; padding:12px 26px; border-radius:10px;">
+              <%= cta %>
+            </a>
+
+            <% if local_assigns[:note].present? %>
+              <p style="font-size:0.8rem; line-height:1.55; color:#9C9892; margin:18px 0 0;">
+                <%= note %>
+              </p>
+            <% end %>
+          </td>
+        </tr>
+
+        <%# Rodapé %>
+        <tr>
+          <td style="background:#F7F5F0; padding:18px 32px; border-top:1px solid #DDD9D2;">
+            <p style="font-size:0.75rem; line-height:1.5; color:#9C9892; margin:0;">
+              <% if local_assigns[:footer].present? %>
+                <%= footer %>
+              <% else %>
+                © Practice-BR
+              <% end %>
+            </p>
+          </td>
+        </tr>
+
+      </table>
+    </td>
+  </tr>
+</table>

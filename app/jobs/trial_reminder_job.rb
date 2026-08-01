@@ -14,10 +14,14 @@ class TrialReminderJob < ApplicationJob
 
   private
 
+  # Só pra quem COMEÇOU. Quem tem zero atividade recebe o email de ativação
+  # (TrialSequenceJob), que fala do começo em vez de dizer "continue" pra quem
+  # nunca começou — e eram 4 de 5 pessoas, medido em 2026-08-01.
   def due_trials
     User.trials
         .where(trial_reminder_sent_at: nil)
         .where("created_at <= ?", 3.days.ago)
         .where("trial_expires_at > ?", Time.current)
+        .where("trial_activities_used > 0")
   end
 end

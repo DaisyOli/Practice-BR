@@ -1,83 +1,9 @@
-<!DOCTYPE html>
-<html>
-<head>
-  <meta content="text/html; charset=UTF-8" http-equiv="Content-Type" />
-</head>
-<body style="margin:0; padding:0; background:#F7F5F0; font-family:'Helvetica Neue',Arial,sans-serif;">
-
-  <table width="100%" cellpadding="0" cellspacing="0" style="background:#F7F5F0; padding:40px 16px;">
-    <tr>
-      <td align="center">
-        <table width="560" cellpadding="0" cellspacing="0" style="background:#fff; border-radius:16px; border:1px solid #DDD9D2; overflow:hidden;">
-
-          <%# Cabeçalho %>
-          <tr>
-            <td style="background:#0F3826; padding:28px 36px;">
-              <div style="font-size:1.3rem; font-weight:800; color:#fff; letter-spacing:-0.02em;">
-                Practice-BR
-              </div>
-              <div style="font-size:0.8rem; color:#6EBD96; margin-top:4px;">
-                Plataforma de Português para Estrangeiros
-              </div>
-            </td>
-          </tr>
-
-          <%# Corpo %>
-          <tr>
-            <td style="padding:36px 36px 28px;">
-              <div style="font-size:2rem; margin-bottom:16px;">⏳</div>
-              <h1 style="font-size:1.2rem; font-weight:700; color:#1C1917; margin:0 0 12px;">
-                Faltam <%= @days_left %> <%= @days_left == 1 ? 'dia' : 'dias' %> para o fim do seu teste
-              </h1>
-              <p style="font-size:0.9rem; color:#5C5853; line-height:1.6; margin:0 0 20px;">
-                Você começou seu acesso de teste há <%= @days_since %> <%= @days_since == 1 ? 'dia' : 'dias' %> e ainda tem atividades disponíveis. Que tal continuar praticando português?
-              </p>
-
-              <table cellpadding="0" cellspacing="0" width="100%" style="background:#F0F7F4; border-radius:10px; padding:20px; margin-bottom:24px;">
-                <tr>
-                  <td style="padding:4px 0;">
-                    <span style="font-size:0.9rem; color:#1C1917;">✅ Até <strong>3 atividades</strong> no nível <%= @user.level %></span>
-                  </td>
-                </tr>
-                <tr>
-                  <td style="padding:4px 0;">
-                    <span style="font-size:0.9rem; color:#1C1917;">⏰ Válido até <strong><%= l(@expires_at, format: :long) %></strong></span>
-                  </td>
-                </tr>
-              </table>
-
-              <table cellpadding="0" cellspacing="0" width="100%" style="margin-bottom:28px;">
-                <tr>
-                  <td align="center">
-                    <a href="<%= @login_url %>"
-                       style="display:inline-block; background:#1A6B4A; color:#fff;
-                              font-size:0.92rem; font-weight:700;
-                              padding:14px 36px; border-radius:10px; text-decoration:none;">
-                      Continuar praticando →
-                    </a>
-                  </td>
-                </tr>
-              </table>
-
-              <p style="font-size:0.8rem; color:#9C9892; line-height:1.55; margin:0;">
-                Depois que as 3 atividades ou os 7 dias acabarem, fale com um professor para continuar aprendendo português!
-              </p>
-            </td>
-          </tr>
-
-          <%# Rodapé %>
-          <tr>
-            <td style="background:#F7F5F0; border-top:1px solid #EAE7E2; padding:18px 36px; text-align:center;">
-              <p style="font-size:0.75rem; color:#9C9892; margin:0;">
-                © Practice-BR · Este é um email automático, por favor não responda.
-              </p>
-            </td>
-          </tr>
-
-        </table>
-      </td>
-    </tr>
-  </table>
-
-</body>
-</html>
+<%= render "message",
+      user:   @user,
+      emoji:  "⏳",
+      title:  @copy[:title],
+      lead:   @copy[:lead] % { feitas: @feitas },
+      cta:    @copy[:cta],
+      url:    @url,
+      note:   "#{@copy[:left] % { dias: @days_left }} · #{@expires_at}",
+      footer: @copy[:footer] %>
