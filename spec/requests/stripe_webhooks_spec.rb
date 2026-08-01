@@ -198,6 +198,62 @@ RSpec.describe "Webhooks do Stripe", type: :request do
     end
   end
 
+  describe "checkout.session.completed" do
+    # Quem acabou de pagar veio da landing: entrou como trial e nunca criou senha.
+    let!(:pagante) { create(:user, :trial, email: "pagou@exemplo.fr", language: "fr") }
+
+    def checkout_completed(user)
+      stub_subscription
+      post_event("checkout.session.completed", {
+        "customer"     => "cus_novo",
+        "subscription" => "sub_novo",
+        "metadata"     => { "user_id" => user.id.to_s }
+      })
+    end
+
+    it "ativa a assinatura" do
+      checkout_completed(pagante)
+
+      expect(response).to have_http_status(:ok)
+      pagante.reload
+      expect(pagante.role).to eq("student")
+      expect(pagante.subscription_status).to eq("active")
+    end
+
+    it "manda as boas-vindas na língua do cadastro" do
+      perform_enqueued_jobs { checkout_completed(pagante) }
+
+      email = ActionMailer::Base.deliveries.find { |m| m.to == ["pagou@exemplo.fr"] }
+      expect(email.subject).to include("Bienvenue")
+      expect(email.body.encoded).to include("Votre accès complet est ouvert")
+    end
+
+    it "carrega o link de criar senha pra quem ainda não tem uma" do
+      perform_enqueued_jobs { checkout_completed(pagante) }
+
+      email = ActionMailer::Base.deliveries.last
+      expect(email.body.encoded).to include("reset_password_token")
+      expect(pagante.reload.reset_password_token).to be_present
+    end
+
+    it "não manda link de senha pra quem já criou a sua" do
+      com_senha = create(:user, :trial, email: "temsenha@exemplo.fr", password_set_at: 1.day.ago)
+
+      perform_enqueued_jobs { checkout_completed(com_senha) }
+
+      email = ActionMailer::Base.deliveries.find { |m| m.to == ["temsenha@exemplo.fr"] }
+      expect(email.body.encoded).not_to include("reset_password_token")
+    end
+
+    it "gerar o token não conta como escolher senha" do
+      checkout_completed(pagante)
+
+      # Se contasse, a pessoa perderia o formulário da tela de sucesso e o prazo
+      # longo do link — justo ela, que continua sem senha nenhuma.
+      expect(pagante.reload.passwordless?).to be true
+    end
+  end
+
   # deliver_later enfileira no GoodJob; em teste o adapter é :test, então os jobs
   # ficam em ActiveJob::Base.queue_adapter.enqueued_jobs.
   def enqueued_mailer_count

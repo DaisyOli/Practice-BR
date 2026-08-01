@@ -23,6 +23,28 @@ class StudentMailerPreview < ActionMailer::Preview
     StudentMailer.new_activity(student, activity)
   end
 
+  # Os dois estados que importam: com e sem o bloco da senha. Quem paga vindo da
+  # landing quase sempre cai no primeiro.
+  def subscription_welcome_fr_sem_senha
+    student = User.new(email: "etudiant@exemple.com", language: "fr", level: "B1")
+    StudentMailer.subscription_welcome(student, "token-de-exemplo")
+  end
+
+  def subscription_welcome_fr_com_senha
+    student = User.new(name: "Camille", email: "etudiant@exemple.com", language: "fr", level: "B1")
+    StudentMailer.subscription_welcome(student)
+  end
+
+  def subscription_welcome_pt
+    student = User.new(name: "Aluno Exemplo", email: "aluno@exemplo.com", language: "pt", level: "A2")
+    StudentMailer.subscription_welcome(student, "token-de-exemplo")
+  end
+
+  def subscription_welcome_en
+    student = User.new(name: "Example Student", email: "student@example.com", language: "en", level: "C1")
+    StudentMailer.subscription_welcome(student, "token-de-exemplo")
+  end
+
   def weekly_reminder_pt
     student    = User.where(role: "student", language: "pt").first ||
                  User.new(name: "Aluno Exemplo", email: "aluno@exemplo.com", language: "pt", level: "B1")

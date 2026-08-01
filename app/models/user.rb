@@ -38,6 +38,7 @@ class User < ApplicationRecord
   validates :professional_type, inclusion: { in: PROFESSIONAL_TYPES }, allow_blank: true
 
   before_validation :set_default_language, on: :create
+  before_update :stamp_password_set_at, if: :will_save_change_to_encrypted_password?
   after_commit :notify_admin_if_teacher_joined
 
   def admin?
@@ -104,7 +105,7 @@ class User < ApplicationRecord
     trial? && trial_activities_used.to_i >= 3
   end
 
-  # ---- O caminho de volta do trial -------------------------------------------
+  # ---- O caminho de volta de quem nunca criou senha ---------------------------
   #
   # Pra quem entra pela landing, o link do email **não é** um "esqueci minha
   # senha": é o único jeito de voltar, porque a pessoa nunca criou senha. Com as
@@ -116,9 +117,19 @@ class User < ApplicationRecord
   # teste é pior que link vivo depois dele. E depois que o teste acaba, entrar
   # leva à tela de assinatura, que é justamente onde a gente quer essa pessoa.
   #
-  # Vale **só pro trial**. Aluno pagante segue com as 6 horas: ali o link é uma
-  # recuperação de senha de verdade, e prazo curto é a proteção certa.
-  TRIAL_PASSWORD_LINK_VALIDITY = 8.days
+  # A condição é **não ter senha**, não ser trial. Era `trial?` antes, e o proxy
+  # falhava exatamente na hora mais cara: no instante em que o webhook do Stripe
+  # muda o papel pra `student`, o link caía pra 6 horas e morria — deixando quem
+  # ACABOU de pagar sem caminho de volta. Quem já escolheu uma senha continua com
+  # as 6 horas: pra essa pessoa o link é uma recuperação de verdade, e prazo
+  # curto é a proteção certa.
+  PASSWORDLESS_LINK_VALIDITY = 8.days
+
+  # Nunca digitou uma senha: a que está no banco é a aleatória gerada no cadastro
+  # pela API da landing. Ver AddPasswordSetAtToUsers.
+  def passwordless?
+    password_set_at.nil?
+  end
 
   # Gancho do Devise::Models::Recoverable. Sobrescrever aqui é o que permite um
   # prazo por tipo de conta sem tocar no `config.reset_password_within`, que é
@@ -129,10 +140,10 @@ class User < ApplicationRecord
   # daqui quebra a redefinição de senha do app inteiro — com um NoMethodError que
   # não diz nada sobre visibilidade à primeira vista.
   def reset_password_period_valid?
-    return super unless trial?
+    return super unless passwordless?
 
     reset_password_sent_at.present? &&
-      reset_password_sent_at.utc >= TRIAL_PASSWORD_LINK_VALIDITY.ago
+      reset_password_sent_at.utc >= PASSWORDLESS_LINK_VALIDITY.ago
   end
 
   # ---- Retenção de dados (RGPD art. 5.1.e) -----------------------------------
@@ -303,6 +314,14 @@ class User < ApplicationRecord
 
   def set_default_language
     self.language ||= DEFAULT_LANGUAGE
+  end
+
+  # Só em update, nunca em create: a senha aleatória que a API da landing gera no
+  # cadastro não conta como senha escolhida — é exatamente o caso que a coluna
+  # precisa reconhecer. Qualquer troca posterior (link do email, "esqueci minha
+  # senha", tela pós-pagamento, aceite de convite) passa por aqui.
+  def stamp_password_set_at
+    self.password_set_at = Time.current
   end
 
   def notify_admin_if_teacher_joined

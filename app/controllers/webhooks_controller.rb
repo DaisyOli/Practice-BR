@@ -48,6 +48,25 @@ class WebhooksController < ApplicationController
       subscription_current_period_end: Time.at(subscription["current_period_end"]).utc
     )
     Rails.logger.info "[Webhook] ✅ Assinatura ativada · user ##{user.id}"
+
+    # Até aqui quem pagava saía do Stripe com um recibo e mais nada nosso. O
+    # email diz o que a assinatura abriu e, pra quem ainda não tem senha, carrega
+    # o link que cria uma.
+    StudentMailer.subscription_welcome(user, password_token_for(user)).deliver_later
+  end
+
+  # Token de senha só pra quem não tem senha nenhuma. Quem já criou a sua não
+  # precisa de um link de redefinição chegando sozinho na caixa de entrada.
+  #
+  # `update_columns` de propósito: grava os dois campos sem passar pelas
+  # validações nem pelo callback que carimba `password_set_at` — gerar o token
+  # não é escolher uma senha.
+  def password_token_for(user)
+    return nil unless user.passwordless?
+
+    raw_token, hashed_token = Devise.token_generator.generate(User, :reset_password_token)
+    user.update_columns(reset_password_token: hashed_token, reset_password_sent_at: Time.current)
+    raw_token
   end
 
   def handle_payment_succeeded(invoice)

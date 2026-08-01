@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta content="text/html; charset=UTF-8" http-equiv="Content-Type" />
+</head>
+<body style="margin:0; padding:0; background:#F7F5F0; font-family:'Helvetica Neue',Arial,sans-serif;">
+
+  <table width="100%" cellpadding="0" cellspacing="0" style="background:#F7F5F0; padding:40px 16px;">
+    <tr>
+      <td align="center">
+        <table width="520" cellpadding="0" cellspacing="0" style="background:#fff; border-radius:16px; border:1px solid #DDD9D2; overflow:hidden; max-width:520px;">
+
+          <%# Cabeçalho %>
+          <tr>
+            <td style="background:#0F3826; padding:24px 32px;">
+              <div style="font-size:1.1rem; font-weight:800; color:#fff; letter-spacing:-0.02em;">Practice-BR</div>
+              <div style="font-size:0.7rem; color:#6EBD96; margin-top:3px;">
+                <% if @lang == "fr" %>Plateforme de Portugais pour Étrangers
+                <% elsif @lang == "en" %>Portuguese Learning Platform
+                <% else %>Plataforma de Português para Estrangeiros
+                <% end %>
+              </div>
+            </td>
+          </tr>
+
+          <%# Corpo %>
+          <tr>
+            <td style="padding:28px 32px 8px;">
+              <div style="font-size:1.8rem; margin-bottom:12px;">🎉</div>
+
+              <div style="font-size:1.15rem; font-weight:700; color:#1C1917; margin-bottom:10px;">
+                <%= @copy[:title] %>
+              </div>
+              <%# O nome só aparece quando existe: quem vem da landing dá email e
+                  nível, mais nada. "Oi , obrigada" seria pior que nenhum nome. %>
+              <% if @student.greeting_name.present? %>
+                <p style="font-size:0.92rem; line-height:1.6; color:#5C5853; margin:0 0 8px;">
+                  <%= @copy[:hello] %> <%= @student.greeting_name %>,
+                </p>
+              <% end %>
+              <p style="font-size:0.92rem; line-height:1.6; color:#5C5853; margin:0 0 20px;">
+                <%= @copy[:lead] %>
+              </p>
+
+              <%# O que a assinatura abriu %>
+              <table cellpadding="0" cellspacing="0" width="100%" style="background:#F0F7F4; border-radius:10px; margin-bottom:24px;">
+                <tr>
+                  <td style="padding:18px 20px 8px;">
+                    <span style="font-size:0.72rem; font-weight:700; color:#0F3826; text-transform:uppercase; letter-spacing:0.06em;"><%= @copy[:includes] %></span>
+                  </td>
+                </tr>
+                <tr>
+                  <td style="padding:4px 20px;">
+                    <span style="font-size:0.88rem; color:#1C1917;">📚 <%= @copy[:i1] %> (<strong><%= @student.level %></strong>)</span>
+                  </td>
+                </tr>
+                <tr>
+                  <td style="padding:4px 20px;">
+                    <span style="font-size:0.88rem; color:#1C1917;">🗓 <%= @copy[:i2] %></span>
+                  </td>
+                </tr>
+                <tr>
+                  <td style="padding:4px 20px;">
+                    <span style="font-size:0.88rem; color:#1C1917;">↩️ <%= @copy[:i3] %></span>
+                  </td>
+                </tr>
+                <tr>
+                  <td style="padding:4px 20px 18px;">
+                    <span style="font-size:0.88rem; color:#1C1917;">✅ <%= @copy[:i4] %></span>
+                  </td>
+                </tr>
+              </table>
+
+              <a href="<%= @url %>"
+                 style="display:inline-block; background:#1A6B4A; color:#fff; text-decoration:none; font-size:0.92rem; font-weight:700; padding:12px 26px; border-radius:10px;">
+                <%= @copy[:cta] %>
+              </a>
+            </td>
+          </tr>
+
+          <%# Senha: só pra quem ainda não tem uma. Este bloco é a segunda chance
+              de quem pulou o formulário da tela de sucesso — sem ele, o caminho
+              de volta dessa pessoa seria só o cookie do navegador. %>
+          <% if @password_url %>
+            <tr>
+              <td style="padding:24px 32px 8px;">
+                <table cellpadding="0" cellspacing="0" width="100%" style="background:#FBF3E0; border:1px solid #E8C97A; border-radius:10px;">
+                  <tr>
+                    <td style="padding:18px 20px;">
+                      <div style="font-size:0.95rem; font-weight:700; color:#7C4A00; margin-bottom:8px;">
+                        🔑 <%= @copy[:pwd_title] %>
+                      </div>
+                      <p style="font-size:0.85rem; line-height:1.55; color:#5C5853; margin:0 0 14px;">
+                        <%= @copy[:pwd_lead] %>
+                      </p>
+                      <a href="<%= @password_url %>"
+                         style="display:inline-block; background:#C9952A; color:#fff; text-decoration:none; font-size:0.85rem; font-weight:700; padding:10px 22px; border-radius:9px;">
+                        <%= @copy[:pwd_cta] %>
+                      </a>
+                    </td>
+                  </tr>
+                </table>
+              </td>
+            </tr>
+          <% end %>
+
+          <%# Rodapé %>
+          <tr>
+            <td style="background:#F7F5F0; padding:18px 32px; border-top:1px solid #DDD9D2; margin-top:20px;">
+              <p style="font-size:0.78rem; line-height:1.5; color:#9C9892; margin:0 0 6px;">
+                <%= @copy[:manage] %>
+              </p>
+              <p style="font-size:0.78rem; line-height:1.5; color:#9C9892; margin:0;">
+                <%= @copy[:footer] %>
+              </p>
+            </td>
+          </tr>
+
+        </table>
+      </td>
+    </tr>
+  </table>
+
+</body>
+</html>

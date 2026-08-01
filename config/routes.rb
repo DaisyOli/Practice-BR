@@ -113,6 +113,7 @@ Rails.application.routes.draw do
   get  "assinar",              to: "billing#new",              as: :billing_new
   post "assinar/checkout",     to: "billing#create_checkout",  as: :billing_checkout
   get  "assinar/sucesso",      to: "billing#success",          as: :billing_success
+  post "assinar/senha",        to: "billing#create_password",  as: :billing_password
   get  "assinar/cancelado",    to: "billing#cancel",           as: :billing_cancel
   post "assinar/cancelar",     to: "billing#cancel_subscription", as: :billing_cancel_subscription
   get  "assinar/pagamento",    to: "billing#payment_problem",  as: :billing_payment_problem

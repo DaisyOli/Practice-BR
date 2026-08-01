@@ -4,10 +4,11 @@ require 'rails_helper'
 # padrão do Devise, quem se cadastrava à noite voltava no dia seguinte pra um
 # link morto.
 #
-# O teste que mais importa aqui é o último: o prazo maior vale SÓ pro trial.
-# Aluno pagante tem que continuar com as 6 horas, porque ali o link é uma
-# recuperação de senha de verdade.
-RSpec.describe "Validade do link de volta do trial", type: :model do
+# O que separa os dois prazos é **ter senha**, não o papel na plataforma. Era
+# `trial?` antes, e o proxy falhava na hora mais cara: no instante em que o
+# webhook do Stripe muda o papel pra `student`, o link caía pra 6 horas e morria
+# — deixando quem acabou de pagar sem caminho de volta.
+RSpec.describe "Validade do link de volta de quem não tem senha", type: :model do
   include ActiveSupport::Testing::TimeHelpers
 
   def link_ainda_vale?(user, depois_de:)
@@ -37,7 +38,7 @@ RSpec.describe "Validade do link de volta do trial", type: :model do
     end
   end
 
-  context "aluno pagante" do
+  context "aluno pagante que já criou senha" do
     let(:user) { create(:user, :student) }
 
     it "continua com as 6 horas do Devise — prazo curto é a proteção certa" do
@@ -45,8 +46,19 @@ RSpec.describe "Validade do link de volta do trial", type: :model do
       expect(link_ainda_vale?(user, depois_de: 7.hours)).to be false
     end
 
-    it "não herda o prazo do trial" do
+    it "não herda o prazo longo" do
       expect(link_ainda_vale?(user, depois_de: 1.day)).to be false
+    end
+  end
+
+  context "aluno pagante que nunca criou senha" do
+    # Quem veio da landing, pagou e pulou o formulário da tela de sucesso. O papel
+    # já é `student`, mas a senha no banco continua sendo a aleatória do cadastro:
+    # o link do email é literalmente o único caminho de volta que ela tem.
+    let(:user) { create(:user, :student, password_set_at: nil) }
+
+    it "mantém o prazo longo — pagar não pode encurtar o único caminho de volta" do
+      expect(link_ainda_vale?(user, depois_de: 3.days)).to be true
     end
   end
 
@@ -55,6 +67,16 @@ RSpec.describe "Validade do link de volta do trial", type: :model do
       teacher = create(:user, :teacher)
 
       expect(link_ainda_vale?(teacher, depois_de: 1.day)).to be false
+    end
+  end
+
+  context "depois de criar a senha" do
+    it "o prazo encurta na hora — o link volta a ser recuperação de verdade" do
+      user = create(:user, :trial)
+      user.update!(password: "escolhida-por-mim", password_confirmation: "escolhida-por-mim")
+
+      expect(user.reload.passwordless?).to be false
+      expect(link_ainda_vale?(user, depois_de: 1.day)).to be false
     end
   end
 end

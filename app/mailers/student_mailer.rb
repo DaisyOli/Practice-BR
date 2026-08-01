@@ -32,6 +32,78 @@ class StudentMailer < ApplicationMailer
     mail(to: student.email, subject: subject)
   end
 
+  # Boas-vindas de quem acabou de pagar. Faz dois trabalhos num email só:
+  #
+  # 1. Diz o que mudou. A assinatura só vale o preço se a pessoa souber o que
+  #    ganhou — antes disto ela saía do Stripe e nada explicava a diferença.
+  # 2. É a segunda chance de criar a senha, pra quem pulou o formulário da tela
+  #    de sucesso. O bloco só aparece quando ainda não há senha (`password_token`
+  #    vem nulo nos outros casos, ver WebhooksController).
+  SUBSCRIPTION_WELCOME = {
+    "fr" => {
+      subject:   "Bienvenue · bem-vindo dans Practice-BR 🎉",
+      hello:     "Bonjour",
+      title:     "Votre accès complet est ouvert",
+      lead:      "Merci de votre confiance. À partir d'aujourd'hui, la pratique quotidienne ne dépend plus que de vous — le reste, c'est notre travail.",
+      includes:  "Ce que vous avez maintenant",
+      i1:        "Toutes les activités jusqu'à votre niveau",
+      i2:        "Jusqu'à 5 activités par jour",
+      i3:        "Les niveaux précédents, à revoir quand vous voulez",
+      i4:        "Correction automatique et détaillée, à chaque exercice",
+      cta:       "Commencer une activité →",
+      pwd_title: "Il vous manque un mot de passe",
+      pwd_lead:  "Vous êtes entré sans en créer un — c'était voulu. Ce lien vous en fait un, et c'est ce qui vous ramènera à votre compte plus tard.",
+      pwd_cta:   "Créer mon mot de passe",
+      manage:    "Vous pouvez annuler quand vous voulez depuis votre tableau de bord.",
+      footer:    "Une question ? Répondez à cet email, on vous lit."
+    },
+    "en" => {
+      subject:   "Welcome · bem-vindo to Practice-BR 🎉",
+      hello:     "Hi",
+      title:     "Your full access is open",
+      lead:      "Thank you for trusting us. From today on, daily practice is up to you — the rest is our job.",
+      includes:  "What you have now",
+      i1:        "All activities up to your level",
+      i2:        "Up to 5 activities a day",
+      i3:        "Previous levels, to review whenever you want",
+      i4:        "Automatic, detailed correction on every exercise",
+      cta:       "Start an activity →",
+      pwd_title: "You're still missing a password",
+      pwd_lead:  "You came in without creating one — that was on purpose. This link sets one up, and that's what brings you back to your account later.",
+      pwd_cta:   "Create my password",
+      manage:    "You can cancel whenever you want from your dashboard.",
+      footer:    "Questions? Just reply to this email — we read them."
+    },
+    "pt" => {
+      subject:   "Boas-vindas à Practice-BR 🎉",
+      hello:     "Oi",
+      title:     "Seu acesso completo está aberto",
+      lead:      "Obrigada pela confiança. A partir de hoje a prática diária depende só de você — o resto é com a gente.",
+      includes:  "O que você tem agora",
+      i1:        "Todas as atividades até o seu nível",
+      i2:        "Até 5 atividades por dia",
+      i3:        "Os níveis anteriores, para revisar quando quiser",
+      i4:        "Correção automática e detalhada em cada exercício",
+      cta:       "Começar uma atividade →",
+      pwd_title: "Falta a sua senha",
+      pwd_lead:  "Você entrou sem criar uma — era essa a ideia. Este link cria a sua, e é ela que vai te trazer de volta à conta depois.",
+      pwd_cta:   "Criar minha senha",
+      manage:    "Você pode cancelar quando quiser pelo seu dashboard.",
+      footer:    "Ficou com dúvida? Responda este email que a gente lê."
+    }
+  }.freeze
+
+  def subscription_welcome(student, password_token = nil)
+    @student      = student
+    @lang         = student.language.presence || "pt"
+    @copy         = SUBSCRIPTION_WELCOME.fetch(@lang, SUBSCRIPTION_WELCOME["fr"])
+    @url          = student_dashboard_url
+    @password_url = password_token.present? &&
+                    edit_user_password_url(reset_password_token: password_token)
+
+    mail(to: student.email, subject: @copy[:subject])
+  end
+
   # Cartão recusado. Este email é o que dá sentido à tolerância: sem ele o aluno
   # não sabe que precisa agir e a tolerância só adia a surpresa.
   def payment_failed(student)

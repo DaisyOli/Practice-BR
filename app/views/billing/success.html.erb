@@ -1,6 +1,67 @@
 <% content_for :head do %>
   <title>Pagamento confirmado · Practice-BR</title>
+  <style>
+    .auth-input:focus { border-color:var(--brand-bright) !important; box-shadow:0 0 0 3px var(--brand-glow) !important; outline:none !important; }
+  </style>
 <% end %>
+
+<%# Duas coisas acontecem nesta tela, e a ordem importa: a festa primeiro (a
+    pessoa acabou de pagar e merece ouvir isso), a senha logo em seguida.
+
+    A senha só aparece pra quem nunca criou uma — quem veio da landing. Ela
+    atravessou o trial inteiro sem senha, de propósito, e este é o último
+    momento em que a gente ainda tem a atenção dela. Depois daqui, o caminho de
+    volta seriam um cookie e um link de email, e os dois vencem.
+
+    O idioma vem do cadastro (user.language), não do navegador: quem chegou pela
+    landing em francês tem "fr" gravado desde o primeiro clique. %>
+<%
+  copy = {
+    "fr" => {
+      title:     "Paiement confirmé !",
+      lead:      "Bienvenue sur Practice-BR. Votre accès complet est actif.",
+      pwd_title: "Il reste une chose : votre mot de passe",
+      pwd_lead:  "Vous êtes entré sans mot de passe — c'était voulu. Choisissez-en un maintenant pour retrouver votre compte à chaque fois.",
+      pwd:       "Mot de passe",
+      pwd_ph:    "6 caractères minimum",
+      confirm:   "Confirmez le mot de passe",
+      confirm_ph:"Répétez le mot de passe",
+      submit:    "Enregistrer et commencer →",
+      later:     "Plus tard — aller au tableau de bord",
+      dashboard: "Aller à mon tableau de bord →"
+    },
+    "en" => {
+      title:     "Payment confirmed!",
+      lead:      "Welcome to Practice-BR. Your full access is active.",
+      pwd_title: "One last thing: your password",
+      pwd_lead:  "You came in without a password — that was on purpose. Pick one now so you can find your account again every time.",
+      pwd:       "Password",
+      pwd_ph:    "6 characters minimum",
+      confirm:   "Confirm password",
+      confirm_ph:"Repeat the password",
+      submit:    "Save and start →",
+      later:     "Later — go to my dashboard",
+      dashboard: "Go to my dashboard →"
+    },
+    "pt" => {
+      title:     "Pagamento confirmado!",
+      lead:      "Boas-vindas à Practice-BR. Seu acesso completo está ativo.",
+      pwd_title: "Falta uma coisa: sua senha",
+      pwd_lead:  "Você entrou sem senha — era essa a ideia. Escolha uma agora para reencontrar sua conta sempre que quiser.",
+      pwd:       "Senha",
+      pwd_ph:    "Mínimo 6 caracteres",
+      confirm:   "Confirme a senha",
+      confirm_ph:"Repita a senha",
+      submit:    "Salvar e começar →",
+      later:     "Deixar para depois — ir para o dashboard",
+      dashboard: "Ir para meu dashboard →"
+    }
+  }
+  c = copy.fetch(current_user.language, copy["fr"])
+
+  label_style = "font-family:'Plus Jakarta Sans',sans-serif; font-size:0.82rem; font-weight:600; color:var(--ink); display:block; margin-bottom:6px; text-align:left;"
+  input_style = "width:100%; padding:11px 14px; border:1.5px solid var(--line); border-radius:10px; font-family:'Plus Jakarta Sans',sans-serif; font-size:0.9rem; color:var(--ink); background:var(--surface); box-sizing:border-box;"
+%>
 
 <div style="min-height:100vh; display:flex; align-items:center; justify-content:center; background:var(--paper); padding:2rem 1rem;">
   <div style="max-width:420px; width:100%; text-align:center;">
@@ -8,17 +69,68 @@
     <div style="font-size:4rem; margin-bottom:1rem;">🎉</div>
 
     <h1 style="font-family:'Raleway',sans-serif; font-size:1.6rem; font-weight:800; color:var(--ink); margin-bottom:12px;">
-      Pagamento confirmado!
+      <%= c[:title] %>
     </h1>
 
     <p style="font-family:'Plus Jakarta Sans',sans-serif; font-size:0.95rem; color:var(--ink-soft); line-height:1.6; margin-bottom:2rem;">
-      Bem-vindo ao Practice-BR. Seu acesso completo está ativo —<br>
-      você pode começar a estudar agora mesmo.
+      <%= c[:lead] %>
     </p>
 
-    <%= link_to student_dashboard_path,
-          style: "display:inline-block; background:var(--brand); color:var(--surface); font-family:'Plus Jakarta Sans',sans-serif; font-size:0.95rem; font-weight:700; padding:14px 36px; border-radius:12px; text-decoration:none;" do %>
-      Ir para meu dashboard →
+    <% if current_user.passwordless? %>
+      <div style="background:var(--surface); border:1px solid var(--line); border-radius:20px; padding:28px 26px; box-shadow:0 4px 24px rgba(0,0,0,0.06); text-align:left;">
+
+        <div style="display:flex; align-items:center; gap:10px; margin-bottom:8px;">
+          <div style="width:36px; height:36px; background:var(--brand-tint); border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:1.05rem; flex-shrink:0;">🔑</div>
+          <h2 style="font-family:'Raleway',sans-serif; font-size:1.05rem; font-weight:700; color:var(--ink); margin:0;">
+            <%= c[:pwd_title] %>
+          </h2>
+        </div>
+
+        <p style="font-family:'Plus Jakarta Sans',sans-serif; font-size:0.85rem; color:var(--ink-soft); line-height:1.55; margin:0 0 20px;">
+          <%= c[:pwd_lead] %>
+        </p>
+
+        <% if current_user.errors.any? %>
+          <div style="background:var(--error-tint); border:1px solid var(--error-border); color:var(--error-deep); font-family:'Plus Jakarta Sans',sans-serif; font-size:0.82rem; border-radius:10px; padding:10px 12px; margin-bottom:16px;">
+            <%= current_user.errors.full_messages.first %>
+          </div>
+        <% end %>
+
+        <%= form_with url: billing_password_path, method: :post, local: true, data: { turbo: false } do %>
+          <div style="margin-bottom:16px;">
+            <%= label_tag "user_password", c[:pwd], style: label_style %>
+            <%= password_field_tag "user[password]", nil,
+                  id: "user_password", required: true, minlength: 6, autofocus: true,
+                  autocomplete: "new-password", placeholder: c[:pwd_ph],
+                  class: "auth-input", style: input_style %>
+          </div>
+
+          <div style="margin-bottom:22px;">
+            <%= label_tag "user_password_confirmation", c[:confirm], style: label_style %>
+            <%= password_field_tag "user[password_confirmation]", nil,
+                  id: "user_password_confirmation", required: true, minlength: 6,
+                  autocomplete: "new-password", placeholder: c[:confirm_ph],
+                  class: "auth-input", style: input_style %>
+          </div>
+
+          <%= submit_tag c[:submit],
+                style: "width:100%; background:var(--action); color:var(--surface); font-family:'Plus Jakarta Sans',sans-serif; font-size:0.9rem; font-weight:700; padding:13px; border:none; border-radius:12px; cursor:pointer; display:block;" %>
+        <% end %>
+      </div>
+
+      <%# Escapatória discreta de propósito: ninguém deve se sentir preso numa
+          tela logo depois de pagar. Quem sair por aqui ainda tem o link do
+          email, que continua valendo enquanto não houver senha (ver
+          User::PASSWORDLESS_LINK_VALIDITY). %>
+      <div style="margin-top:16px;">
+        <%= link_to c[:later], student_dashboard_path,
+              style: "font-family:'Plus Jakarta Sans',sans-serif; font-size:0.82rem; color:var(--ink-faint); text-decoration:none;" %>
+      </div>
+    <% else %>
+      <%= link_to student_dashboard_path,
+            style: "display:inline-block; background:var(--brand); color:var(--surface); font-family:'Plus Jakarta Sans',sans-serif; font-size:0.95rem; font-weight:700; padding:14px 36px; border-radius:12px; text-decoration:none;" do %>
+        <%= c[:dashboard] %>
+      <% end %>
     <% end %>
 
   </div>

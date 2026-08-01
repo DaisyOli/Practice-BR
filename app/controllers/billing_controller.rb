@@ -1,4 +1,12 @@
 class BillingController < ApplicationController
+  # Na língua de quem lê: a maior parte de quem paga chegou pela landing em
+  # francês. Mesmo padrão do TrialStartsController.
+  PASSWORD_SAVED = {
+    "fr" => "Mot de passe enregistré. Vous pouvez revenir quand vous voulez.",
+    "en" => "Password saved. You can come back whenever you want.",
+    "pt" => "Senha salva. Você pode voltar quando quiser."
+  }.freeze
+
   def new
   end
 
@@ -23,6 +31,38 @@ class BillingController < ApplicationController
   end
 
   def success
+  end
+
+  # A senha nasce aqui, e não antes: quem vem da landing atravessa o trial
+  # inteiro sem criar uma (a conta nasce com uma aleatória). Enquanto o acesso
+  # era o cookie de "lembrar de mim" e o link de 8 dias do email, isso funcionou
+  # — mas os dois vencem. Duas semanas depois de pagar, a pessoa encontrava uma
+  # tela de login pedindo uma senha que ela nunca escolheu.
+  #
+  # Este é o único momento do fluxo em que pedir a senha faz sentido pra ela:
+  # acabou de pagar, está com a compra fresca na cabeça e ainda não fechou a aba.
+  def create_password
+    # Quem já tem senha não passa por aqui. Trocar senha sem pedir a atual é
+    # justamente o que o Devise evita com o `current_password` — a exceção só se
+    # justifica pra quem não tem nenhuma pra informar.
+    return redirect_to student_dashboard_path unless current_user.passwordless?
+
+    if current_user.update(password: params.dig(:user, :password),
+                           password_confirmation: params.dig(:user, :password_confirmation))
+      # Trocar a senha muda o salt que assina a sessão e o cookie de "lembrar de
+      # mim": sem reemitir os dois, a pessoa seria deslogada na página seguinte,
+      # bem depois de pagar. `force: true` porque o Warden ainda tem o usuário
+      # antigo em cache neste request e um `sign_in` normal não faria nada.
+      current_user.remember_me = true
+      sign_in(current_user, force: true)
+
+      redirect_to student_dashboard_path, notice: PASSWORD_SAVED.fetch(current_user.language, PASSWORD_SAVED["fr"])
+    else
+      # Sem flash: o erro sai na caixa dentro do formulário, ao lado dos campos.
+      # Um toast no canto da tela obrigaria a pessoa a olhar pra dois lugares
+      # pra entender que a confirmação não bateu.
+      render :success, status: :unprocessable_entity
+    end
   end
 
   def cancel
