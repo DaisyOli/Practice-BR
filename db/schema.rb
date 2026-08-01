@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.1].define(version: 2026_08_01_140000) do
+ActiveRecord::Schema[7.1].define(version: 2026_08_01_210000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
 
@@ -352,7 +352,7 @@ ActiveRecord::Schema[7.1].define(version: 2026_08_01_140000) do
     t.string "subscription_status"
     t.datetime "subscription_current_period_end"
     t.string "professional_type"
-    t.boolean "weekly_reminder_email"
+    t.boolean "weekly_reminder_email", default: true
     t.integer "daily_quiz_count", default: 0, null: false
     t.date "daily_quiz_date"
     t.datetime "trial_reminder_sent_at"

@@ -20,8 +20,10 @@
     "fr" => {
       title:     "Paiement confirmé !",
       lead:      "Bienvenue sur Practice-BR. Votre accès complet est actif.",
-      pwd_title: "Il reste une chose : votre mot de passe",
+      pwd_title: "Encore deux petites choses",
       pwd_lead:  "Vous êtes entré sans mot de passe — c'était voulu. Choisissez-en un maintenant pour retrouver votre compte à chaque fois.",
+      name:      "Comment souhaitez-vous qu'on vous appelle ?",
+      name_ph:   "Prénom ou surnom",
       pwd:       "Mot de passe",
       pwd_ph:    "6 caractères minimum",
       confirm:   "Confirmez le mot de passe",
@@ -33,8 +35,10 @@
     "en" => {
       title:     "Payment confirmed!",
       lead:      "Welcome to Practice-BR. Your full access is active.",
-      pwd_title: "One last thing: your password",
+      pwd_title: "Two last things",
       pwd_lead:  "You came in without a password — that was on purpose. Pick one now so you can find your account again every time.",
+      name:      "What should we call you?",
+      name_ph:   "First name or nickname",
       pwd:       "Password",
       pwd_ph:    "6 characters minimum",
       confirm:   "Confirm password",
@@ -46,8 +50,10 @@
     "pt" => {
       title:     "Pagamento confirmado!",
       lead:      "Boas-vindas à Practice-BR. Seu acesso completo está ativo.",
-      pwd_title: "Falta uma coisa: sua senha",
+      pwd_title: "Faltam só duas coisinhas",
       pwd_lead:  "Você entrou sem senha — era essa a ideia. Escolha uma agora para reencontrar sua conta sempre que quiser.",
+      name:      "Como você quer ser chamado?",
+      name_ph:   "Nome ou apelido",
       pwd:       "Senha",
       pwd_ph:    "Mínimo 6 caracteres",
       confirm:   "Confirme a senha",
@@ -97,10 +103,22 @@
         <% end %>
 
         <%= form_with url: billing_password_path, method: :post, local: true, data: { turbo: false } do %>
+          <%# O nome vem primeiro de propósito: é a pergunta simpática, e quem
+              chega aqui atravessou o teste inteiro sem nome nenhum — a landing
+              pede só email e nível. Sem isto a dashboard cumprimenta com um
+              "Olá!" seco pra sempre. %>
+          <div style="margin-bottom:16px;">
+            <%= label_tag "user_name", c[:name], style: label_style %>
+            <%= text_field_tag "user[name]", nil,
+                  id: "user_name", maxlength: 50, autofocus: true,
+                  autocomplete: "given-name", placeholder: c[:name_ph],
+                  class: "auth-input", style: input_style %>
+          </div>
+
           <div style="margin-bottom:16px;">
             <%= label_tag "user_password", c[:pwd], style: label_style %>
             <%= password_field_tag "user[password]", nil,
-                  id: "user_password", required: true, minlength: 6, autofocus: true,
+                  id: "user_password", required: true, minlength: 6,
                   autocomplete: "new-password", placeholder: c[:pwd_ph],
                   class: "auth-input", style: input_style %>
           </div>

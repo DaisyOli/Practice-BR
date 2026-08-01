@@ -24,7 +24,20 @@ RSpec.describe WeeklyReminderJob, type: :job do
     }.to have_enqueued_mail(StudentMailer, :weekly_reminder)
   end
 
-  it 'não envia para quem não ativou o lembrete' do
+  it 'alcança aluno novo sem ninguém precisar ligar nada' do
+    # O lembrete nascia desligado, e quem vem da landing nunca vê caixa nenhuma
+    # pra marcar — então o único contato semanal da plataforma simplesmente não
+    # acontecia. Repare que a factory não passa `weekly_reminder_email`: quem
+    # liga é o default da coluna.
+    create(:user, :student, level: "B1")
+    create(:activity, :B1, draft: false)
+
+    expect {
+      described_class.perform_now
+    }.to have_enqueued_mail(StudentMailer, :weekly_reminder)
+  end
+
+  it 'respeita quem desligou na dashboard' do
     create(:user, :student, weekly_reminder_email: false, level: "B1")
     create(:activity, :B1, draft: false)
 

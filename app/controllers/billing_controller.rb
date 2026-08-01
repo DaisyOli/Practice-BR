@@ -47,8 +47,7 @@ class BillingController < ApplicationController
     # justifica pra quem não tem nenhuma pra informar.
     return redirect_to student_dashboard_path unless current_user.passwordless?
 
-    if current_user.update(password: params.dig(:user, :password),
-                           password_confirmation: params.dig(:user, :password_confirmation))
+    if current_user.update(password_attrs)
       # Trocar a senha muda o salt que assina a sessão e o cookie de "lembrar de
       # mim": sem reemitir os dois, a pessoa seria deslogada na página seguinte,
       # bem depois de pagar. `force: true` porque o Warden ainda tem o usuário
@@ -112,6 +111,18 @@ class BillingController < ApplicationController
   end
 
   private
+
+  # O nome só entra quando vem preenchido: o campo é opcional, e um envio vazio
+  # não pode apagar o nome de quem já tem um.
+  def password_attrs
+    attrs = {
+      password:              params.dig(:user, :password),
+      password_confirmation: params.dig(:user, :password_confirmation)
+    }
+    nome = params.dig(:user, :name).to_s.strip
+    attrs[:name] = nome if nome.present?
+    attrs
+  end
 
   def no_open_invoice
     redirect_to billing_payment_problem_path, alert: NO_OPEN_INVOICE

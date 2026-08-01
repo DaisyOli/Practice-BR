@@ -18,8 +18,20 @@ RSpec.describe "Senha depois do pagamento", type: :request do
 
       get billing_success_path
 
-      expect(texto).to include("Il reste une chose : votre mot de passe")
+      expect(texto).to include("Encore deux petites choses")
       expect(response.body).to include("user[password]")
+    end
+
+    it "pergunta como a pessoa quer ser chamada" do
+      # Quem vem da landing atravessa o teste inteiro sem nome: lá o cadastro é
+      # só email e nível. Sem perguntar aqui, a dashboard cumprimenta com um
+      # "Olá!" seco pra sempre.
+      sign_in create(:user, :student, password_set_at: nil, language: "fr")
+
+      get billing_success_path
+
+      expect(texto).to include("Comment souhaitez-vous qu'on vous appelle ?")
+      expect(response.body).to include("user[name]")
     end
 
     it "não pede nada de quem já tem senha" do
@@ -35,7 +47,8 @@ RSpec.describe "Senha depois do pagamento", type: :request do
 
       get billing_success_path, headers: { "HTTP_ACCEPT_LANGUAGE" => "fr-FR,fr;q=0.9" }
 
-      expect(texto).to include("Falta uma coisa: sua senha")
+      expect(texto).to include("Faltam só duas coisinhas")
+      expect(texto).to include("Como você quer ser chamado?")
     end
 
     it "deixa uma saída — ninguém fica preso numa tela logo depois de pagar" do
@@ -52,9 +65,31 @@ RSpec.describe "Senha depois do pagamento", type: :request do
 
     before { sign_in user }
 
-    def criar_senha(senha, confirmacao = senha)
+    def criar_senha(senha, confirmacao = senha, nome: nil)
       post billing_password_path,
-           params: { user: { password: senha, password_confirmation: confirmacao } }
+           params: { user: { name: nome, password: senha, password_confirmation: confirmacao } }
+    end
+
+    it "guarda o nome junto com a senha" do
+      criar_senha("minha-senha-nova", nome: "Camille")
+
+      expect(user.reload.name).to eq("Camille")
+      expect(user.greeting_name).to eq("Camille")
+    end
+
+    it "não apaga o nome de quem deixou o campo vazio" do
+      user.update_columns(name: "Já Tinha Nome")
+
+      criar_senha("minha-senha-nova", nome: "   ")
+
+      expect(user.reload.name).to eq("Já Tinha Nome")
+    end
+
+    it "recusa nome maior que o limite sem perder a senha digitada" do
+      criar_senha("minha-senha-nova", nome: "x" * 51)
+
+      expect(response).to have_http_status(:unprocessable_entity)
+      expect(user.reload.passwordless?).to be true
     end
 
     it "salva a senha e leva pra dashboard" do
