@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.1].define(version: 2026_08_01_230000) do
+ActiveRecord::Schema[7.1].define(version: 2026_08_02_001000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
 
@@ -333,7 +333,7 @@ ActiveRecord::Schema[7.1].define(version: 2026_08_01_230000) do
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.string "role", default: "trial"
-    t.string "language", default: "en"
+    t.string "language", default: "fr"
     t.string "invitation_token"
     t.datetime "invitation_created_at"
     t.datetime "invitation_sent_at"
@@ -364,6 +364,7 @@ ActiveRecord::Schema[7.1].define(version: 2026_08_01_230000) do
     t.datetime "activation_nudge_sent_at"
     t.datetime "trial_ended_email_sent_at"
     t.datetime "trial_winback_sent_at"
+    t.datetime "trial_reopened_at"
     t.index ["email"], name: "index_users_on_email", unique: true
     t.index ["invitation_token"], name: "index_users_on_invitation_token", unique: true
     t.index ["invited_by_id"], name: "index_users_on_invited_by_id"

@@ -18,7 +18,12 @@ class User < ApplicationRecord
   ROLES = %w[teacher student trial].freeze
   LANGUAGES = %w[en pt fr].freeze
   CEFR_LEVELS = %w[A1 A2 B1 B2 C1].freeze
-  DEFAULT_LANGUAGE = 'pt'.freeze
+  # Francês, e não português: quem chega sem idioma declarado vem da landing
+  # francófona, e é o que o resto do app já assume quando não sabe (mailers,
+  # tela de fim de teste, boas-vindas). Era 'pt' aqui e 'en' no default da
+  # coluna — duas verdades discordando, e a do banco ganhava calada.
+  # Ver FixDefaultLanguageToFrench.
+  DEFAULT_LANGUAGE = 'fr'.freeze
   PROFESSIONAL_TYPES = %w[OPCO eCPF].freeze
 
   scope :teachers, -> { where(role: 'teacher') }
