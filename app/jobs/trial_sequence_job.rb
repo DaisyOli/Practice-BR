@@ -19,13 +19,14 @@ class TrialSequenceJob < ApplicationJob
   queue_as :default
 
   ACTIVATION_AFTER = 1.day
+  REOPEN_FOR       = 7.days
   WINBACK_AFTER    = 5.days
 
   def perform
     candidates.find_each do |trial|
       # No máximo um email por pessoa por rodada. Sem isto, alguém que esgotou o
       # teste no primeiro dia receberia dois emails na mesma manhã.
-      send_activation(trial) || send_ended(trial) || send_winback(trial)
+      send_activation(trial) || send_reopen(trial) || send_ended(trial) || send_winback(trial)
     end
   end
 
@@ -39,8 +40,13 @@ class TrialSequenceJob < ApplicationJob
     User.trials.where(stripe_customer_id: nil)
   end
 
+  # O link deste email leva direto à atividade, e não a um token de acesso, de
+  # propósito: em D+1 a pessoa acabou de entrar pela landing e o "lembrar de
+  # mim" (2 semanas) ainda está de pé. Quem já foi reaberto está fora daqui —
+  # acabou de receber um link e não precisa de dois emails em dois dias.
   def send_activation(trial)
     return false if trial.activation_nudge_sent_at.present?
+    return false if trial.trial_reopened_at.present?
     return false unless trial.trial_access_active?
     return false unless trial.trial_activities_used.to_i.zero?
     return false if trial.created_at > ACTIVATION_AFTER.ago
@@ -50,6 +56,30 @@ class TrialSequenceJob < ApplicationJob
 
     TrialMailer.activation_email(trial, activity).deliver_later
     trial.update_column(:activation_nudge_sent_at, Time.current)
+    true
+  end
+
+  # O teste acabou sem a pessoa abrir uma única atividade. Antes de falar em
+  # pagar, devolve o que ela não usou — uma vez só.
+  #
+  # Reabrir é mais que mudar uma data: quem entrou pela landing nunca criou
+  # senha, e o link do email original já venceu. Sem token novo, o convite
+  # levaria a uma porta trancada.
+  def send_reopen(trial)
+    return false if trial.trial_reopened_at.present?
+    return false if trial.trial_access_active?
+    return false unless trial.trial_activities_used.to_i.zero?
+    return false if first_activity_for(trial).nil?
+
+    raw_token, hashed_token = Devise.token_generator.generate(User, :reset_password_token)
+    trial.update_columns(
+      trial_expires_at:       REOPEN_FOR.from_now,
+      trial_reopened_at:      Time.current,
+      reset_password_token:   hashed_token,
+      reset_password_sent_at: Time.current
+    )
+
+    TrialMailer.reopen_email(trial, raw_token).deliver_later
     true
   end
 

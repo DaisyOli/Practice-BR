@@ -22,6 +22,16 @@ class TrialMailerPreview < ActionMailer::Preview
     TrialMailer.reminder_email(pessoa("pt", nome: "Marina", feitas: 2))
   end
 
+  # Reabertura: o email de quem nunca chegou a usar o teste. É o que as 4
+  # pessoas reais receberiam na primeira rodada.
+  def reopen_fr
+    TrialMailer.reopen_email(pessoa("fr"), "token-de-exemplo")
+  end
+
+  def reopen_pt
+    TrialMailer.reopen_email(pessoa("pt", nome: "Marina"), "token-de-exemplo")
+  end
+
   # Quem nunca abriu uma atividade: é o caso de 4 das 5 pessoas reais.
   def ended_fr_sem_ter_comecado
     TrialMailer.ended_email(pessoa("fr"), 145)

@@ -156,7 +156,49 @@ class TrialMailer < ApplicationMailer
     mail(to: user.email, subject: @copy[:subject])
   end
 
-  # 2. O teste acabou (esgotou as 3 ou venceu o prazo). Até aqui isso só existia
+  # 2. Nunca chegou a usar o teste. Este email devolve o que a pessoa não usou,
+  #    em vez de pedir dinheiro por algo que ela nunca viu.
+  #
+  #    Ele carrega um link de acesso novo, e isso não é detalhe: quem entrou pela
+  #    landing nunca criou senha, e o link do email original vale 8 dias. Passado
+  #    o prazo, essa pessoa está **trancada para fora da própria conta** — um
+  #    convite sem link novo seria um convite para uma porta fechada.
+  REOPEN = {
+    "fr" => {
+      subject: "On vous rouvre l'essai · seu teste, de novo 🌱",
+      title:   "Vos 3 activités n'ont jamais servi",
+      lead:    "Vous aviez créé un accès et la semaine est passée sans qu'on se croise. Ça arrive. On vous rouvre l'essai pour 7 jours — mêmes 3 activités, à votre niveau, sans rien payer.",
+      cta:     "Ouvrir mon essai →",
+      note:    "Ce lien vous fait entrer directement et vous laisse choisir un mot de passe. Il est valable 8 jours."
+    },
+    "en" => {
+      subject: "We're reopening your trial · seu teste, de novo 🌱",
+      title:   "Your 3 activities were never used",
+      lead:    "You created an access and the week went by without us crossing paths. It happens. We're reopening your trial for 7 days — same 3 activities, at your level, nothing to pay.",
+      cta:     "Open my trial →",
+      note:    "This link takes you straight in and lets you pick a password. It's valid for 8 days."
+    },
+    "pt" => {
+      subject: "Reabrimos seu teste 🌱",
+      title:   "Suas 3 atividades nunca foram usadas",
+      lead:    "Você criou um acesso e a semana passou sem a gente se encontrar. Acontece. Reabrimos seu teste por 7 dias — as mesmas 3 atividades, no seu nível, sem pagar nada.",
+      cta:     "Abrir meu teste →",
+      note:    "Este link te leva direto pra dentro e deixa você criar uma senha. Vale por 8 dias."
+    }
+  }.freeze
+
+  def reopen_email(user, reset_token)
+    @user     = user
+    @copy     = REOPEN.fetch(user.language, REOPEN["fr"])
+    @activity = nil
+    @url      = edit_user_password_url(reset_password_token: reset_token,
+                                       host: default_url_options[:host],
+                                       protocol: default_url_options[:protocol] || "https")
+
+    mail(to: user.email, subject: @copy[:subject])
+  end
+
+  # 3. O teste acabou (esgotou as 3 ou venceu o prazo). Até aqui isso só existia
   #    como tela dentro do app: só via quem voltasse sozinha.
   # Dois textos, e a diferença não é cosmética: "você viu o que o teste tinha" é
   # mentira para quem não abriu uma atividade sequer — e essas eram 4 das 5

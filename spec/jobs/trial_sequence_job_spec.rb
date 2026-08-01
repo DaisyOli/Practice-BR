@@ -52,6 +52,65 @@ RSpec.describe TrialSequenceJob, type: :job do
     end
   end
 
+  describe "reabertura (nunca chegou a usar)" do
+    it "devolve o teste em vez de pedir dinheiro por algo que a pessoa não viu" do
+      pessoa = teste(trial_expires_at: 1.day.ago, created_at: 8.days.ago, trial_activities_used: 0)
+
+      expect { described_class.perform_now }
+        .to have_enqueued_mail(TrialMailer, :reopen_email)
+
+      pessoa.reload
+      expect(pessoa.trial_reopened_at).to be_present
+      expect(pessoa.trial_access_active?).to be true
+      expect(pessoa.trial_expires_at).to be > 6.days.from_now
+    end
+
+    it "manda um link de acesso novo — a pessoa está trancada pra fora" do
+      # Quem entrou pela landing nunca criou senha, e o link do email original
+      # vale 8 dias. Um convite sem token novo levaria a uma porta fechada.
+      pessoa = teste(trial_expires_at: 1.day.ago, created_at: 12.days.ago,
+                     trial_activities_used: 0, reset_password_sent_at: 12.days.ago)
+
+      described_class.perform_now
+
+      pessoa.reload
+      expect(pessoa.reset_password_token).to be_present
+      expect(pessoa.reset_password_sent_at).to be_within(1.minute).of(Time.current)
+      expect(pessoa.reset_password_period_valid?).to be true
+    end
+
+    it "não reabre pra quem já praticou — essa pessoa viu o produto" do
+      teste(trial_activities_used: 3)
+
+      expect { described_class.perform_now }
+        .not_to have_enqueued_mail(TrialMailer, :reopen_email)
+    end
+
+    it "reabre uma vez só" do
+      teste(trial_expires_at: 1.day.ago, created_at: 20.days.ago,
+            trial_activities_used: 0, trial_reopened_at: 10.days.ago)
+
+      expect { described_class.perform_now }
+        .not_to have_enqueued_mail(TrialMailer, :reopen_email)
+    end
+
+    it "quem ignorou a reabertura recebe o fim, e aí sim a assinatura" do
+      teste(trial_expires_at: 1.day.ago, created_at: 20.days.ago,
+            trial_activities_used: 0, trial_reopened_at: 10.days.ago)
+
+      expect { described_class.perform_now }
+        .to have_enqueued_mail(TrialMailer, :ended_email)
+    end
+
+    it "não manda ativação no dia seguinte à reabertura" do
+      teste(created_at: 20.days.ago, trial_activities_used: 0,
+            trial_reopened_at: 1.day.ago, trial_expires_at: 6.days.from_now)
+
+      expect { described_class.perform_now }
+        .not_to have_enqueued_mail(TrialMailer, :activation_email)
+    end
+  end
+
   describe "fim do teste" do
     it "avisa quem esgotou as 3 atividades" do
       pessoa = teste(trial_activities_used: 3)
@@ -62,8 +121,8 @@ RSpec.describe TrialSequenceJob, type: :job do
       expect(pessoa.reload.trial_ended_email_sent_at).to be_present
     end
 
-    it "avisa quem deixou o prazo vencer" do
-      teste(trial_expires_at: 1.day.ago, created_at: 8.days.ago)
+    it "avisa quem praticou e deixou o prazo vencer" do
+      teste(trial_expires_at: 1.day.ago, created_at: 8.days.ago, trial_activities_used: 2)
 
       expect { described_class.perform_now }
         .to have_enqueued_mail(TrialMailer, :ended_email)
@@ -86,8 +145,10 @@ RSpec.describe TrialSequenceJob, type: :job do
     it "não diz 'você viu o que o teste tinha' pra quem não viu nada" do
       # O caso de 4 das 5 pessoas reais. Um balanço de algo que não aconteceu é
       # a pior coisa pra mandar justamente pra elas.
-      pessoa = teste(trial_expires_at: 1.day.ago, created_at: 8.days.ago,
-                     trial_activities_used: 0, language: "fr")
+      # Chega aqui só depois de ignorar a reabertura — por isso o trial_reopened_at.
+      pessoa = teste(trial_expires_at: 1.day.ago, created_at: 20.days.ago,
+                     trial_activities_used: 0, trial_reopened_at: 10.days.ago,
+                     language: "fr")
 
       corpo = CGI.unescapeHTML(TrialMailer.ended_email(pessoa, 145).body.encoded)
       expect(corpo).to include("sans qu'on se croise")
