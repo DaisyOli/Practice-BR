@@ -545,7 +545,25 @@
       <% levels_data.each do |ld| %>
         <% m = cefr_colors(ld[:level]) %>
         <% is_locked = !accessible_levels.include?(ld[:level]) %>
-        <% if is_locked %>
+        <%# Cadeado do teste: nível abaixo do declarado é justamente o que a
+            assinatura devolve ("revoir les niveaux précédents", na landing).
+            Por isso este cadeado é clicável e leva pra assinatura — o de cima
+            continua mudo, porque nem assinando ele abre. %>
+        <% trial_locked = current_user.trial? && !is_locked && ld[:level] != current_user.level %>
+        <% if trial_locked %>
+          <%= link_to billing_new_path, class: "level-card-link" do %>
+            <div class="level-card-inner" style="text-align:center; border:1.5px solid var(--action-border); border-radius:12px; padding:12px 8px; background:var(--action-tint);">
+              <div style="background:var(--surface); color:var(--action-ink); border:1.5px solid var(--action-border); font-family:'DM Mono',monospace; font-size:0.85rem; font-weight:800; width:44px; height:44px; border-radius:10px; display:flex; align-items:center; justify-content:center; margin:0 auto 8px;">
+                🔒
+              </div>
+              <div style="font-family:'Plus Jakarta Sans',sans-serif; font-size:0.75rem; font-weight:600; color:var(--ink); margin-bottom:8px;"><%= ld[:level] %></div>
+              <div style="background:var(--surface); border-radius:99px; height:5px; overflow:hidden; margin-bottom:4px;">
+                <div style="width:0%; height:100%; border-radius:99px;"></div>
+              </div>
+              <div style="font-family:'DM Mono',monospace; font-size:0.65rem; color:var(--action-ink);">com a assinatura</div>
+            </div>
+          <% end %>
+        <% elsif is_locked %>
           <div style="text-align:center; border:1.5px solid var(--paper-2); border-radius:12px; padding:12px 8px; opacity:0.4; cursor:not-allowed; position:relative;" title="Nível não liberado pelo seu professor">
             <div style="background:var(--line-soft); color:var(--ink-faint); border:1.5px solid var(--line); font-family:'DM Mono',monospace; font-size:0.85rem; font-weight:800; width:44px; height:44px; border-radius:10px; display:flex; align-items:center; justify-content:center; margin:0 auto 8px;">
               🔒

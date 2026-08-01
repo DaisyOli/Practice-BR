@@ -1,6 +1,18 @@
-// Practice-BR Service Worker v2 — caching estratégico para PWA
-
-var CACHE = 'practicebr-v2';
+// Practice-BR Service Worker v3 — caching estratégico para PWA
+//
+// v3 (2026-08-01): parou de guardar HTML de página logada. A v2 gravava toda
+// resposta HTML num cache com chave só de URL — sem nenhuma noção de QUEM
+// estava logado. Numa queda de rede, /student_dashboard devolvia a página
+// guardada da última pessoa que visitou aquela URL naquele navegador.
+//
+// Foi visto acontecendo: navbar da professora aparecendo sobre a dashboard de
+// uma conta de aluna, no mesmo navegador. Num computador compartilhado isso é
+// vazamento de dado pessoal de uma pessoa para outra.
+//
+// O nome do cache mudou de propósito: o handler de `activate` apaga todo cache
+// com nome diferente, então subir esta versão limpa o HTML já guardado em todos
+// os aparelhos que abrirem o app.
+var CACHE = 'practicebr-v3';
 
 // ── Instalação: ativa imediatamente sem esperar abas fecharem ──────────────
 self.addEventListener('install', function(event) {
@@ -46,10 +58,11 @@ self.addEventListener('fetch', function(event) {
     return;
   }
 
-  // Network-first: páginas HTML (dinâmicas, dados do usuário)
-  // Sempre tenta a rede; usa cache como fallback offline
+  // Rede sempre, sem guardar: página HTML carrega dado de UMA pessoa logada, e
+  // o cache do SW não tem como saber de quem. Offline, mostra aviso — ver v3 no
+  // topo do arquivo.
   if (req.headers.get('accept') && req.headers.get('accept').includes('text/html')) {
-    event.respondWith(networkFirst(req));
+    event.respondWith(networkOnly(req));
     return;
   }
 });
@@ -80,22 +93,16 @@ function staleWhileRevalidate(req) {
   });
 }
 
-function networkFirst(req) {
-  return fetch(req)
-    .then(function(response) {
-      if (response.ok) {
-        caches.open(CACHE).then(function(cache) { cache.put(req, response.clone()); });
-      }
-      return response;
-    })
-    .catch(function() {
-      return caches.match(req).then(function(cached) {
-        return cached || new Response('Você está offline. Abra o app com conexão.', {
-          status: 503,
-          headers: { 'Content-Type': 'text/plain; charset=utf-8' }
-        });
-      });
+// Sem cache nenhum, nem de leitura nem de escrita. A versão anterior caía no
+// cache quando a rede falhava — e era exatamente aí que a página de outra
+// pessoa aparecia. Um aviso de offline é pior de usar e melhor de confiar.
+function networkOnly(req) {
+  return fetch(req).catch(function() {
+    return new Response('Você está offline. Abra o app com conexão.', {
+      status: 503,
+      headers: { 'Content-Type': 'text/plain; charset=utf-8' }
     });
+  });
 }
 
 // ── Push notifications (inalterado) ──────────────────────────────────────

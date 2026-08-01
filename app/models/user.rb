@@ -273,7 +273,21 @@ class User < ApplicationRecord
   # próprio nível — com menos que isso a média não é um sinal confiável.
   MIN_ATTEMPTS_FOR_ADAPTIVE_WEIGHTS = 3
 
+  # Durante o teste a porta só abre pro nível declarado (ver
+  # ActivitiesController#check_trial_level_restriction!). As telas perguntam isto
+  # pra mostrar cadeado com caminho pra assinatura, em vez de um link que a
+  # própria plataforma recusa meio segundo depois.
+  def locked_activity?(activity)
+    return false unless activity
+    trial? && activity.level != level
+  end
+
   def weighted_priority_levels
+    # No teste o sorteio não faz sentido: ele existe pra intercalar níveis mais
+    # fáceis, e nenhum deles abre. Sortear aqui era o que fazia a dashboard
+    # oferecer uma atividade A2 pra quem só pode abrir B1.
+    return [level].compact if trial?
+
     levels = accessible_levels.reverse # próprio nível primeiro, depois descendente
     return levels if levels.size <= 1
 

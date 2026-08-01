@@ -246,6 +246,9 @@
               <% if current_user.teacher? && activity.draft? && mine %>
                 <%= link_to "Revisar", review_draft_activity_path(activity),
                       style: "font-family:'Plus Jakarta Sans',sans-serif; font-size:0.78rem; font-weight:600; color:var(--action-ink); padding:5px 12px; border:1.5px solid var(--action); border-radius:8px; text-decoration:none; background:var(--warning-tint); white-space:nowrap;" %>
+              <% elsif current_user.locked_activity?(activity) %>
+                <%= link_to "🔒 Com a assinatura", billing_new_path,
+                      style: "font-family:'Plus Jakarta Sans',sans-serif; font-size:0.78rem; font-weight:600; color:var(--action-ink); padding:5px 12px; border:1.5px solid var(--action-border); border-radius:8px; text-decoration:none; background:var(--action-tint); white-space:nowrap;" %>
               <% else %>
                 <%= link_to "Ver", activity_path(activity),
                       style: "font-family:'Plus Jakarta Sans',sans-serif; font-size:0.78rem; font-weight:600; color:var(--info); padding:5px 12px; border:1.5px solid var(--info-border); border-radius:8px; text-decoration:none; background:var(--info-tint); white-space:nowrap;" %>
@@ -334,8 +337,13 @@
               </div>
 
               <div style="display:flex; gap:6px; border-top:1px solid var(--line-soft); padding-top:12px; margin-top:auto;">
-                <%= link_to "Ver", activity_path(activity),
-                      style: "flex:1; text-align:center; font-family:'Plus Jakarta Sans',sans-serif; font-size:0.78rem; font-weight:600; color:var(--info); padding:7px; border:1.5px solid var(--info-border); border-radius:8px; text-decoration:none; background:var(--info-tint);" %>
+                <% if current_user.locked_activity?(activity) %>
+                  <%= link_to "🔒 Com a assinatura", billing_new_path,
+                        style: "flex:1; text-align:center; font-family:'Plus Jakarta Sans',sans-serif; font-size:0.78rem; font-weight:600; color:var(--action-ink); padding:7px; border:1.5px solid var(--action-border); border-radius:8px; text-decoration:none; background:var(--action-tint);" %>
+                <% else %>
+                  <%= link_to "Ver", activity_path(activity),
+                        style: "flex:1; text-align:center; font-family:'Plus Jakarta Sans',sans-serif; font-size:0.78rem; font-weight:600; color:var(--info); padding:7px; border:1.5px solid var(--info-border); border-radius:8px; text-decoration:none; background:var(--info-tint);" %>
+                <% end %>
                 <% if current_user.teacher? && activity.teacher_id == current_user.id %>
                   <%= link_to "Editar", edit_activity_path(activity),
                         style: "flex:1; text-align:center; font-family:'Plus Jakarta Sans',sans-serif; font-size:0.78rem; font-weight:500; color:var(--ink-soft); padding:7px; border:1.5px solid var(--line); border-radius:8px; text-decoration:none;" %>

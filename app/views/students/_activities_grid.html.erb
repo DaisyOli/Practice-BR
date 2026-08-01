@@ -76,12 +76,22 @@
         <span style="font-family:'Plus Jakarta Sans',sans-serif; font-size:0.77rem; color:var(--ink-faint); display:flex; align-items:center; gap:4px; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">
           <i class="bi bi-person" style="flex-shrink:0;"></i> Prof. <%= activity.teacher&.display_name %>
         </span>
-        <%= link_to solve_activity_path(activity),
-              style: "flex-shrink:0; font-family:'Plus Jakarta Sans',sans-serif; font-size:0.85rem; font-weight:700; padding:9px 20px; border-radius:10px; text-decoration:none; display:inline-flex; align-items:center; gap:6px; #{completed ? 'background:var(--paper); color:var(--ink-soft); border:1.5px solid var(--line);' : "background:#{m[:border]}; color:var(--surface);"}" do %>
-          <% if completed %>
-            <i class="bi bi-arrow-clockwise"></i> <%= t('student_dashboard.actions.retry_quiz') %>
-          <% else %>
-            <i class="bi bi-play-fill"></i> <%= t('activities.solve_quiz') %>
+        <%# No teste, atividade de outro nível vira convite em vez de porta
+            fechada: o cadeado leva pra assinatura, que é onde a gente quer essa
+            pessoa. Antes o botão prometia abrir e a plataforma recusava. %>
+        <% if current_user.locked_activity?(activity) %>
+          <%= link_to billing_new_path,
+                style: "flex-shrink:0; font-family:'Plus Jakarta Sans',sans-serif; font-size:0.85rem; font-weight:700; padding:9px 20px; border-radius:10px; text-decoration:none; display:inline-flex; align-items:center; gap:6px; background:var(--action-tint); color:var(--action-ink); border:1.5px solid var(--action-border);" do %>
+            🔒 Com a assinatura
+          <% end %>
+        <% else %>
+          <%= link_to solve_activity_path(activity),
+                style: "flex-shrink:0; font-family:'Plus Jakarta Sans',sans-serif; font-size:0.85rem; font-weight:700; padding:9px 20px; border-radius:10px; text-decoration:none; display:inline-flex; align-items:center; gap:6px; #{completed ? 'background:var(--paper); color:var(--ink-soft); border:1.5px solid var(--line);' : "background:#{m[:border]}; color:var(--surface);"}" do %>
+            <% if completed %>
+              <i class="bi bi-arrow-clockwise"></i> <%= t('student_dashboard.actions.retry_quiz') %>
+            <% else %>
+              <i class="bi bi-play-fill"></i> <%= t('activities.solve_quiz') %>
+            <% end %>
           <% end %>
         <% end %>
       </div>
