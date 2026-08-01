@@ -45,6 +45,20 @@ class StudentMailerPreview < ActionMailer::Preview
     StudentMailer.subscription_welcome(student, "token-de-exemplo")
   end
 
+  def inactivity_nudge_fr
+    student  = User.new(name: "Camille", email: "etudiant@exemple.com", language: "fr", level: "B1")
+    activity = Activity.published.first ||
+               Activity.new(title: "Exemplo de Atividade", level: "B1", slug: "exemplo")
+    StudentMailer.inactivity_nudge(student, activity)
+  end
+
+  def inactivity_nudge_pt
+    student  = User.new(email: "aluno@exemplo.com", language: "pt", level: "A2")
+    activity = Activity.published.first ||
+               Activity.new(title: "Exemplo de Atividade", level: "A2", slug: "exemplo")
+    StudentMailer.inactivity_nudge(student, activity)
+  end
+
   def weekly_reminder_pt
     student    = User.where(role: "student", language: "pt").first ||
                  User.new(name: "Aluno Exemplo", email: "aluno@exemplo.com", language: "pt", level: "B1")

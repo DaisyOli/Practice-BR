@@ -104,6 +104,44 @@ class StudentMailer < ApplicationMailer
     mail(to: student.email, subject: @copy[:subject])
   end
 
+  # 48h sem praticar. O tom aqui importa mais que em qualquer outro email da
+  # plataforma: quem sumiu dois dias não fez nada de errado, e um email que soa
+  # a cobrança é um email que ensina a pessoa a não abrir os próximos. Por isso
+  # ele traz uma atividade concreta e curta, não uma lista de deveres.
+  INACTIVITY = {
+    "fr" => {
+      subject: "On reprend · vamos voltar ? 🌱",
+      title:   "Deux jours sans portugais, ça arrive",
+      lead:    "La semaine passe vite. On vous a gardé une activité courte pour reprendre le fil — pas besoin de rattraper quoi que ce soit.",
+      cta:     "Faire cette activité →",
+      footer:  "Vous ne voulez plus de rappels ? Le bouton est sur votre tableau de bord."
+    },
+    "en" => {
+      subject: "Let's pick it back up · vamos voltar? 🌱",
+      title:   "Two days without Portuguese happens",
+      lead:    "Weeks go by fast. We saved you one short activity to get back in — nothing to catch up on.",
+      cta:     "Do this activity →",
+      footer:  "Don't want reminders anymore? The button is on your dashboard."
+    },
+    "pt" => {
+      subject: "Vamos voltar? 🌱",
+      title:   "Dois dias sem português acontece",
+      lead:    "A semana passa voando. Guardamos uma atividade curta pra você pegar o fio de novo — não tem nada pra recuperar.",
+      cta:     "Fazer esta atividade →",
+      footer:  "Não quer mais lembretes? O botão está no seu dashboard."
+    }
+  }.freeze
+
+  def inactivity_nudge(student, activity)
+    @student  = student
+    @activity = activity
+    @lang     = student.language.presence || "pt"
+    @copy     = INACTIVITY.fetch(@lang, INACTIVITY["fr"])
+    @url      = solve_activity_url(activity)
+
+    mail(to: student.email, subject: @copy[:subject])
+  end
+
   # Cartão recusado. Este email é o que dá sentido à tolerância: sem ele o aluno
   # não sabe que precisa agir e a tolerância só adia a surpresa.
   def payment_failed(student)
