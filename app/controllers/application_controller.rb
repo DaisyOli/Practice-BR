@@ -82,6 +82,30 @@ class ApplicationController < ActionController::Base
     redirect_to billing_payment_problem_path
   end
 
+  # Português para todo mundo, e isso é decisão — não pendência.
+  #
+  # A interface multilíngue existiu pela metade: 32 das 102 views usam `t()`, o
+  # resto tem português escrito na mão, e o `fr.yml` está 87 linhas atrás do
+  # `pt.yml`. Metade traduzido é o pior estado possível — dá o trabalho de manter
+  # três arquivos por tela nova e não entrega idioma nenhum inteiro. Forçar o
+  # padrão aqui foi o que parou de quebrar o app.
+  #
+  # E o motivo de ficar assim não é o custo: quem entra está aqui para praticar
+  # português, e a interface faz parte da imersão. São poucas dezenas de palavras
+  # ("atividade", "nível", "enviar", "seu progresso"), sempre no mesmo lugar,
+  # sempre com a ação visível ao lado. Isso é input compreensível, não obstáculo.
+  #
+  # Os três idiomas continuam existindo onde a pessoa **não** está imersa, e lá
+  # são escritos na mão, sem I18n: os emails (StudentMailer, TrialMailer), a
+  # política de privacidade (HomeController), a tela de fim de teste e o billing.
+  # São os momentos em que entender não pode depender de esforço — a caixa de
+  # entrada entre outras 40 mensagens, o texto legal, a hora de pagar.
+  #
+  # Ou seja: imersão dentro do app, a língua da pessoa fora dele.
+  #
+  # Se um dia a interface voltar a ser multilíngue, é este método que sai. Mas as
+  # 102 views precisam estar traduzidas **antes** de ele sair, não depois — foi
+  # exatamente essa ordem invertida que quebrou o app das outras vezes.
   def switch_locale(&action)
     I18n.with_locale(I18n.default_locale, &action)
   end

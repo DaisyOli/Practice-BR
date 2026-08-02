@@ -819,6 +819,62 @@
   </script>
 <% end %>
 
+<%# Idioma dos emails.
+    Vem logo depois do lembrete semanal porque é a mesma decisão vista de dois
+    ângulos: o que chega na caixa de entrada, e em que língua chega.
+
+    Não mexe na interface — ela é português de propósito (ver o `switch_locale`
+    do ApplicationController). Mexe só no que os mailers leem, e é por isso que
+    o texto fala de email, não de "idioma do app": prometer uma tradução que não
+    vai acontecer seria pior que não ter botão nenhum.
+
+    Vale para trial também, não só para student: quem está no teste recebe 4
+    emails da sequência, e é justamente quem tem mais chance de ter nascido com
+    o idioma errado. %>
+<% if current_user.student_like? %>
+  <%# Os rótulos seguem a língua ESCOLHIDA, não a do navegador (que é o padrão
+      do resto desta tela): quem selecionou francês precisa continuar vendo
+      francês aqui, senão o botão parece não ter funcionado. %>
+  <% email_lang_copy = {
+       "fr" => { title: "Langue des emails",
+                 desc:  "L'app reste en portugais — ça fait partie de la pratique. Nos emails, eux, arrivent dans la langue que vous choisissez." },
+       "en" => { title: "Email language",
+                 desc:  "The app stays in Portuguese — that's part of the practice. Our emails, though, arrive in the language you choose." },
+       "pt" => { title: "Idioma dos emails",
+                 desc:  "O app continua em português — faz parte da prática. Já nossos emails chegam na língua que você escolher." }
+     } %>
+  <% email_lang = email_lang_copy.fetch(current_user.language, email_lang_copy["fr"]) %>
+
+  <div style="max-width:560px; margin:12px auto 0; padding:20px 24px; background:var(--surface); border-radius:14px; border:1px solid var(--paper-2);">
+    <%# flex-wrap: no celular os três botões descem pra linha de baixo em vez de
+        espremer o texto. %>
+    <div style="display:flex; align-items:center; justify-content:space-between; gap:16px; flex-wrap:wrap;">
+      <div style="flex:1; min-width:200px;">
+        <div style="font-family:'Plus Jakarta Sans',sans-serif; font-size:0.88rem; font-weight:700; color:var(--ink);">
+          <%= email_lang[:title] %>
+        </div>
+        <div style="font-family:'Plus Jakarta Sans',sans-serif; font-size:0.78rem; color:var(--ink-faint); margin-top:3px;">
+          <%= email_lang[:desc] %>
+        </div>
+      </div>
+
+      <%# Francês primeiro: é a língua da maior parte da base. %>
+      <div style="display:flex; gap:6px; flex-shrink:0;">
+        <% %w[fr pt en].each do |code| %>
+          <% selected = current_user.language == code %>
+          <%= button_to update_language_path,
+                method: :patch,
+                params: { language: code },
+                form: { data: { turbo: false } },
+                style: "background:#{selected ? 'var(--brand)' : 'var(--paper-2)'}; color:#{selected ? 'var(--surface)' : 'var(--ink-faint)'}; font-family:'Plus Jakarta Sans',sans-serif; font-size:0.78rem; font-weight:700; border:none; border-radius:20px; padding:7px 14px; cursor:pointer; white-space:nowrap;" do %>
+            <%= current_user.language_name_for(code) %>
+          <% end %>
+        <% end %>
+      </div>
+    </div>
+  </div>
+<% end %>
+
 <script>
 (function() {
   function animateCompBars() {

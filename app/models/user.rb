@@ -242,12 +242,14 @@ class User < ApplicationRecord
     language_name_for(language)
   end
 
+  # O fallback acompanha DEFAULT_LANGUAGE: era 'English' de quando a coluna
+  # nascia em inglês, e um idioma desconhecido virando "English" é exatamente o
+  # engano que as migrações de 20260802 consertaram.
   def language_name_for(lang_code)
     case lang_code.to_s
     when 'pt' then 'Português'
     when 'en' then 'English'
-    when 'fr' then 'Français'
-    else 'English'
+    else 'Français'
     end
   end
 
