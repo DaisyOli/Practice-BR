@@ -85,6 +85,27 @@ RSpec.describe "Idioma dos emails", type: :request do
       expect(response.body).to include("Français")
     end
 
+    # O card é a ferramenta pra consertar um idioma errado: se ele mesmo aparece
+    # no idioma errado, não serve. E quem está em "en" nesta base não escolheu
+    # inglês — herdou do default antigo da coluna.
+    it "se apresenta em francês para quem está preso no inglês herdado" do
+      sign_in student # language "en"
+      get student_dashboard_path
+
+      expect(response.body).to include("Langue des emails")
+      expect(response.body).not_to include("Email language")
+    end
+
+    # Português é a exceção: aí a pessoa escolheu de verdade, e é a língua do app.
+    it "se apresenta em português para quem escolheu português" do
+      student.update!(language: "pt")
+      sign_in student
+      get student_dashboard_path
+
+      expect(response.body).to include("Idioma dos emails")
+      expect(response.body).not_to include("Langue des emails")
+    end
+
     # Trial recebe 4 emails da sequência e é quem mais tem chance de ter nascido
     # com o idioma errado — não pode ficar de fora.
     it "para quem está no teste" do

@@ -832,14 +832,21 @@
     emails da sequência, e é justamente quem tem mais chance de ter nascido com
     o idioma errado. %>
 <% if current_user.student_like? %>
-  <%# Os rótulos seguem a língua ESCOLHIDA, não a do navegador (que é o padrão
-      do resto desta tela): quem selecionou francês precisa continuar vendo
-      francês aqui, senão o botão parece não ter funcionado. %>
+  <%# O card nunca se apresenta em inglês, e isso não é detalhe de gosto.
+      Ele é a ferramenta pra consertar um idioma errado — se ele próprio aparece
+      no idioma errado, não serve pra nada. E "en" nesta base não é escolha de
+      ninguém: é o default antigo da coluna (ver as migrações de 20260802), então
+      quem está em inglês é justamente quem precisa do card e não o lê.
+
+      O público é majoritariamente francófono, e francês é o fallback do app
+      inteiro (mailers, privacidade, billing). Só o português escapa, porque aí a
+      pessoa escolheu de verdade — e é a língua do app.
+
+      Quem clicar em English continua tendo a confirmação em inglês e o botão
+      aceso; o rótulo do card fica em francês de propósito. %>
   <% email_lang_copy = {
        "fr" => { title: "Langue des emails",
                  desc:  "L'app reste en portugais — ça fait partie de la pratique. Nos emails, eux, arrivent dans la langue que vous choisissez." },
-       "en" => { title: "Email language",
-                 desc:  "The app stays in Portuguese — that's part of the practice. Our emails, though, arrive in the language you choose." },
        "pt" => { title: "Idioma dos emails",
                  desc:  "O app continua em português — faz parte da prática. Já nossos emails chegam na língua que você escolher." }
      } %>
