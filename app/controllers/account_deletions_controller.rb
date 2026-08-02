@@ -8,9 +8,8 @@ class AccountDeletionsController < ApplicationController
   before_action :redirect_teachers
 
   def new
-    @has_subscription = current_user.stripe_subscription_id.present? &&
-                        current_user.subscription_status != "canceled"
-    @attempts_count = current_user.quiz_attempts.count
+    @has_subscription = current_user.deletion_cancels_subscription?
+    @attempts_count   = current_user.quiz_attempts.count
   end
 
   private

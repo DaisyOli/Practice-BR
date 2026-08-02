@@ -86,24 +86,46 @@ RSpec.describe "Idioma dos emails", type: :request do
     end
 
     # O card é a ferramenta pra consertar um idioma errado: se ele mesmo aparece
-    # no idioma errado, não serve. E quem está em "en" nesta base não escolheu
-    # inglês — herdou do default antigo da coluna.
+    # no idioma errado, não serve. E quem está em "en" sem `language_chosen_at`
+    # não escolheu inglês — herdou do default antigo da coluna.
     it "se apresenta em francês para quem está preso no inglês herdado" do
-      sign_in student # language "en"
+      expect(student.language_chosen_at).to be_nil
+      sign_in student # language "en", herdado
+
       get student_dashboard_path
 
       expect(response.body).to include("Langue des emails")
       expect(response.body).not_to include("Email language")
     end
 
-    # Português é a exceção: aí a pessoa escolheu de verdade, e é a língua do app.
-    it "se apresenta em português para quem escolheu português" do
+    # A outra metade da regra, e a que impede o excesso de zelo: quem CLICOU em
+    # English pediu inglês, e ignorar isso é o mesmo erro na direção contrária.
+    it "se apresenta em inglês para quem escolheu inglês de verdade" do
+      sign_in student
+      patch update_language_path, params: { language: "en" }
+
+      get student_dashboard_path
+
+      expect(response.body).to include("Email language")
+      expect(response.body).not_to include("Langue des emails")
+    end
+
+    # Português é a língua do app: ninguém a recebe por engano, então passa direto.
+    it "se apresenta em português para quem está em português" do
       student.update!(language: "pt")
       sign_in student
+
       get student_dashboard_path
 
       expect(response.body).to include("Idioma dos emails")
       expect(response.body).not_to include("Langue des emails")
+    end
+
+    it "registra o momento da escolha, que é o que separa escolha de herança" do
+      sign_in student
+
+      expect { patch update_language_path, params: { language: "en" } }
+        .to change { student.reload.language_chosen_at }.from(nil)
     end
 
     # Trial recebe 4 emails da sequência e é quem mais tem chance de ter nascido

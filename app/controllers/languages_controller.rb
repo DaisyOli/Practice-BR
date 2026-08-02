@@ -35,7 +35,10 @@ class LanguagesController < ApplicationController
       return redirect_back_with(:alert, copy_for(current_user.language)[:failed])
     end
 
-    if current_user.update(language: new_language)
+    # `language_chosen_at` é o que separa escolha de herança. Só quem passa por
+    # aqui escolheu — a landing e o default da coluna não escolhem por ninguém.
+    # É o que autoriza a dashboard a mostrar inglês: em inglês, quem pediu.
+    if current_user.update(language: new_language, language_chosen_at: Time.current)
       redirect_back_with(:notice, copy_for(new_language)[:ok])
     else
       Rails.logger.error "Failed to update user language: #{current_user.errors.full_messages.join(', ')}"

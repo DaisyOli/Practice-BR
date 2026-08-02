@@ -170,6 +170,21 @@ class User < ApplicationRecord
     ONGOING_SUBSCRIPTION_STATUSES.include?(subscription_status)
   end
 
+  # "Apagar esta conta vai cancelar uma assinatura na Stripe?"
+  #
+  # Mora aqui, e não em cada tela, porque três lugares dependem da MESMA
+  # resposta: o rótulo do link na dashboard (que precisa avisar antes do clique),
+  # a tela de confirmação e o AccountDeletionService, que é quem cancela de fato.
+  # Um deles discordando dos outros é uma pessoa clicando em "só apagar a conta"
+  # e perdendo a assinatura sem aviso.
+  #
+  # Mais largo que `subscription_ongoing?` de propósito: qualquer assinatura não
+  # cancelada é uma assinatura que o destroy vai cancelar, mesmo em estado que
+  # não dá acesso (`incomplete`, `unpaid`).
+  def deletion_cancels_subscription?
+    stripe_subscription_id.present? && subscription_status != "canceled"
+  end
+
   # "Última atividade" é a tentativa de quiz mais recente, não o último login.
   # O `:trackable` do Devise nem está ativado, mas mesmo que estivesse: login
   # mede aba aberta, tentativa mede uso de verdade. Quem nunca respondeu nada
@@ -240,6 +255,22 @@ class User < ApplicationRecord
 
   def language_name
     language_name_for(language)
+  end
+
+  # A língua em que o app fala com a pessoa NA TELA — diferente de `language`,
+  # que é a dos emails.
+  #
+  # As duas divergem num caso só: inglês. `language` pode ser inglês sem ninguém
+  # ter pedido, porque era o default da coluna até 02/08/2026 — e um público
+  # francófono lendo um inglês que não escolheu é exatamente o que a gente está
+  # consertando. Então inglês só aparece na tela depois de alguém clicar nele, e
+  # é isso que `language_chosen_at` registra.
+  #
+  # Português passa direto: é a língua do app, ninguém a recebe por engano.
+  def display_language
+    return language if language_chosen_at.present?
+
+    language == "pt" ? "pt" : "fr"
   end
 
   # O fallback acompanha DEFAULT_LANGUAGE: era 'English' de quando a coluna

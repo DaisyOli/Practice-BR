@@ -832,25 +832,22 @@
     emails da sequência, e é justamente quem tem mais chance de ter nascido com
     o idioma errado. %>
 <% if current_user.student_like? %>
-  <%# O card nunca se apresenta em inglês, e isso não é detalhe de gosto.
-      Ele é a ferramenta pra consertar um idioma errado — se ele próprio aparece
-      no idioma errado, não serve pra nada. E "en" nesta base não é escolha de
-      ninguém: é o default antigo da coluna (ver as migrações de 20260802), então
-      quem está em inglês é justamente quem precisa do card e não o lê.
+  <%# O card fala a língua de `display_language`, não a de `language`. A
+      diferença é só o inglês: quem CLICOU em English lê inglês, quem herdou o
+      inglês do default antigo da coluna lê francês.
 
-      O público é majoritariamente francófono, e francês é o fallback do app
-      inteiro (mailers, privacidade, billing). Só o português escapa, porque aí a
-      pessoa escolheu de verdade — e é a língua do app.
-
-      Quem clicar em English continua tendo a confirmação em inglês e o botão
-      aceso; o rótulo do card fica em francês de propósito. %>
+      Sem essa distinção só dava pra escolher entre dois defeitos — ou o card
+      aparecia em inglês pra quem nunca o pediu (e o público é francófono), ou
+      ignorava quem pediu de verdade. O `language_chosen_at` desempata. %>
   <% email_lang_copy = {
        "fr" => { title: "Langue des emails",
                  desc:  "L'app reste en portugais — ça fait partie de la pratique. Nos emails, eux, arrivent dans la langue que vous choisissez." },
        "pt" => { title: "Idioma dos emails",
-                 desc:  "O app continua em português — faz parte da prática. Já nossos emails chegam na língua que você escolher." }
+                 desc:  "O app continua em português — faz parte da prática. Já nossos emails chegam na língua que você escolher." },
+       "en" => { title: "Email language",
+                 desc:  "The app stays in Portuguese — that's part of the practice. Our emails, though, arrive in the language you choose." }
      } %>
-  <% email_lang = email_lang_copy.fetch(current_user.language, email_lang_copy["fr"]) %>
+  <% email_lang = email_lang_copy.fetch(current_user.display_language, email_lang_copy["fr"]) %>
 
   <div style="max-width:560px; margin:12px auto 0; padding:20px 24px; background:var(--surface); border-radius:14px; border:1px solid var(--paper-2);">
     <%# flex-wrap: no celular os três botões descem pra linha de baixo em vez de
@@ -967,18 +964,36 @@
           style: "font-family:'Plus Jakarta Sans',sans-serif; font-size:0.74rem; color:var(--ink-faint); text-decoration:underline;" do %>
       Meus dados
     <% end %>
+    <%# O rótulo diz a assinatura em voz alta pra quem tem uma. Apagar a conta
+        cancela a assinatura na hora e sem devolver o período já pago (ver
+        AccountDeletionService) — quem descobre isso só na tela seguinte já
+        clicou achando que ia só apagar dados.
+
+        Condicional porque pra trial e aluno gratuito falar em assinatura seria
+        inventar um contrato que não existe. Mesma pergunta que a tela de
+        confirmação faz, e por isso as duas usam o mesmo método. %>
+    <%# Só a frase que vale chega ao HTML. Emitir as duas e deixar o JS escolher
+        deixaria a página prometendo cancelamento a quem não tem assinatura —
+        invisível na tela, mas presente pra quem lê o código, e indistinguível
+        do caso real em qualquer teste. %>
+    <% cancels_sub = current_user.deletion_cancels_subscription? %>
+    <% delete_label = {
+         "pt" => cancels_sub ? "Cancelar assinatura e excluir conta"                : "Excluir minha conta",
+         "fr" => cancels_sub ? "Résilier mon abonnement et supprimer mon compte"    : "Supprimer mon compte",
+         "en" => cancels_sub ? "Cancel my subscription and delete my account"       : "Delete my account"
+       } %>
     <%= link_to account_deletion_path,
           id: "delete-account-link",
           style: "font-family:'Plus Jakarta Sans',sans-serif; font-size:0.74rem; color:var(--ink-faint); text-decoration:underline;" do %>
-      Excluir minha conta
+      <%= delete_label["pt"] %>
     <% end %>
   </div>
 
   <script>
   (function() {
     var lang = (navigator.language || 'pt').toLowerCase().substring(0, 2);
-    var t = lang.startsWith('fr') ? { dados: "Mes données", excluir: "Supprimer mon compte" }
-          : lang.startsWith('en') ? { dados: "My data",     excluir: "Delete my account" }
+    var t = lang.startsWith('fr') ? { dados: "Mes données", excluir: <%= delete_label["fr"].to_json.html_safe %> }
+          : lang.startsWith('en') ? { dados: "My data",     excluir: <%= delete_label["en"].to_json.html_safe %> }
           : null;
     if (!t) return;
     var set = function(id, text) { var el = document.getElementById(id); if (el) el.textContent = text; };
