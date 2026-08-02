@@ -170,18 +170,23 @@ class User < ApplicationRecord
     ONGOING_SUBSCRIPTION_STATUSES.include?(subscription_status)
   end
 
-  # "Apagar esta conta vai cancelar uma assinatura na Stripe?"
+  # "Existe uma assinatura na Stripe que ainda não terminou?"
   #
-  # Mora aqui, e não em cada tela, porque três lugares dependem da MESMA
-  # resposta: o rótulo do link na dashboard (que precisa avisar antes do clique),
-  # a tela de confirmação e o AccountDeletionService, que é quem cancela de fato.
-  # Um deles discordando dos outros é uma pessoa clicando em "só apagar a conta"
-  # e perdendo a assinatura sem aviso.
+  # Mora aqui, e não em cada tela, porque quatro lugares dependem da MESMA
+  # resposta e discordar entre eles custa dinheiro de alguém:
   #
-  # Mais largo que `subscription_ongoing?` de propósito: qualquer assinatura não
-  # cancelada é uma assinatura que o destroy vai cancelar, mesmo em estado que
-  # não dá acesso (`incomplete`, `unpaid`).
-  def deletion_cancels_subscription?
+  #   - o botão de cancelar assinatura na dashboard (não pode oferecer cancelar
+  #     o que já acabou)
+  #   - o rótulo do link de exclusão (precisa avisar antes do clique que apagar
+  #     a conta cancela a assinatura junto)
+  #   - a tela de confirmação da exclusão
+  #   - o AccountDeletionService, que é quem cancela de fato
+  #
+  # Não confundir com `subscription_ongoing?`, que responde outra pergunta — "a
+  # relação comercial ainda está de pé?", usada pela retenção de dados. Esta aqui
+  # é mais larga de propósito: `incomplete` e `unpaid` não dão acesso, mas são
+  # assinaturas vivas na Stripe, e o destroy cancela elas também.
+  def stripe_subscription_open?
     stripe_subscription_id.present? && subscription_status != "canceled"
   end
 
