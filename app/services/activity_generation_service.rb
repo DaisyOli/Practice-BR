@@ -18,12 +18,29 @@ class ActivityGenerationService
 
     USE estes contextos — são os que engajam adultos em 2026:
     - Apps e plataformas reais: WhatsApp, Instagram, iFood, Spotify, Airbnb, Nubank, Pix, Uber
-    - Trabalho remoto e vida profissional: reuniões por Zoom, email, coworking, home office
-    - Gastronomia urbana: restaurantes, bares, delivery, mercado, cafeteria, happy hour
-    - Viagens e turismo: Airbnb, roteiros, aeroporto, hospedagem, passagem
-    - Cultura contemporânea: séries brasileiras (Sintonia, Vai Rir?), podcasts, futebol, shows, carnaval, música
-    - Cotidiano adulto urbano: academia, apartamento, supermercado, transporte, medicina
+    - Gastronomia: restaurantes, bares, delivery, feira, mercado, cafeteria, cozinha de casa
+    - Viagens e deslocamento: Airbnb, roteiros, rodoviária, aeroporto, barco, hospedagem
+    - Cultura contemporânea: séries brasileiras (Sintonia, Vai Rir?), podcasts, futebol, shows, festas populares, música
+    - Cotidiano adulto: academia, vizinhança, supermercado, transporte, saúde, moradia
     - Compras online e finanças pessoais: bancos digitais, parcelamento, promoção, pagar Pix
+    - Vida profissional: reuniões, email, coworking, home office — UM contexto entre vários, não o padrão
+
+    Sobre o último item: até 03/08/2026 quase toda atividade gerada caía em trabalho, e num Brasil urbano genérico que na prática era São Paulo. Trabalho continua válido; deixar de ser o default é o ponto.
+
+    ═══════════════════════════════════════════
+    O BRASIL NÃO É UMA CIDADE SÓ
+    ═══════════════════════════════════════════
+    O país tem cinco regiões e o português muda entre elas. Quem só ouviu paulistano trava em Recife. Essa variação não é curiosidade — é conteúdo de aula, e é o que separa um aluno que entende o Brasil de um que entende um bairro.
+
+    A REGIÃO APARECE NA LÍNGUA, PRIMEIRO:
+    - tratamento: "você" x "tu" (e o "tu" gaúcho com verbo na 3ª pessoa: "tu vai")
+    - a mesma coisa com nomes diferentes: mandioca / macaxeira / aipim · mexerica / bergamota / tangerina · bolacha / biscoito · sinal / semáforo
+    - interjeições que localizam a fala na hora: "oxe" e "vixe" (NE), "uai" e "trem" (MG), "bah" e "tri" (RS), "égua" (PA)
+    - o mesmo prato mudando de forma: no Pará o açaí é salgado, grosso, comido com peixe e farinha — o oposto da tigela doce de São Paulo
+
+    NÃO FAÇA CARTÃO-POSTAL. A região tem que aparecer em como as pessoas falam, comem e resolvem a vida — não em ponto turístico. Bahia não é Pelourinho e acarajé; Amazonas não é "a floresta"; Minas não é só pão de queijo. Se o texto pudesse ilustrar um folheto de agência de viagem, refaça: você escreveu paisagem, não gente.
+
+    INTERCÂMBIO CULTURAL: os alunos são estrangeiros, muitos franceses. O que ensina de verdade é o CONTRASTE — horário de almoço e de jantar, quanto se chega atrasado sem ser grosseria, beijo/aperto de mão, formalidade no email, "saudade" e o que não tem tradução, feriado que ninguém de fora entende. Uma atividade que compara vale mais que uma que descreve.
 
     ═══════════════════════════════════════════
     O QUE TORNA UMA ATIVIDADE EXCELENTE
@@ -35,7 +52,7 @@ class ActivityGenerationService
     3. PROGRESSÃO: ordene os exercícios do mais fácil (reconhecimento) ao mais desafiador (inferência/produção).
     4. DISTRATORES INTELIGENTES: nas múltiplas escolhas, as alternativas erradas devem ser erros PLAUSÍVEIS do nível (ser/estar, tempo verbal vizinho, falso cognato, concordância) — nunca opções absurdas ou obviamente erradas.
     5. LACUNAS COM PROPÓSITO: em fill_in_blank, o contexto torna a resposta deduzível sem entregá-la. Não dê o verbo entre parênteses; deixe marcadores temporais e contextuais guiarem a escolha.
-    6. CULTURA VIVA: pelo menos um detalhe cultural brasileiro autêntico e atual por atividade (comida, música, hábito, expressão, lugar) — integrado à história, nunca como nota de rodapé.
+    6. CULTURA VIVA: a atividade se passa num lugar do Brasil que dá para reconhecer — pela fala dos personagens, pelo que comem, pelo que é normal ali. Não basta um detalhe cultural de enfeite: o lugar tem que ser parte da história, não uma nota de rodapé.
     7. VARIEDADE: use pelo menos 3 tipos de exercício diferentes, escolhendo os que melhor servem ao objetivo pedagógico — sentence_ordering, paragraph_ordering e column_matching são bem-vindos, não só múltipla escolha e lacunas.
 
     ═══════════════════════════════════════════
@@ -156,10 +173,10 @@ class ActivityGenerationService
       "type": "paragraph_ordering",
       "instruction": "Coloque as frases na ordem correta para formar o texto",
       "sentences": [
-        "Ana chegou ao trabalho às 9h.",
-        "Ela tomou café e leu os emails.",
-        "Às 12h, foi almoçar com os colegas.",
-        "No final do dia, voltou para casa cansada mas satisfeita."
+        "Dona Lurdes chegou cedo na feira de Caruaru.",
+        "Comprou macaxeira, coentro e um queijo coalho pra assar.",
+        "Na volta, parou pra tomar um caldo de cana com a vizinha.",
+        "Em casa, botou o forró pra tocar e começou a fazer o almoço."
       ]
     }
     REGRAS:
@@ -259,6 +276,28 @@ class ActivityGenerationService
     }
   PROMPT
 
+  # O prompt de sistema explica POR QUE variar de região. Ele não consegue FAZER
+  # variar: cada geração é uma chamada independente, sem memória das anteriores,
+  # então "alterne entre as regiões" é uma instrução que o modelo não tem como
+  # cumprir — ele escolhe a região mais provável, toda vez, e volta a concentrar.
+  # Foi assim que tudo virou São Paulo.
+  #
+  # O sorteio abaixo é o que produz a variedade de verdade. As âncoras são de
+  # língua e de cotidiano, não de ponto turístico, justamente pra não trocar a
+  # monotonia paulistana por um Brasil de folheto.
+  REGIOES = {
+    "Norte (Belém, Manaus, interior do Pará e do Amazonas)" =>
+      "\"égua\" como interjeição; açaí SALGADO com peixe e farinha (não a tigela doce do Sudeste); tacacá, tucupi, jambu; rio como estrada e barco como ônibus; calor e chuva da tarde como fato organizador do dia",
+    "Nordeste (Recife, Salvador, Fortaleza, sertão e agreste)" =>
+      "\"oxe\", \"vixe\", \"arretado\"; macaxeira (não mandioca); \"menino\"/\"menina\" como forma de tratamento; São João em junho pesando mais que o Carnaval no interior; forró, queijo coalho, caldo de cana; feira livre como centro da semana",
+    "Centro-Oeste (Goiás, Mato Grosso, Brasília)" =>
+      "pequi, pamonha, sertanejo de raiz; Brasília com vocabulário próprio de cidade planejada (quadra, superquadra, eixinho, asa); distâncias grandes e carro como necessidade; Pantanal como lugar onde se trabalha, não só onde se visita",
+    "Sudeste fora de São Paulo (Minas, Rio, Espírito Santo)" =>
+      "\"uai\", \"trem\" pra qualquer coisa, \"cê\" reduzido em Minas; \"cara\", \"maneiro\", praia como espaço público carioca; moqueca capixaba com panela de barro; cidade histórica mineira como lugar onde se mora, não como passeio",
+    "Sul (Rio Grande do Sul, Santa Catarina, Paraná)" =>
+      "\"tu\" com verbo na 3ª pessoa (\"tu vai\", \"tu viu\"); \"bah\", \"tri\", \"capaz\"; bergamota (não mexerica); chimarrão como hábito coletivo e diário; herança alemã e italiana na comida e nos sobrenomes; frio de verdade no inverno"
+  }.freeze
+
   def initialize(prompt:, teacher:)
     @prompt = prompt
     @teacher = teacher
@@ -291,6 +330,27 @@ class ActivityGenerationService
 
   private
 
+  # Vai na mensagem do usuário, e não no SYSTEM_PROMPT, por dois motivos: o
+  # sistema fica byte a byte idêntico entre chamadas (pronto pra cache de prompt,
+  # que hoje não usamos mas custa nada preservar), e o sorteio fica ao lado do
+  # pedido da professora, que é quem ele não pode atropelar.
+  def prompt_com_regiao
+    regiao, ancoras = REGIOES.to_a.sample
+
+    <<~ADENDO
+      #{@prompt}
+
+      ---
+      Ambientação sorteada para esta atividade: #{regiao}.
+      Âncoras de língua e cotidiano: #{ancoras}.
+
+      Use isso como o lugar onde a história acontece — na fala dos personagens e
+      no que é normal ali, nunca como cartão-postal. Se o pedido acima já indicar
+      outro lugar, região ou contexto, o pedido manda e esta ambientação é
+      descartada.
+    ADENDO
+  end
+
   def call_api
     # Opus 4.8 com adaptive thinking: o modelo planeja a pedagogia antes de
     # escrever. Geração é baixo volume (~US$0,10/atividade) — aqui o modelo
@@ -301,7 +361,7 @@ class ActivityGenerationService
       max_tokens: 8000,
       thinking: { type: "adaptive" },
       system: SYSTEM_PROMPT,
-      messages: [{ role: "user", content: @prompt }]
+      messages: [{ role: "user", content: prompt_com_regiao }]
     )
 
     raise "Geração recusada pela IA" if message.stop_reason == :refusal
