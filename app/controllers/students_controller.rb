@@ -7,6 +7,14 @@ class StudentsController < ApplicationController
     @open_ended_activity_ids = Set.new
     @av_activity_ids         = Set.new
 
+    # Quem chega e nunca praticou encontra 148 atividades em 4 níveis. É o mesmo
+    # problema que o lembrete semanal tinha (03/08/2026): lista longa não convida,
+    # intimida. Aqui a resposta é mais forte que um teto — é uma escolha só.
+    #
+    # Some sozinho: na segunda visita a pessoa já tem uma tentativa e o bloco não
+    # aparece mais. Não precisa de flag, de "não mostrar de novo", nem de coluna.
+    @start_here = current_user.suggested_first_activity if current_user.never_practiced?
+
     load_completed_exercises if current_user.student?
 
     if params[:level].present?

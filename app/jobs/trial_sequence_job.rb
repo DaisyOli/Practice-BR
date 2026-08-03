@@ -105,18 +105,11 @@ class TrialSequenceJob < ApplicationJob
     true
   end
 
-  # A atividade que vai no email. Só do nível declarado: durante o teste é o
-  # único que abre, e mandar alguém para uma porta trancada seria pior que não
-  # mandar nada.
+  # A atividade que vai no email. A escolha mudou de lugar (User) porque a
+  # dashboard passou a oferecer a mesma no bloco "Comece por aqui": se cada um
+  # escolhesse por conta, o email mandaria para uma e a tela ofereceria outra.
   def first_activity_for(trial)
-    return nil if trial.level.blank?
-
-    feitas = QuizAttempt.where(user_id: trial.id).pluck(:activity_id)
-    Activity.published
-            .where(level: trial.level)
-            .where.not(id: feitas)
-            .order(created_at: :desc)
-            .first
+    trial.suggested_first_activity
   end
 
   # Quantas atividades a assinatura abriria pra essa pessoa. Número concreto no
