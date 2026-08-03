@@ -36,8 +36,8 @@ Live in private beta at [app.practicebr.com](https://app.practicebr.com), with r
 
 **Under the hood:**
 - Trial-to-subscription onboarding with Stripe (checkout + webhooks)
-- Weekly reminder emails (Resend + GoodJob cron) and daily YouTube video suggestions per teacher
-- Interface localized in Portuguese, English and French
+- Weekly reminder emails (Resend + GoodJob cron), and a daily curation agent that proposes one activity theme for the teacher to review
+- **Portuguese-only interface, by design** — immersion while practising. The learner's own language (FR / EN / PT) is reserved for everything that happens *outside* the app: emails, the privacy policy, end-of-trial and billing. Those are the moments where understanding must not depend on effort
 
 ---
 
@@ -55,6 +55,7 @@ Live in private beta at [app.practicebr.com](https://app.practicebr.com), with r
 | Media & email | Cloudinary, Unsplash, YouTube Data API, Resend |
 | Tests & CI | RSpec, FactoryBot, SimpleCov, GitHub Actions |
 | Deploy | Heroku (with PWA + web push in production) |
+| Monitoring | Sentry (EU region, errors only — no tracing, no logs) |
 
 ---
 
@@ -63,10 +64,12 @@ Live in private beta at [app.practicebr.com](https://app.practicebr.com), with r
 - **Service objects** keep controllers thin: quiz submission and AI grading, activity generation (prompt- and video-based), transcription, push notifications and analytics each live in their own service under `app/services`.
 - **Both AI pipelines run in background jobs** (GoodJob, backed by Postgres — no Redis): activity generation and answer grading are queued instead of blocking the request, with retry + graceful degradation when the AI is unavailable, and the UI updates itself via a polling Stimulus controller instead of a page refresh.
 - **Cost-aware model selection**: Claude Opus generates activities — low volume, quality-critical, guided by a grading rubric baked into the system prompt — while Claude Haiku grades student answers, which run at much higher volume. Same pipeline, different model for the economics of each job.
+- **A curation agent, not a prompt wrapper**: the daily suggestion agent runs a real tool-use loop — it queries the activity catalogue, student ratings and quiz performance *before* proposing a theme, instead of inventing one in a vacuum. The research tools are allowed to answer *"not enough data yet"*, and the system prompt requires the agent to accept that rather than force a conclusion. The loop is capped, refusals are handled, and the answer arrives through a terminal `propose_suggestion` tool instead of being parsed out of prose. Nothing it proposes reaches a student: it writes a `pending` suggestion for the teacher to approve, and refuses to produce a second one while the first is unreviewed.
 - **Server-rendered UI with Hotwire** — no SPA, no API layer to maintain; Turbo handles interactivity.
 - **Role-based access** (admin / teacher / student / trial) enforced at controller level, with students scoped to the teacher who invited them.
 - **Graceful degradation**: AI, YouTube and Unsplash integrations are optional — the platform works without their API keys.
-- **Privacy engineering across two legal regimes (GDPR + LGPD)**: no third-party CDNs — fonts, icons and libraries are self-hosted, so no visitor IP reaches an outside company before consent, which is also what removes the need for a cookie banner; personal data is kept out of production logs; AI grading receives only the answer text, never a name or an email. The privacy policy is selected server-side from `Accept-Language` in three versions that are *not* translations of each other: FR and EN follow the GDPR, PT follows Brazil's LGPD, and the two diverge on response deadlines, the list of data subject rights, the right to human review of an automated decision, and the age at which someone counts as a minor. The decisions, the rules that keep them from regressing, and the still-open items — data export, one-click account deletion, retention policy — are tracked in [`docs/PROTECAO_DE_DADOS.md`](docs/PROTECAO_DE_DADOS.md).
+- **Privacy engineering across two legal regimes (GDPR + LGPD)**: no third-party CDNs — fonts, icons and libraries are self-hosted, so no visitor IP reaches an outside company before consent, which is also what removes the need for a cookie banner; personal data is kept out of production logs; AI grading receives only the answer text, never a name or an email. The privacy policy is selected server-side from `Accept-Language` in three versions that are *not* translations of each other: FR and EN follow the GDPR, PT follows Brazil's LGPD, and the two diverge on response deadlines, the list of data subject rights, the right to human review of an automated decision, and the age at which someone counts as a minor. The decisions, the rules that keep them from regressing, and the still-open items — data export, one-click account deletion, retention policy — are tracked in [`docs/PROTECAO_DE_DADOS.md`](docs/PROTECAO_DE_DADOS.md). No new subprocessor reaches production before it is written into three places: the policy tables, the Article 30 record ([`docs/REGISTRE_DES_TRAITEMENTS.md`](docs/REGISTRE_DES_TRAITEMENTS.md)) and the DPA table — and a test fails if it is missing from any of them, because a compliance document that goes stale doesn't break anything, it just quietly starts lying.
+- **Error reporting that doesn't undo the privacy work**: production errors go to Sentry, pinned to its **EU region** so error data is stored inside the Union. The integration is inert unless `SENTRY_DSN` is set — development and test never phone home, and production can be switched off without a deploy. Personal data is stripped in three layers: default PII off (no IP, no cookies, no request body), the app's existing log parameter filters reused rather than a second list for someone to forget, and a final pass over the exception *text*, where an email can sit inside a sentence beyond the reach of any parameter filter. Performance tracing is deliberately off, and `traces_sample_rate` is `nil` rather than `0.0` — `0.0` is a *valid* rate, so the SDK still registers every Rails instrumentation subscriber and patches `ActiveSupport::Notifications` before discarding 100% of the samples: the full cost for none of the data, on a dyno whose 512 MB are already shared with the job runner.
 
 ## Technical roadmap
 
