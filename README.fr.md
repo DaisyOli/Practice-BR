@@ -37,7 +37,7 @@ En bêta privée sur [app.practicebr.com](https://app.practicebr.com), testée p
 **Sous le capot :**
 - Parcours essai-vers-abonnement avec Stripe (checkout + webhooks)
 - Emails de rappel hebdomadaires (Resend + cron GoodJob) et suggestions quotidiennes de vidéos YouTube par professeur
-- Interface disponible en portugais, anglais et français
+- **Interface en portugais uniquement, par choix** — l'immersion pendant la pratique. La langue de la personne (FR / EN / PT) est réservée à tout ce qui se passe *hors* de l'application : emails, politique de confidentialité, fin d'essai et facturation. Ce sont les moments où comprendre ne doit pas dépendre d'un effort
 
 ---
 
@@ -55,6 +55,7 @@ En bêta privée sur [app.practicebr.com](https://app.practicebr.com), testée p
 | Médias & email | Cloudinary, Unsplash, YouTube Data API, Resend |
 | Tests & CI | RSpec, FactoryBot, SimpleCov, GitHub Actions |
 | Déploiement | Heroku (avec PWA + web push en production) |
+| Supervision | Sentry (région UE, erreurs uniquement — ni tracing, ni logs) |
 
 ---
 
@@ -66,6 +67,8 @@ En bêta privée sur [app.practicebr.com](https://app.practicebr.com), testée p
 - **Interface rendue côté serveur avec Hotwire** — pas de SPA, pas de couche API à maintenir ; Turbo gère l'interactivité.
 - **Accès par rôle** (admin / professeur / élève / essai) appliqué au niveau des contrôleurs, chaque élève étant rattaché au professeur qui l'a invité.
 - **Dégradation gracieuse** : les intégrations IA, YouTube et Unsplash sont optionnelles — la plateforme fonctionne sans leurs clés d'API.
+- **Protection des données sous deux régimes juridiques (RGPD + LGPD brésilienne)** : aucun CDN tiers — polices, icônes et bibliothèques sont auto-hébergées, donc aucune adresse IP de visiteur n'atteint une société extérieure avant consentement, ce qui supprime du même coup le besoin d'un bandeau cookies ; les données personnelles sont tenues hors des logs de production ; la correction par IA ne reçoit que le texte de la réponse, jamais un nom ni un email. La politique de confidentialité est choisie côté serveur à partir de l'en-tête `Accept-Language`, en trois versions qui ne sont *pas* des traductions l'une de l'autre : FR et EN suivent le RGPD, PT suit la LGPD brésilienne, et les deux divergent sur les délais de réponse, la liste des droits, le droit à une révision humaine d'une décision automatisée et l'âge de la minorité. Les décisions, les règles qui les empêchent de régresser et ce qui reste ouvert — export des données, suppression du compte en un clic, politique de conservation — sont suivis dans [`docs/PROTECAO_DE_DADOS.md`](docs/PROTECAO_DE_DADOS.md). Aucun sous-traitant nouveau n'atteint la production avant d'être inscrit à trois endroits : les tableaux des politiques, le registre des traitements de l'article 30 ([`docs/REGISTRE_DES_TRAITEMENTS.md`](docs/REGISTRE_DES_TRAITEMENTS.md)) et le tableau des DPA — et un test échoue s'il manque à l'un d'eux, car un document de conformité qui se périme ne casse rien : il se met simplement à mentir.
+- **Une supervision des erreurs qui ne défait pas ce travail** : les erreurs de production partent vers Sentry, fixé à sa **région UE**, où les données d'erreur sont donc stockées dans l'Union. L'intégration reste inerte tant que `SENTRY_DSN` n'est pas défini — développement et test n'émettent jamais rien vers l'extérieur, et la production se coupe sans déploiement. Les données personnelles sont retirées en trois couches : envoi des données personnelles désactivé par défaut (ni IP, ni cookies, ni corps de requête), réutilisation des filtres de paramètres déjà en place pour les logs plutôt qu'une seconde liste que l'on oublierait de tenir à jour, et un dernier passage sur le *texte* de l'exception, où un email peut se trouver au milieu d'une phrase, hors de portée de tout filtre de paramètre. Le tracing de performance est volontairement désactivé, et `traces_sample_rate` vaut `nil` plutôt que `0.0` : `0.0` est un taux *valide*, le SDK enregistre donc malgré tout chaque souscripteur d'instrumentation Rails et modifie `ActiveSupport::Notifications` avant d'écarter 100 % des échantillons — tout le coût, aucune donnée, sur un dyno dont les 512 Mo sont déjà partagés avec l'exécution des tâches de fond.
 
 ## Feuille de route technique
 
