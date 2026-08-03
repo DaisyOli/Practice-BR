@@ -307,6 +307,30 @@ class User < ApplicationRecord
     level.present?
   end
 
+  def never_practiced?
+    quiz_attempts.none?
+  end
+
+  # A atividade que esta pessoa deveria fazer PRIMEIRO.
+  #
+  # Vive aqui, e não no job que a usava, porque agora tem dois usos que não podem
+  # divergir: o email de ativação do TrialSequenceJob (D+1) e o bloco "Comece por
+  # aqui" da dashboard. Se os dois escolhessem separado, o email mandaria a pessoa
+  # para uma atividade e a tela ofereceria outra — e a incoerência seria invisível
+  # até alguém receber as duas.
+  #
+  # Só do nível declarado: durante o teste é o único que abre, e mandar alguém
+  # para uma porta trancada é pior que não mandar nada.
+  def suggested_first_activity
+    return nil if level.blank?
+
+    Activity.published
+            .where(level: level)
+            .where.not(id: quiz_attempts.select(:activity_id))
+            .order(created_at: :desc)
+            .first
+  end
+
   # Peso decrescente por distância do nível declarado: favorece o nível do
   # aluno mas dá espaço real pros de baixo, já que o nível autodeclarado
   # (sobretudo no trial) costuma vir inflado.
