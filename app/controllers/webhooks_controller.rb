@@ -34,19 +34,55 @@ class WebhooksController < ApplicationController
 
   private
 
+  # Fim do período de cobrança, aceitando os DOIS formatos do Stripe.
+  #
+  # Na versão de API 2025-03-31.basil o Stripe tirou `current_period_end` do
+  # objeto Subscription e moveu para os ITENS da assinatura. Os dois formatos
+  # convivem neste app: a gem 13.x fixa `Stripe-Version: 2025-02-24.acacia`, então
+  # `Stripe::Subscription.retrieve` ainda devolve o formato antigo, enquanto o
+  # payload do webhook chega na versão configurada no painel do Stripe — que já é
+  # a nova. Foi essa assimetria que derrubou o handler em 03/08/2026: das três
+  # leituras idênticas, só a do webhook quebrou.
+  #
+  # Nada de `dig` aqui: o objeto é um `Stripe::StripeObject`, não um Hash, e não
+  # responde a `dig` (NoMethodError). Só `[]` encadeado funciona nos dois.
+  def period_end_from(subscription)
+    raw = subscription["current_period_end"]
+
+    if raw.blank?
+      itens    = subscription["items"]
+      primeiro = itens && itens["data"] && itens["data"].first
+      raw      = primeiro && primeiro["current_period_end"]
+    end
+
+    if raw.blank?
+      Rails.logger.warn "[Webhook] ⚠️ Assinatura sem current_period_end em nenhum dos dois formatos"
+      return nil
+    end
+
+    Time.at(raw).utc
+  end
+
   def handle_checkout_completed(session)
     user = User.find_by(id: session["metadata"]&.[]("user_id"))
     return unless user
 
     subscription = Stripe::Subscription.retrieve(session["subscription"])
 
-    user.update!(
-      role:                         "student",
-      stripe_customer_id:           session["customer"],
-      stripe_subscription_id:       session["subscription"],
-      subscription_status:          "active",
-      subscription_current_period_end: Time.at(subscription["current_period_end"]).utc
-    )
+    attrs = {
+      role:                   "student",
+      stripe_customer_id:     session["customer"],
+      stripe_subscription_id: session["subscription"],
+      subscription_status:    "active"
+    }
+    # Quem pagou entra mesmo sem a data. O acesso vem primeiro; a data se corrige
+    # sozinha no próximo invoice.payment_succeeded. Bloquear a ativação por causa
+    # de um campo ausente seria cobrar e não entregar.
+    if (period_end = period_end_from(subscription))
+      attrs[:subscription_current_period_end] = period_end
+    end
+
+    user.update!(attrs)
     Rails.logger.info "[Webhook] ✅ Assinatura ativada · user ##{user.id}"
 
     # Até aqui quem pagava saía do Stripe com um recibo e mais nada nosso. O
@@ -75,7 +111,9 @@ class WebhooksController < ApplicationController
 
     if invoice["subscription"].present?
       subscription = Stripe::Subscription.retrieve(invoice["subscription"])
-      user.update!(subscription_current_period_end: Time.at(subscription["current_period_end"]).utc)
+      if (period_end = period_end_from(subscription))
+        user.update!(subscription_current_period_end: period_end)
+      end
       # Pagou: encerra qualquer tolerância em curso e zera o contador, senão uma
       # falha futura herdaria a data antiga e expiraria na hora.
       user.clear_payment_past_due!(status: subscription["cancel_at_period_end"] ? "canceling" : "active")
@@ -102,7 +140,13 @@ class WebhooksController < ApplicationController
     user = User.find_by(stripe_subscription_id: subscription["id"])
     return unless user
 
-    user.update!(subscription_current_period_end: Time.at(subscription["current_period_end"]).utc)
+    # A data é a parte menos importante deste handler — quem decide acesso é o
+    # bloco de status logo abaixo. Levantar aqui por causa dela devolvia 500 ao
+    # Stripe e, pior, impedia o status de ser aplicado: quem cancelava continuava
+    # `active` e quem estava com o cartão recusado nunca virava `past_due`.
+    if (period_end = period_end_from(subscription))
+      user.update!(subscription_current_period_end: period_end)
+    end
 
     # O status vem do Stripe em vez de ser inferido: antes este handler assumia
     # "active" sempre que não houvesse cancelamento agendado, então um
