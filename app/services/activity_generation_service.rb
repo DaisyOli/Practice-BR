@@ -30,17 +30,26 @@ class ActivityGenerationService
     ═══════════════════════════════════════════
     O BRASIL NÃO É UMA CIDADE SÓ
     ═══════════════════════════════════════════
-    O país tem cinco regiões e o português muda entre elas. Quem só ouviu paulistano trava em Recife. Essa variação não é curiosidade — é conteúdo de aula, e é o que separa um aluno que entende o Brasil de um que entende um bairro.
+    O país é grande e as atividades não podem se passar todas na mesma capital genérica. Mas a variedade está no QUE ACONTECE, não em como as pessoas falam.
 
-    A REGIÃO APARECE NA LÍNGUA, PRIMEIRO:
-    - tratamento: "você" x "tu" (e o "tu" gaúcho com verbo na 3ª pessoa: "tu vai")
-    - a mesma coisa com nomes diferentes: mandioca / macaxeira / aipim · mexerica / bergamota / tangerina · bolacha / biscoito · sinal / semáforo
-    - interjeições que localizam a fala na hora: "oxe" e "vixe" (NE), "uai" e "trem" (MG), "bah" e "tri" (RS), "égua" (PA)
-    - o mesmo prato mudando de forma: no Pará o açaí é salgado, grosso, comido com peixe e farinha — o oposto da tigela doce de São Paulo
+    ── A LÍNGUA É PADRÃO. SEM EXCEÇÃO. ──────────
+    O aluno vai IMITAR o que ler. Tudo o que os personagens dizem é português brasileiro padrão, culto e neutro — o que se ouve num telejornal ou numa consulta médica em qualquer estado.
 
-    NÃO FAÇA CARTÃO-POSTAL. A região tem que aparecer em como as pessoas falam, comem e resolvem a vida — não em ponto turístico. Bahia não é Pelourinho e acarajé; Amazonas não é "a floresta"; Minas não é só pão de queijo. Se o texto pudesse ilustrar um folheto de agência de viagem, refaça: você escreveu paisagem, não gente.
+    PROIBIDO no texto: "tu" com verbo na 3ª pessoa ("tu vai", "tu tá"), "bah", "tri", "capaz", "oxe", "vixe", "uai", "égua", "arretado", e qualquer outra marca dialetal usada como tempero. Nada disso é erro no Brasil real — é erro AQUI, porque um estrangeiro que aprende "tu vai" como modelo vai soar errado na maior parte do país.
 
-    INTERCÂMBIO CULTURAL: os alunos são estrangeiros, muitos franceses. O que ensina de verdade é o CONTRASTE — horário de almoço e de jantar, quanto se chega atrasado sem ser grosseria, beijo/aperto de mão, formalidade no email, "saudade" e o que não tem tradução, feriado que ninguém de fora entende. Uma atividade que compara vale mais que uma que descreve.
+    Variação regional é assunto de compreensão, nunca de imitação. Se um dia o TEMA da atividade for a própria variação, ela aparece como objeto de observação — uma lista, uma comparação, uma nota — e nunca como o registro em que o texto inteiro é escrito.
+
+    ── ONDE A REGIÃO APARECE, ENTÃO ─────────────
+    No que acontece e no que é normal ali: o que se come num dia comum, o que o clima obriga, como se chega aos lugares, do que se vive, o que a cidade tem que outra não tem, que hora as coisas acontecem.
+
+    ── DOIS TESTES ANTES DE ENTREGAR ────────────
+    1. CARICATURA: alguém daquela região leria isso e acharia o personagem constrangedor? Se um personagem parece estar fantasiado de si mesmo — sotaque carregado, comida típica em toda frase, sobrenome escolhido a dedo — refaça. Uma pessoa real não performa a própria origem.
+    2. FOLHETO: o texto poderia ilustrar propaganda de agência de viagem? Então você escreveu paisagem, não gente. Bahia não é Pelourinho e acarajé; Amazonas não é "a floresta"; Minas não é só pão de queijo.
+
+    Uma menção regional bem colocada vale mais que cinco. Se não couber naturalmente, não force: uma cena boa num lugar discreto é melhor que uma cena ruim cheia de cor local.
+
+    ── INTERCÂMBIO CULTURAL ─────────────────────
+    Os alunos são estrangeiros, muitos franceses. O que ensina de verdade é o CONTRASTE — horário de almoço e de jantar, quanto se chega atrasado sem ser grosseria, beijo/aperto de mão, formalidade no email, "saudade" e o que não tem tradução, feriado que ninguém de fora entende. Uma atividade que compara vale mais que uma que descreve.
 
     ═══════════════════════════════════════════
     O QUE TORNA UMA ATIVIDADE EXCELENTE
@@ -173,10 +182,10 @@ class ActivityGenerationService
       "type": "paragraph_ordering",
       "instruction": "Coloque as frases na ordem correta para formar o texto",
       "sentences": [
-        "Dona Lurdes chegou cedo na feira de Caruaru.",
-        "Comprou macaxeira, coentro e um queijo coalho pra assar.",
-        "Na volta, parou pra tomar um caldo de cana com a vizinha.",
-        "Em casa, botou o forró pra tocar e começou a fazer o almoço."
+        "Dona Lurdes saiu cedo de casa para ir à feira.",
+        "Escolheu as frutas com calma e conversou com o vendedor de sempre.",
+        "Na volta, parou na padaria e comprou pão ainda quente.",
+        "Em casa, guardou as compras e começou a preparar o almoço."
       ]
     }
     REGRAS:
@@ -282,20 +291,28 @@ class ActivityGenerationService
   # cumprir — ele escolhe a região mais provável, toda vez, e volta a concentrar.
   # Foi assim que tudo virou São Paulo.
   #
-  # O sorteio abaixo é o que produz a variedade de verdade. As âncoras são de
-  # língua e de cotidiano, não de ponto turístico, justamente pra não trocar a
-  # monotonia paulistana por um Brasil de folheto.
+  # As âncoras são de VIDA — o que acontece ali, do que se vive, o que o clima
+  # obriga — e não de vocabulário.
+  #
+  # A primeira versão (03/08/2026) listava marcas dialetais: "bah", "tri",
+  # "capaz", "oxe", "égua", bergamota, sobrenome alemão. Deu no que uma lista
+  # sempre dá — o modelo tratou como checklist e produziu uma teleconsulta em que
+  # a médica dizia "bah, tu não tá com uma cara muito boa" e o paciente
+  # respondia "capaz que eu nem consegui tomar meu chimarrão": sete marcadores em
+  # quinze linhas, ninguém fala assim. Trocou o clichê paulistano por um clichê
+  # gaúcho, que é pior, porque o aluno IMITA o que lê e "tu vai" é modelo errado
+  # pra quem está aprendendo.
   REGIOES = {
     "Norte (Belém, Manaus, interior do Pará e do Amazonas)" =>
-      "\"égua\" como interjeição; açaí SALGADO com peixe e farinha (não a tigela doce do Sudeste); tacacá, tucupi, jambu; rio como estrada e barco como ônibus; calor e chuva da tarde como fato organizador do dia",
+      "rio como estrada e barco como transporte de rotina; chuva forte no fim da tarde organizando o dia; peixe de água doce no almoço comum; calor que muda horário de trabalho e de escola; distância grande entre cidades",
     "Nordeste (Recife, Salvador, Fortaleza, sertão e agreste)" =>
-      "\"oxe\", \"vixe\", \"arretado\"; macaxeira (não mandioca); \"menino\"/\"menina\" como forma de tratamento; São João em junho pesando mais que o Carnaval no interior; forró, queijo coalho, caldo de cana; feira livre como centro da semana",
+      "feira livre como centro da semana; festas de junho pesando mais que o Carnaval no interior; seca e chuva definindo o calendário de quem vive do campo; capitais litorâneas com economia de serviços e turismo; polo médico e universitário em Recife",
     "Centro-Oeste (Goiás, Mato Grosso, Brasília)" =>
-      "pequi, pamonha, sertanejo de raiz; Brasília com vocabulário próprio de cidade planejada (quadra, superquadra, eixinho, asa); distâncias grandes e carro como necessidade; Pantanal como lugar onde se trabalha, não só onde se visita",
+      "agronegócio como emprego e assunto de conversa; distâncias longas e carro como necessidade, não escolha; Brasília com rotina organizada por quadras e horários de repartição; calor seco e queimada no meio do ano",
     "Sudeste fora de São Paulo (Minas, Rio, Espírito Santo)" =>
-      "\"uai\", \"trem\" pra qualquer coisa, \"cê\" reduzido em Minas; \"cara\", \"maneiro\", praia como espaço público carioca; moqueca capixaba com panela de barro; cidade histórica mineira como lugar onde se mora, não como passeio",
+      "praia como espaço público de todo dia no Rio, não como passeio; cidade mineira pequena onde todo mundo se conhece e o comércio fecha na hora do almoço; montanha e estrada sinuosa; porto e café no Espírito Santo",
     "Sul (Rio Grande do Sul, Santa Catarina, Paraná)" =>
-      "\"tu\" com verbo na 3ª pessoa (\"tu vai\", \"tu viu\"); \"bah\", \"tri\", \"capaz\"; bergamota (não mexerica); chimarrão como hábito coletivo e diário; herança alemã e italiana na comida e nos sobrenomes; frio de verdade no inverno"
+      "inverno que exige casaco de verdade, o que é raro no resto do país; colheita da uva e vinho na serra gaúcha; indústria e agricultura familiar; cidades de porte médio com centro compacto e serviço público organizado"
   }.freeze
 
   def initialize(prompt:, teacher:)
@@ -342,12 +359,15 @@ class ActivityGenerationService
 
       ---
       Ambientação sorteada para esta atividade: #{regiao}.
-      Âncoras de língua e cotidiano: #{ancoras}.
+      O que é comum por lá: #{ancoras}.
 
-      Use isso como o lugar onde a história acontece — na fala dos personagens e
-      no que é normal ali, nunca como cartão-postal. Se o pedido acima já indicar
-      outro lugar, região ou contexto, o pedido manda e esta ambientação é
-      descartada.
+      Isso é onde a cena acontece, não um tema a cumprir. A fala dos personagens
+      continua em português padrão — nada de marca dialetal, sotaque escrito ou
+      gíria regional. Uma menção bem colocada basta; se não couber com
+      naturalidade, deixe a ambientação discreta e escreva uma cena boa.
+
+      Se o pedido acima já indicar outro lugar, região ou contexto, o pedido manda
+      e esta ambientação é descartada.
     ADENDO
   end
 

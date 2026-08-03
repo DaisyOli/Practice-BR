@@ -68,22 +68,30 @@ RSpec.describe ActivityGenerationService, "ambientação regional" do
       expect(chaves).to include("fora de São Paulo")
     end
 
-    it "ancoram em língua e cotidiano, não em ponto turístico" do
-      ancoras = described_class::REGIOES.values.join(" ")
+    # A primeira versão destas âncoras listava marcas dialetais e o modelo tratou
+    # como checklist: uma teleconsulta com "bah", "tu tá", "capaz", "tri",
+    # bergamota e chimarrão em quinze linhas. Lista de vocabulário É um checklist —
+    # a correção foi tirar o vocabulário, não pedir moderação.
+    it "não contêm marca dialetal nenhuma" do
+      ancoras = described_class::REGIOES.values.join(" ").downcase
 
-      # Marcadores linguísticos reais — o que faz um aluno entender Recife depois
-      # de só ter ouvido paulistano.
-      expect(ancoras).to include("égua", "oxe", "uai", "bah")
-      expect(ancoras).to include("tu")            # o "tu" gaúcho com verbo na 3ª
-      expect(ancoras).to include("macaxeira")     # x mandioca
-      expect(ancoras).to include("bergamota")     # x mexerica
+      # Fronteira de palavra, e não `include`: "tri" casa dentro de "indústria" e
+      # "capaz" dentro de "capazes". Sem \b o teste acusa dialeto onde não tem.
+      %w[bah tri capaz oxe vixe uai égua arretado macaxeira bergamota chimarrão].each do |marca|
+        expect(ancoras).not_to match(/\b#{Regexp.escape(marca)}\b/),
+                               "a âncora voltou a ensinar dialeto: #{marca}"
+      end
     end
 
-    it "traz o açaí salgado do Pará, que contradiz a tigela doce do Sudeste" do
-      # É o melhor anti-clichê da lista: surpreende, é verdade, e serve de material
-      # intercultural em vez de folheto.
-      expect(described_class::REGIOES.keys.grep(/Norte/).first).to be_present
-      expect(described_class::REGIOES.values.join).to match(/açaí SALGADO/)
+    it "ancoram no que acontece ali, não em vocabulário" do
+      ancoras = described_class::REGIOES.values.join(" ")
+
+      # Clima, trabalho, deslocamento, rotina — o que muda de verdade entre regiões
+      # e dá assunto sem precisar de sotaque escrito.
+      expect(ancoras).to match(/rio como estrada/)
+      expect(ancoras).to match(/feira livre como centro da semana/)
+      expect(ancoras).to match(/agronegócio/)
+      expect(ancoras).to match(/inverno que exige casaco/)
     end
   end
 
@@ -95,7 +103,28 @@ RSpec.describe ActivityGenerationService, "ambientação regional" do
     end
 
     it "proíbe cartão-postal com um teste que o modelo pode aplicar sozinho" do
-      expect(sistema).to include("folheto de agência de viagem")
+      expect(sistema).to include("FOLHETO")
+      expect(sistema).to include("propaganda de agência de viagem")
+    end
+
+    # O erro de 03/08/2026: um aluno de PLE IMITA o que lê, então pôr "tu vai" na
+    # boca de uma médica ensina uma forma que soa errada na maior parte do Brasil.
+    # Variação regional é objeto de compreensão, nunca registro do texto.
+    it "manda escrever em português padrão, e proíbe as marcas nominalmente" do
+      expect(sistema).to include("A LÍNGUA É PADRÃO. SEM EXCEÇÃO.")
+      expect(sistema).to include('"tu" com verbo na 3ª pessoa')
+      expect(sistema).to include("nunca de imitação")
+    end
+
+    it "tem o teste da caricatura, além do teste do folheto" do
+      # Folheto pega paisagem; caricatura pega personagem fantasiado de si mesmo,
+      # que foi o defeito de verdade da teleconsulta gaúcha.
+      expect(sistema).to include("CARICATURA")
+      expect(sistema).to include("fantasiado de si mesmo")
+    end
+
+    it "diz que uma menção basta, para não virar concurso de cor local" do
+      expect(sistema).to include("Uma menção regional bem colocada vale mais que cinco")
     end
 
     it "pede contraste cultural, não descrição — os alunos são estrangeiros" do
@@ -103,11 +132,19 @@ RSpec.describe ActivityGenerationService, "ambientação regional" do
       expect(sistema).to include("Uma atividade que compara vale mais que uma que descreve")
     end
 
-    it "não usa mais o dia de escritório como molde de história" do
-      # O exemplo de paragraph_ordering era "Ana chegou ao trabalho às 9h" — o
-      # molde mais concreto que o modelo tinha do que é uma história aqui.
+    # O exemplo do schema é o molde mais concreto que o modelo tem do que é "uma
+    # história aqui" — e por isso ele imita o que estiver ali. Já errou duas vezes:
+    # era um dia de escritório (ensinou trabalho) e virou uma feira de Caruaru com
+    # macaxeira, queijo coalho, caldo de cana e forró em quatro frases (ensinou
+    # desfile de cor local). Agora ensina só a ESTRUTURA, que é a função dele.
+    it "usa um exemplo neutro, que não ensina nem escritório nem cor local" do
       expect(sistema).not_to include("Ana chegou ao trabalho")
-      expect(sistema).to include("feira de Caruaru")
+      expect(sistema).not_to include("Caruaru")
+
+      exemplo = sistema[/"Dona Lurdes.*?preparar o almoço\."/m]
+      expect(exemplo).to be_present
+      %w[macaxeira coalho forró chimarrão].each { |marca| expect(exemplo).not_to include(marca) }
+      expect(exemplo).not_to include(" pra ")  # contração informal no modelo de escrita
     end
   end
 end
