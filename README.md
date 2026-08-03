@@ -36,7 +36,7 @@ Live in private beta at [app.practicebr.com](https://app.practicebr.com), with r
 
 **Under the hood:**
 - Trial-to-subscription onboarding with Stripe (checkout + webhooks)
-- Weekly reminder emails (Resend + GoodJob cron) and daily YouTube video suggestions per teacher
+- Weekly reminder emails (Resend + GoodJob cron), and a daily curation agent that proposes one activity theme for the teacher to review
 - **Portuguese-only interface, by design** — immersion while practising. The learner's own language (FR / EN / PT) is reserved for everything that happens *outside* the app: emails, the privacy policy, end-of-trial and billing. Those are the moments where understanding must not depend on effort
 
 ---
@@ -64,6 +64,7 @@ Live in private beta at [app.practicebr.com](https://app.practicebr.com), with r
 - **Service objects** keep controllers thin: quiz submission and AI grading, activity generation (prompt- and video-based), transcription, push notifications and analytics each live in their own service under `app/services`.
 - **Both AI pipelines run in background jobs** (GoodJob, backed by Postgres — no Redis): activity generation and answer grading are queued instead of blocking the request, with retry + graceful degradation when the AI is unavailable, and the UI updates itself via a polling Stimulus controller instead of a page refresh.
 - **Cost-aware model selection**: Claude Opus generates activities — low volume, quality-critical, guided by a grading rubric baked into the system prompt — while Claude Haiku grades student answers, which run at much higher volume. Same pipeline, different model for the economics of each job.
+- **A curation agent, not a prompt wrapper**: the daily suggestion agent runs a real tool-use loop — it queries the activity catalogue, student ratings and quiz performance *before* proposing a theme, instead of inventing one in a vacuum. The research tools are allowed to answer *"not enough data yet"*, and the system prompt requires the agent to accept that rather than force a conclusion. The loop is capped, refusals are handled, and the answer arrives through a terminal `propose_suggestion` tool instead of being parsed out of prose. Nothing it proposes reaches a student: it writes a `pending` suggestion for the teacher to approve, and refuses to produce a second one while the first is unreviewed.
 - **Server-rendered UI with Hotwire** — no SPA, no API layer to maintain; Turbo handles interactivity.
 - **Role-based access** (admin / teacher / student / trial) enforced at controller level, with students scoped to the teacher who invited them.
 - **Graceful degradation**: AI, YouTube and Unsplash integrations are optional — the platform works without their API keys.

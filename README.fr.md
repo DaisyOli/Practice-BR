@@ -36,7 +36,7 @@ En bêta privée sur [app.practicebr.com](https://app.practicebr.com), testée p
 
 **Sous le capot :**
 - Parcours essai-vers-abonnement avec Stripe (checkout + webhooks)
-- Emails de rappel hebdomadaires (Resend + cron GoodJob) et suggestions quotidiennes de vidéos YouTube par professeur
+- Emails de rappel hebdomadaires (Resend + cron GoodJob), et un agent de curation quotidien qui propose un thème d'activité à la relecture du professeur
 - **Interface en portugais uniquement, par choix** — l'immersion pendant la pratique. La langue de la personne (FR / EN / PT) est réservée à tout ce qui se passe *hors* de l'application : emails, politique de confidentialité, fin d'essai et facturation. Ce sont les moments où comprendre ne doit pas dépendre d'un effort
 
 ---
@@ -64,6 +64,7 @@ En bêta privée sur [app.practicebr.com](https://app.practicebr.com), testée p
 - Les **service objects** gardent les contrôleurs légers : la soumission de quiz et la correction par IA, la génération d'activités (par prompt ou par vidéo), la transcription, les notifications push et les analytics vivent chacun dans leur propre service sous `app/services`.
 - **Les deux pipelines d'IA tournent en tâche de fond** (GoodJob, adossé à Postgres — pas de Redis) : la génération d'activités et la correction des réponses sont mises en file plutôt que de bloquer la requête, avec retry + dégradation gracieuse quand l'IA est indisponible, et l'interface se met à jour toute seule via un contrôleur Stimulus qui interroge le serveur, sans recharger la page.
 - **Choix de modèle piloté par le coût** : Claude Opus génère les activités — faible volume, exigeant en qualité, guidé par une grille de qualité intégrée au prompt système — tandis que Claude Haiku corrige les réponses des élèves, un flux à bien plus haut volume. Même pipeline, modèle différent selon l'économie de chaque tâche.
+- **Un agent de curation, pas une simple surcouche de prompt** : l'agent de suggestion quotidienne exécute une véritable boucle de tool use — il interroge le catalogue d'activités, les évaluations des élèves et les résultats aux quiz *avant* de proposer un thème, au lieu d'en inventer un dans le vide. Les outils de recherche ont le droit de répondre *« pas encore assez de données »*, et le prompt système impose à l'agent de l'accepter plutôt que de forcer une conclusion. La boucle est bornée, les refus sont traités, et la réponse arrive par un outil terminal `propose_suggestion` au lieu d'être extraite d'un texte libre. Rien de ce qu'il propose n'atteint un élève : il crée une suggestion `pending` que le professeur valide, et refuse d'en produire une seconde tant que la première n'a pas été relue.
 - **Interface rendue côté serveur avec Hotwire** — pas de SPA, pas de couche API à maintenir ; Turbo gère l'interactivité.
 - **Accès par rôle** (admin / professeur / élève / essai) appliqué au niveau des contrôleurs, chaque élève étant rattaché au professeur qui l'a invité.
 - **Dégradation gracieuse** : les intégrations IA, YouTube et Unsplash sont optionnelles — la plateforme fonctionne sans leurs clés d'API.
