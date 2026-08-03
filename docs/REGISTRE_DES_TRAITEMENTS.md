@@ -325,7 +325,7 @@ incorporé à ses conditions de service.
 | Stripe | Traitement des paiements et facturation | Email, identifiants d'abonnement, données de carte transmises directement par le navigateur | 30/07/2026 |
 | Resend | Acheminement des emails de la plateforme | Adresse email et contenu du message | 31/07/2026 |
 | Cloudinary | Stockage des images et des fichiers audio | Fichiers déposés, dont l'audio temporaire | 31/07/2026 |
-| Sentry (Functional Software, Inc.) — **hébergement Union européenne** | Journalisation des erreurs techniques de l'application | Type d'erreur, fichier et ligne du code, route appelée. **Ni adresse email, ni adresse IP, ni contenu des réponses** | **à vérifier avant activation** |
+| Sentry (Functional Software, Inc.) — **stockage Union européenne** (région Francfort) | Journalisation des erreurs techniques de l'application | Type d'erreur, fichier et ligne du code, route appelée. **Ni adresse email, ni adresse IP, ni contenu des réponses** | 03/08/2026 |
 
 **Resend** et **OpenAI** sont par ailleurs certifiés au titre du **EU-US Data
 Privacy Framework**. Les clauses contractuelles types de la décision (UE) 2021/914
@@ -333,10 +333,32 @@ sont incorporées par référence aux addenda de Cloudinary et de Salesforce (He
 ce dernier y ajoutant ses règles d'entreprise contraignantes (BCR) de
 sous-traitant.
 
-**Sentry** est le seul sous-traitant hébergé dans l'Union européenne (région UE,
-Francfort) : les données d'erreur ne quittent donc pas l'Union, et aucun transfert
-au titre du chapitre V n'est en jeu pour ce traitement. Ce choix de région est
-délibéré et doit être conservé lors de tout renouvellement du compte.
+**Sentry** est le seul sous-traitant dont les données sont **stockées** dans
+l'Union européenne. La région UE (Francfort) a été retenue à la création du
+compte — ce choix est délibéré, ne peut pas être modifié par la suite et doit être
+conservé lors de tout renouvellement — et Sentry s'engage à ce que les données de
+service demeurent dans la région sélectionnée.
+
+Le stockage dans l'Union ne suffit toutefois pas à écarter le chapitre V. La
+société contractante, **Functional Software, Inc.**, est établie aux États-Unis, et
+son addendum prévoit expressément qu'elle peut traiter les données *« in the
+United States and any other country in which we or our Subprocessors maintain data
+processing operations »*. La garantie demeure donc contractuelle, comme pour les
+autres sous-traitants : les **clauses contractuelles types de la décision (UE)
+2021/914, module 2** (responsable du traitement vers sous-traitant), sont
+incorporées à l'addendum de Sentry (version 5.1.0 du 29 mai 2024).
+
+Contrairement aux autres sous-traitants recensés ici, cet addendum **n'est pas
+incorporé par référence aux conditions de service** : il ne prend effet qu'à
+compter de son acceptation expresse par le responsable du traitement. Cette
+acceptation a été effectuée le **3 août 2026**, préalablement à toute mise en
+service ; Sentry en conserve l'horodatage et l'identité du signataire. Toute
+version ultérieure de l'addendum devra faire l'objet d'une nouvelle acceptation.
+
+Trois sous-traitants ultérieurs de Sentry relèvent de la seule région américaine :
+Anthropic et OpenAI, qui ne servent que les fonctionnalités d'intelligence
+artificielle de Sentry — non activées ici — et Intercom, son outil d'assistance,
+sollicité uniquement en cas d'ouverture d'un ticket.
 
 **Minimisation.** La configuration (`config/initializers/sentry.rb`) désactive
 l'envoi des données personnelles par défaut, réutilise les filtres de paramètres

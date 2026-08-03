@@ -310,7 +310,7 @@ atualizados unilateralmente (o da Stripe mudou em 18/11/2025).
 | OpenAI | Incorporado por referência aos Business Terms do uso pago da API — mesma mecânica de Anthropic e Stripe, sem assinatura separada. Certificada no EU-US Data Privacy Framework (reconfirmado em junho/2026). [openai.com/policies/data-processing-addendum](https://openai.com/policies/data-processing-addendum/) | 2026-07-31 ✅ |
 | Cloudinary | *"forms part of the Cloudinary Subscription Agreement"*, com as SCCs da Decisão (UE) 2021/914 incorporadas por referência. Versão de junho/2026. [cloudinary.com/gdpr/dpa](https://cloudinary.com/gdpr/dpa) (redireciona pro PDF datado) | 2026-07-31 ✅ |
 | Heroku (Salesforce) | **Não existe DPA específico da Heroku** — a palavra é da própria Heroku: *"there is not a Heroku specific DPA (we have a DPA that covers all service offered by Salesforce, including Heroku)"*. O documento é o [DPA da Salesforce](https://www.salesforce.com/company/legal/agreements/) (revisão de abril/2026), que incorpora por referência as BCR de processador e as SCCs. **Falta confirmar se basta o aceite dos termos ou se pede contra-assinatura** — a Salesforce bloqueia leitura automatizada do PDF, então essa parte tem que ser olhada por gente. [Artigo da Heroku](https://help.heroku.com/B4E5QFQQ/where-do-i-get-copy-of-dpa-from-heroku) | 2026-07-31 ⚠️ parcial |
-| Sentry | **Ainda não conferido — é o que trava a ativação.** O código está pronto e inerte desde 2026-08-02; ligar é só definir `SENTRY_DSN`. Mas a regra de ouro nº 5 deste arquivo diz que o terceiro entra nos três lugares **antes** de ir pra produção, e este é o lugar que falta. Conferir em [sentry.io/legal/dpa](https://sentry.io/legal/dpa/), guardar cópia datada, **e confirmar que a conta foi criada na região UE** (Frankfurt) — a região é escolhida no cadastro e não dá pra trocar depois. | ⬜ pendente |
+| Sentry | **Aceito em 2026-08-03.** DPA v5.1.0, de 29/05/2024, da **Functional Software, Inc.**, com as SCCs da Decisão (UE) 2021/914 no **módulo 2** (controlador → operador). **É o único desta tabela que não vale por referência:** os outros passam a valer no aceite dos termos de uso, este só *"as of the date electronically agreed and accepted by you"* — criar a conta não aceitava nada. Aceito em **Settings → Legal & Compliance** da organização, papel Owner. O próprio Sentry guarda quem aceitou e quando, e **esse registro é a cópia datada** — não há PDF a arquivar. **Ao renovar ou se surgir versão nova:** como o aceite é de uma versão específica, conferir se o Sentry pede novo aceite; não presuma que uma v5.2 herda esta. Suboperadores (01/06/2026) em [sentry.io/legal/subprocessors](https://sentry.io/legal/subprocessors/). [sentry.io/legal/dpa](https://sentry.io/legal/dpa/) | 2026-08-03 ✅ |
 
 Ao adicionar um operador novo, este é o terceiro passo (depois de entrar na
 tabela da política e no registro do art. 30): achar o DPA, salvar cópia datada,
@@ -366,9 +366,12 @@ Pendente, em ordem de risco:
       **ferramenta** foi escrita em 2026-08-02, verificada com um boot real em 2026-08-03, e
       está **pronta e desligada**: Sentry na região UE, em `config/initializers/sentry.rb`,
       inerte enquanto não houver `SENTRY_DSN`.
-      **Falta para ligar, e só você pode fazer:** criar a conta **na região Europa** (não dá
-      pra trocar depois), conferir o DPA e anotar na tabela acima, e então
-      `heroku config:set SENTRY_DSN=...`. Nesta ordem — é a regra de ouro nº 5.
+      A regra de ouro nº 5 foi cumprida **antes** da ativação: conta criada na região Europa
+      em 2026-08-03 (escolha irreversível), DPA aceito no mesmo dia, e os três lugares
+      preenchidos — as três políticas, o registre do art. 30 e a tabela de DPAs acima.
+      **Falta só o último passo:** subir o código pra produção e então
+      `heroku config:set SENTRY_DSN=...` — nessa ordem, porque a variável sem o código
+      deployado não faz nada.
       **Descoberta ao escrever:** o prazo que aperta **não é** o de 72h da CNIL, é o brasileiro —
       a Resolução CD/ANPD nº 15/2024 fixa **3 dias úteis** para avisar a ANPD **e o titular**.
 - [x] ~~**Registre des traitements (RGPD art. 30)**~~ — escrito em 2026-07-31, em francês, em
