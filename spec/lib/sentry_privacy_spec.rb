@@ -123,6 +123,18 @@ RSpec.describe "Privacidade no relatório de erros" do
       expect(configurada.call(0.0)).to be(true)
     end
 
+    # `SystemExit` não está em Sentry::Rails::IGNORE_DEFAULT nem no IGNORE_DEFAULT
+    # do sentry-ruby — conferido rodando. Sem esta linha, todo `heroku run` que
+    # termina mal vira email.
+    it "ignora SystemExit, que não é defeito de aplicação" do
+      expect(fonte).to include('config.excluded_exceptions += ["SystemExit"]')
+    end
+
+    it "e o padrão do SDK realmente não cobria isso" do
+      padrao = Sentry::Configuration.new.excluded_exceptions
+      expect(padrao).not_to include("SystemExit")
+    end
+
     it "só reporta em produção" do
       expect(fonte).to match(/config\.enabled_environments\s*=\s*%w\[production\]/)
     end

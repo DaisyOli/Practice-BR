@@ -92,9 +92,18 @@ Sentry.init do |config|
   # sentry-ruby. Uma lista repetindo esses nomes não mudaria uma linha do
   # comportamento; só pareceria estar protegendo alguma coisa.
   #
-  # Se algum dia aparecer barulho DESTE app — uma exceção específica, recorrente e
-  # que não é defeito — é aqui que ela entra:
-  #   config.excluded_exceptions += ["MinhaExcecaoBarulhenta"]
+  # A exceção: `SystemExit` não está em nenhuma das duas listas padrão, e aparece.
+  #
+  # É o sinal de saída do Ruby, nunca defeito de aplicação. Todo `heroku run rails
+  # runner` que termina mal levanta um — foi o que aconteceu em 03/08/2026, quando
+  # uma consulta de diagnóstico usou um campo inexistente e virou alerta por email.
+  # Dyno de one-off reporta igual ao resto, e um comando manual com erro de digitação
+  # não é notícia.
+  #
+  # O que NÃO dá pra fazer: excluir tudo que vem de `runner`. O primeiro erro que
+  # este arquivo capturou em produção foi uma falha de conexão do ping do Scheduler,
+  # que roda por `runner` — e aquilo era sinal de verdade.
+  config.excluded_exceptions += ["SystemExit"]
 
   # Qual deploy quebrou. O Heroku expõe o commit quando o lab
   # `runtime-dyno-metadata` está ligado; sem ele fica nulo e o Sentry apenas não
