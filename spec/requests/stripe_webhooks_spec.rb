@@ -25,14 +25,18 @@ RSpec.describe "Webhooks do Stripe", type: :request do
   end
 
   # Monta o cabeçalho Stripe-Signature igual ao que o Stripe manda.
-  def post_event(type, object, secret: WEBHOOK_SECRET)
-    payload = { id: "evt_test", type: type, data: { object: object } }.to_json
+  def signed_headers(payload, secret: WEBHOOK_SECRET)
     timestamp = Time.now
     signature = Stripe::Webhook::Signature.compute_signature(timestamp, payload, secret)
-    header = Stripe::Webhook::Signature.generate_header(timestamp, signature)
+    header    = Stripe::Webhook::Signature.generate_header(timestamp, signature)
 
-    post "/webhooks/stripe", params: payload,
-         headers: { "HTTP_STRIPE_SIGNATURE" => header, "CONTENT_TYPE" => "application/json" }
+    { "HTTP_STRIPE_SIGNATURE" => header, "CONTENT_TYPE" => "application/json" }
+  end
+
+  def post_event(type, object, secret: WEBHOOK_SECRET)
+    payload = { id: "evt_test", type: type, data: { object: object } }.to_json
+
+    post "/webhooks/stripe", params: payload, headers: signed_headers(payload, secret: secret)
   end
 
   def stub_subscription(period_end: 1.month.from_now, cancel_at_period_end: false)
@@ -167,6 +171,104 @@ RSpec.describe "Webhooks do Stripe", type: :request do
                    "current_period_end" => 5.days.from_now.to_i })
 
       expect(student.reload.subscription_status).to eq("canceling")
+    end
+  end
+
+  # O Stripe tirou `current_period_end` do objeto Subscription na versão de API
+  # 2025-03-31.basil e moveu para os ITENS. Em 03/08/2026 isso derrubou o webhook
+  # em produção: `Time.at(nil)` levantando TypeError, 500 devolvido ao Stripe, e o
+  # status da assinatura congelado — que é o dano de verdade.
+  #
+  # Todas as specs acima mandam o campo no topo (formato antigo), e é por isso que
+  # nenhuma delas pegou o defeito. Estas mandam nos dois formatos.
+  describe "os dois formatos de current_period_end do Stripe" do
+    def subscription_updated(objeto)
+      post_event("customer.subscription.updated",
+                 { "id" => "sub_123", "status" => "active", "cancel_at_period_end" => false }.merge(objeto))
+    end
+
+    it "lê o formato NOVO, com a data dentro dos itens (2025-03-31.basil)" do
+      subscription_updated("items" => { "data" => [{ "current_period_end" => 90.days.from_now.to_i }] })
+
+      expect(response).to have_http_status(:ok)
+      expect(student.reload.subscription_current_period_end).to be_within(1.day).of(90.days.from_now)
+    end
+
+    it "continua lendo o formato ANTIGO, com a data no topo (2025-02-24.acacia)" do
+      # Não é retrocompatibilidade decorativa: a gem 13.x fixa `Stripe-Version:
+      # 2025-02-24.acacia`, então `Stripe::Subscription.retrieve` devolve o
+      # formato antigo mesmo hoje. Os dois convivem no mesmo app.
+      subscription_updated("current_period_end" => 45.days.from_now.to_i)
+
+      expect(student.reload.subscription_current_period_end).to be_within(1.day).of(45.days.from_now)
+    end
+
+    it "prefere o topo quando os dois vêm, sem se confundir" do
+      subscription_updated("current_period_end" => 10.days.from_now.to_i,
+                           "items" => { "data" => [{ "current_period_end" => 99.days.from_now.to_i }] })
+
+      expect(student.reload.subscription_current_period_end).to be_within(1.day).of(10.days.from_now)
+    end
+
+    context "quando a data não vem em formato nenhum" do
+      it "não devolve 500 ao Stripe" do
+        # Um 500 aqui não é só um erro: o Stripe reenvia o evento por até 3 dias,
+        # cada tentativa vira mais um alerta, e o status nunca é aplicado.
+        subscription_updated({})
+
+        expect(response).to have_http_status(:ok)
+      end
+
+      it "aplica o status assim mesmo — é ele que decide acesso" do
+        student.update!(subscription_status: "active")
+
+        post_event("customer.subscription.updated",
+                   { "id" => "sub_123", "status" => "past_due", "cancel_at_period_end" => false })
+
+        expect(student.reload.subscription_status).to eq("past_due")
+      end
+
+      it "preserva a data que já estava gravada em vez de apagá-la" do
+        anterior = student.subscription_current_period_end
+
+        subscription_updated({})
+
+        expect(student.reload.subscription_current_period_end).to be_within(1.second).of(anterior)
+      end
+
+      it "ativa quem acabou de pagar mesmo assim" do
+        pagante = create(:user, :trial, email: "sem_data@exemplo.fr")
+        allow(Stripe::Subscription).to receive(:retrieve).and_return({ "cancel_at_period_end" => false })
+
+        post_event("checkout.session.completed", {
+          "customer" => "cus_x", "subscription" => "sub_x",
+          "metadata" => { "user_id" => pagante.id.to_s }
+        })
+
+        expect(response).to have_http_status(:ok)
+        expect(pagante.reload.role).to eq("student")
+        expect(pagante.subscription_status).to eq("active")
+      end
+    end
+
+    # O objeto real não é um Hash: `Stripe::Webhook.construct_event` devolve
+    # StripeObject, que NÃO responde a `dig` (NoMethodError). A primeira versão
+    # desta correção usava `dig` e teria trocado um crash por outro no mesmo
+    # handler. Este teste existe para que ninguém "simplifique" de volta.
+    it "funciona com StripeObject de verdade, não só com Hash" do
+      objeto = Stripe::Subscription.construct_from(
+        id: "sub_123", status: "active", cancel_at_period_end: false,
+        items: { data: [{ current_period_end: 60.days.from_now.to_i }] }
+      )
+
+      expect {
+        post "/webhooks/stripe",
+             params: { id: "evt", type: "customer.subscription.updated", data: { object: objeto.to_hash } }.to_json,
+             headers: signed_headers({ id: "evt", type: "customer.subscription.updated", data: { object: objeto.to_hash } }.to_json)
+      }.not_to raise_error
+
+      expect(response).to have_http_status(:ok)
+      expect(student.reload.subscription_current_period_end).to be_within(1.day).of(60.days.from_now)
     end
   end
 
