@@ -312,10 +312,10 @@ preuve du respect des obligations.
 
 ## Sous-traitants et transferts hors Union européenne
 
-Tous les sous-traitants ci-dessous traitent des données sur des serveurs situés aux
-**États-Unis**. Chacun présente les garanties contractuelles prévues au chapitre V
-du RGPD, sous la forme d'un accord de traitement (DPA) incorporé à ses conditions de
-service.
+Sauf mention contraire, les sous-traitants ci-dessous traitent des données sur des
+serveurs situés aux **États-Unis**. Chacun présente les garanties contractuelles
+prévues au chapitre V du RGPD, sous la forme d'un accord de traitement (DPA)
+incorporé à ses conditions de service.
 
 | Sous-traitant | Finalité | Données transmises | DPA vérifié |
 |---|---|---|---|
@@ -325,12 +325,24 @@ service.
 | Stripe | Traitement des paiements et facturation | Email, identifiants d'abonnement, données de carte transmises directement par le navigateur | 30/07/2026 |
 | Resend | Acheminement des emails de la plateforme | Adresse email et contenu du message | 31/07/2026 |
 | Cloudinary | Stockage des images et des fichiers audio | Fichiers déposés, dont l'audio temporaire | 31/07/2026 |
+| Sentry (Functional Software, Inc.) — **hébergement Union européenne** | Journalisation des erreurs techniques de l'application | Type d'erreur, fichier et ligne du code, route appelée. **Ni adresse email, ni adresse IP, ni contenu des réponses** | **à vérifier avant activation** |
 
 **Resend** et **OpenAI** sont par ailleurs certifiés au titre du **EU-US Data
 Privacy Framework**. Les clauses contractuelles types de la décision (UE) 2021/914
 sont incorporées par référence aux addenda de Cloudinary et de Salesforce (Heroku),
 ce dernier y ajoutant ses règles d'entreprise contraignantes (BCR) de
 sous-traitant.
+
+**Sentry** est le seul sous-traitant hébergé dans l'Union européenne (région UE,
+Francfort) : les données d'erreur ne quittent donc pas l'Union, et aucun transfert
+au titre du chapitre V n'est en jeu pour ce traitement. Ce choix de région est
+délibéré et doit être conservé lors de tout renouvellement du compte.
+
+**Minimisation.** La configuration (`config/initializers/sentry.rb`) désactive
+l'envoi des données personnelles par défaut, réutilise les filtres de paramètres
+de l'application et supprime toute adresse email figurant dans le texte des
+messages d'erreur. Le service reste entièrement inactif tant que la variable
+`SENTRY_DSN` n'est pas définie.
 
 **Aucune donnée n'est vendue, cédée ou transmise à des fins publicitaires.**
 

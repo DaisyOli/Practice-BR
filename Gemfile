@@ -27,6 +27,12 @@ gem "rack-attack"
 gem "stripe", "~> 13.0"
 gem "web-push"
 
+# Relatório de erros. Sem isto, um 500 na cara de um aluno só é descoberto se ele
+# escrever contando — e a maioria não escreve, desiste. Ver config/initializers/sentry.rb:
+# fica inteiramente desligado enquanto SENTRY_DSN não existir.
+gem "sentry-ruby", "~> 5.21"
+gem "sentry-rails", "~> 5.21"
+
 # Use the Puma web server [https://github.com/puma/puma]
 gem "puma", ">= 5.0"
 
