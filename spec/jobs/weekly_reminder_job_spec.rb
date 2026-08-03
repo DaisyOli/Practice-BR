@@ -15,6 +15,46 @@ RSpec.describe WeeklyReminderJob, type: :job do
     }.not_to have_enqueued_mail(StudentMailer, :weekly_reminder)
   end
 
+  # Antes não havia teto nenhum: quem passava semanas sem entrar recebia a lista
+  # inteira do nível. Uma lista longa não convida, intimida — foi o que a Daisy
+  # viu chegando no próprio email em 03/08/2026.
+  describe "teto de #{described_class::MAX_ACTIVITIES} atividades" do
+    it "manda no máximo #{described_class::MAX_ACTIVITIES}, mesmo com muitas pendentes" do
+      create(:user, :student, weekly_reminder_email: true, level: "B1")
+      create_list(:activity, 12, :B1, draft: false)
+
+      expect { described_class.perform_now }
+        .to have_enqueued_mail(StudentMailer, :weekly_reminder)
+        .with { |_student, pending, _featured|
+          expect(pending.size).to eq(described_class::MAX_ACTIVITIES)
+        }
+    end
+
+    it "manda as mais recentes, não umas quaisquer" do
+      create(:user, :student, weekly_reminder_email: true, level: "B1")
+      antigas  = create_list(:activity, 5, :B1, draft: false, created_at: 1.year.ago)
+      recentes = create_list(:activity, 5, :B1, draft: false, created_at: 1.day.ago)
+
+      expect { described_class.perform_now }
+        .to have_enqueued_mail(StudentMailer, :weekly_reminder)
+        .with { |_student, pending, _featured|
+          expect(pending.map(&:id)).to match_array(recentes.map(&:id))
+          expect(pending.map(&:id)).not_to include(*antigas.map(&:id))
+        }
+    end
+
+    it "não infla a lista quando há poucas pendentes" do
+      create(:user, :student, weekly_reminder_email: true, level: "B1")
+      create_list(:activity, 2, :B1, draft: false)
+
+      expect { described_class.perform_now }
+        .to have_enqueued_mail(StudentMailer, :weekly_reminder)
+        .with { |_student, pending, featured|
+          expect(pending.size + featured.size).to be <= described_class::MAX_ACTIVITIES
+        }
+    end
+  end
+
   it 'envia atividades pendentes do nível do aluno para quem ativou o lembrete' do
     create(:user, :student, weekly_reminder_email: true, level: "B1")
     create(:activity, :B1, draft: false)

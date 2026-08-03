@@ -5,9 +5,23 @@
 class WeeklyReminderJob < ApplicationJob
   queue_as :default
 
+  # Teto de atividades no email. Antes não havia nenhum: quem estava há semanas
+  # sem entrar recebia a lista inteira do nível, e uma lista longa não convida —
+  # intimida. Cinco é o que cabe numa tela de telefone sem rolar, e o que parece
+  # "dá pra fazer" em vez de "estou atrasado".
+  #
+  # Casa com o bloco de `featured` abaixo, que só entra quando há menos de 3
+  # pendentes e traz até 3: o máximo continua sendo 5 pelos dois caminhos.
+  MAX_ACTIVITIES = 5
+
   def perform
     return unless Date.current.monday?
 
+    # Sem filtro de `subscription_status`, e é decisão, não esquecimento (03/08/2026).
+    # Quem está em `canceling` cancelou a RENOVAÇÃO, mas pagou até o fim do período
+    # e continua com acesso — cortar o lembrete seria encurtar o que a pessoa já
+    # comprou. Quem de fato saiu vira `trial` no handle_subscription_deleted e cai
+    # fora deste `where` sozinho.
     User.where(role: "student", weekly_reminder_email: true).find_each do |student|
       next if student.level.blank?
 
@@ -21,6 +35,7 @@ class WeeklyReminderJob < ApplicationJob
                          .where(level: levels)
                          .where.not(id: completed_ids)
                          .order(created_at: :desc)
+                         .limit(MAX_ACTIVITIES)
                          .to_a
 
       featured = []
