@@ -11,8 +11,13 @@ default: &default
   username: <%= ENV["DB_USERNAME"] %>
   password: <%= ENV["DB_PASSWORD"] %>
   timeout: 10000
-  connect_timeout: 10
-  checkout_timeout: 15
+  # Curtos de propósito. O router do Heroku desliga o pedido aos 30s, e o
+  # DatabaseConnectionRetry ainda tenta 3 vezes: com 10s de connect_timeout o
+  # total passava dos 30s e o aluno levava a página de timeout do Heroku, que
+  # não é nossa e leva junto tudo que ele digitou. Errar em segundos e mostrar
+  # a nossa página de erro é bem melhor que travar e sumir.
+  connect_timeout: 3
+  checkout_timeout: 5
   keepalives: 1
   keepalives_idle: 60
   keepalives_interval: 10

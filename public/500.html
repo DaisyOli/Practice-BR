@@ -1,66 +1,149 @@
 <!DOCTYPE html>
-<html>
+<html lang="pt-BR">
 <head>
-  <title>We're sorry, but something went wrong (500)</title>
+  <meta charset="utf-8">
+  <title>Deu um soluço aqui — Practice PT</title>
   <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="theme-color" content="#1A6B4A">
   <style>
-  .rails-default-error-page {
-    background-color: #EFEFEF;
-    color: #2E2F30;
-    text-align: center;
-    font-family: arial, sans-serif;
-    margin: 0;
-  }
+    /*
+      Página estática de propósito: ela precisa funcionar justamente quando o
+      banco não responde, então não pode depender de nada do app. Por isso os
+      tokens do design system aparecem escritos aqui em vez de virem do
+      _tokens.scss — mesma exceção que vale para os mailers.
+    */
+    :root {
+      --ink:          #1C1917;
+      --ink-soft:     #5C5853;
+      --paper:        #F7F5F0;
+      --surface:      #FFFFFF;
+      --line:         #DDD9D2;
+      --brand-deep:   #0F3826;
+      --brand:        #1A6B4A;
+      --brand-soft:   #6EBD96;
+      --brand-mist:   #F0FAF5;
+    }
 
-  .rails-default-error-page div.dialog {
-    width: 95%;
-    max-width: 33em;
-    margin: 4em auto 0;
-  }
+    * { box-sizing: border-box; }
 
-  .rails-default-error-page div.dialog > div {
-    border: 1px solid #CCC;
-    border-right-color: #999;
-    border-left-color: #999;
-    border-bottom-color: #BBB;
-    border-top: #B00100 solid 4px;
-    border-top-left-radius: 9px;
-    border-top-right-radius: 9px;
-    background-color: white;
-    padding: 7px 12% 0;
-    box-shadow: 0 3px 8px rgba(50, 50, 50, 0.17);
-  }
+    body {
+      margin: 0;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 24px;
+      background: var(--paper);
+      color: var(--ink);
+      font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      line-height: 1.55;
+    }
 
-  .rails-default-error-page h1 {
-    font-size: 100%;
-    color: #730E15;
-    line-height: 1.5em;
-  }
+    .card {
+      width: 100%;
+      max-width: 460px;
+      background: var(--surface);
+      border: 1px solid var(--line);
+      border-radius: 18px;
+      padding: 36px 30px 30px;
+      text-align: center;
+      box-shadow: 0 8px 32px rgba(15, 56, 38, 0.10);
+    }
 
-  .rails-default-error-page div.dialog > p {
-    margin: 0 0 1em;
-    padding: 1em;
-    background-color: #F7F7F7;
-    border: 1px solid #CCC;
-    border-right-color: #999;
-    border-left-color: #999;
-    border-bottom-color: #999;
-    border-bottom-left-radius: 4px;
-    border-bottom-right-radius: 4px;
-    border-top-color: #DADADA;
-    color: #666;
-    box-shadow: 0 3px 8px rgba(50, 50, 50, 0.17);
-  }
+    .mascot {
+      font-size: 2.6rem;
+      line-height: 1;
+      margin-bottom: 14px;
+    }
+
+    h1 {
+      margin: 0 0 10px;
+      font-size: 1.28rem;
+      font-weight: 800;
+      color: var(--brand-deep);
+    }
+
+    p {
+      margin: 0 0 14px;
+      font-size: 0.94rem;
+      color: var(--ink-soft);
+    }
+
+    .saved {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin: 20px 0 24px;
+      padding: 12px 14px;
+      background: var(--brand-mist);
+      border: 1.5px solid var(--brand-soft);
+      border-radius: 11px;
+      text-align: left;
+      font-size: 0.86rem;
+      color: var(--brand-deep);
+    }
+
+    .saved span:first-child { font-size: 1.1rem; line-height: 1; }
+
+    .actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      justify-content: center;
+    }
+
+    a.btn {
+      flex: 1 1 auto;
+      min-width: 140px;
+      display: inline-block;
+      padding: 11px 20px;
+      border-radius: 10px;
+      font-size: 0.88rem;
+      font-weight: 700;
+      text-decoration: none;
+      transition: opacity 0.15s;
+    }
+
+    a.btn:hover { opacity: 0.88; }
+
+    a.primary {
+      background: var(--brand);
+      color: var(--surface);
+      border: 1.5px solid var(--brand);
+    }
+
+    a.secondary {
+      background: var(--surface);
+      color: var(--brand-deep);
+      border: 1.5px solid var(--line);
+    }
   </style>
 </head>
 
-<body class="rails-default-error-page">
-  <!-- This file lives in public/500.html -->
-  <div class="dialog">
-    <div>
-      <h1>We're sorry, but something went wrong.</h1>
+<body>
+  <!-- Este arquivo mora em public/500.html -->
+  <main class="card">
+    <div class="mascot">🐿️</div>
+
+    <h1>Deu um soluço aqui</h1>
+
+    <p>
+      Não foi você nem o seu exercício — foi o nosso servidor que tropeçou.
+      Costuma passar em alguns instantes.
+    </p>
+
+    <div class="saved">
+      <span>💾</span>
+      <span>
+        Se você estava respondendo um exercício, <strong>as suas respostas estão
+        guardadas</strong> neste navegador. Volte para o exercício e elas vão
+        aparecer no lugar.
+      </span>
     </div>
-    <p>If you are the application owner check the logs for more information.</p>
-  </div>
+
+    <div class="actions">
+      <a class="btn primary" href="/">Voltar ao início</a>
+    </div>
+  </main>
 </body>
 </html>

@@ -2,6 +2,12 @@
   <title><%= @activity.title %> - <%= t('quiz.results') %> - Practice PT</title>
 <% end %>
 
+<%# Chegar aqui significa que o envio foi salvo: o rascunho do navegador já cumpriu o papel %>
+<div data-controller="quiz-rescue"
+     data-quiz-rescue-mode-value="clear"
+     data-quiz-rescue-key-value="<%= "#{current_user&.id}:#{@activity.slug}" %>"
+     style="display:none;"></div>
+
 <% grading_pending = @quiz_attempt&.ai_grading_pending? %>
 <div class="results-container"
      <% if grading_pending %>
