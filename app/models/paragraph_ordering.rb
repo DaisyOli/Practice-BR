@@ -1,4 +1,6 @@
 class ParagraphOrdering < ApplicationRecord
+  include Derangeable
+
   belongs_to :activity
   has_many :paragraph_sentences, dependent: :destroy
 
@@ -46,9 +48,11 @@ class ParagraphOrdering < ApplicationRecord
 
   private
 
+  # Desarranjo, não `shuffle` puro: nenhuma frase pode cair na sua própria
+  # posição, senão o parágrafo aparece já ordenado. Ver `Derangeable`.
   def shuffle_display_positions!
     sentences = paragraph_sentences.to_a
-    shuffled = (1..sentences.length).to_a.shuffle
+    shuffled = deranged_positions(sentences.length)
     sentences.each_with_index do |s, i|
       s.update_column(:display_position, shuffled[i])
     end

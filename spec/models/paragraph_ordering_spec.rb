@@ -12,6 +12,30 @@ RSpec.describe ParagraphOrdering, type: :model do
 
   let(:sentences) { ordering.paragraph_sentences.order(:correct_position).to_a }
 
+  # Mesmo bug de SentenceOrdering: `shuffle` puro sorteia a permutação
+  # identidade em 1/n! das vezes e o parágrafo abre já ordenado.
+  describe 'embaralhamento das posições' do
+    it 'nunca deixa uma frase na sua posição correta' do
+      30.times do
+        subject = activity.paragraph_orderings.create!
+        subject.add_sentence("Primeiro.")
+        subject.add_sentence("Segundo.")
+        subject.add_sentence("Terceiro.")
+
+        pares = subject.paragraph_sentences.map { |s| [s.correct_position, s.display_position] }
+        expect(pares.none? { |correta, exibida| correta == exibida }).to be(true),
+               "frase exibida na posição correta: #{pares.inspect}"
+      end
+    end
+
+    it 'não trava com uma frase só, onde desarranjo não existe' do
+      subject = activity.paragraph_orderings.create!
+
+      expect { Timeout.timeout(5) { subject.add_sentence("Sozinha.") } }.not_to raise_error
+      expect(subject.paragraph_sentences.first.display_position).to eq(1)
+    end
+  end
+
   describe '#sentence_results' do
     it 'marca todas as posições como corretas quando o aluno acerta tudo' do
       answer = sentences.map(&:id)

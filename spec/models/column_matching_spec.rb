@@ -9,6 +9,40 @@ RSpec.describe ColumnMatching, type: :model do
   let!(:pair3) { matching.add_pair("Japão", "Tóquio") }
   let!(:pair4) { matching.add_pair("Egito", "Cairo") }
 
+  # A coluna da direita não pode sair alinhada com a da esquerda: seria a
+  # resposta de graça. Com 4 pares, `shuffle` sozinho fazia isso em 1/24 das
+  # aberturas; com 3, em 1/6.
+  describe '#shuffled_pairs' do
+    let(:ordem_da_esquerda) { matching.matching_pairs.order(:position).map(&:id) }
+
+    it 'nunca alinha um par com a linha que ele ocupa na esquerda' do
+      50.times do
+        embaralhada = matching.shuffled_pairs.map(&:id)
+
+        expect(embaralhada.each_with_index.none? { |id, i| id == ordem_da_esquerda[i] }).to be(true),
+               "par alinhado: #{embaralhada.inspect} vs #{ordem_da_esquerda.inspect}"
+      end
+    end
+
+    it 'devolve todos os pares, sem perder nem duplicar nenhum' do
+      expect(matching.shuffled_pairs.map(&:id).sort).to eq(ordem_da_esquerda.sort)
+    end
+
+    it 'não trava com um par só, onde desarranjo não existe' do
+      solo = activity.column_matchings.create!(title: "Um par")
+      par  = solo.add_pair("Brasil", "Brasília")
+
+      expect {
+        Timeout.timeout(5) { expect(solo.shuffled_pairs.map(&:id)).to eq([par.id]) }
+      }.not_to raise_error
+    end
+
+    it 'devolve lista vazia quando não há pares' do
+      vazio = activity.column_matchings.create!(title: "Vazio")
+      expect(vazio.shuffled_pairs).to eq([])
+    end
+  end
+
   describe '#pair_results' do
     it 'marca todos os pares como corretos quando o aluno acerta tudo' do
       answer = [pair1, pair2, pair3, pair4].map { |p| "#{p.id}:#{p.id}" }.join(',')
