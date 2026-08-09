@@ -142,6 +142,13 @@ Rails.application.configure do
       account_retention: {
         cron: "30 3 * * * Europe/Paris",
         class: "AccountRetentionJob"
+      },
+      # 1x/dia, depois dos emails que falam com o aluno (7:00 e 7:30): este
+      # fala com a Daisy, e faz sentido chegar quando os automáticos do dia
+      # já saíram. Só manda email se houver alguém sumido.
+      student_went_quiet: {
+        cron: "0 8 * * * Europe/Paris",
+        class: "StudentWentQuietJob"
       }
     }
   }

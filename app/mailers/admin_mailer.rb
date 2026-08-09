@@ -64,6 +64,27 @@ class AdminMailer < ApplicationMailer
     mail(to: DAISY_EMAIL, subject: subject)
   end
 
+  # Aluno pagante que parou de aparecer. Ver StudentWentQuietJob para o porquê.
+  #
+  # Chega só quando há alguém na lista: caixa de entrada que recebe "nenhuma
+  # novidade" toda semana vira caixa de entrada que ninguém abre.
+  # `last_practice` vem pronto do job (um hash id => data), para a view não
+  # refazer uma consulta por aluno só para escrever "última atividade em ...".
+  def students_went_quiet(students, last_practice = {})
+    @students      = students
+    @last_practice = last_practice
+    @silence_days  = (StudentWentQuietJob::SILENCE / 1.day).to_i
+
+    subject =
+      if students.one?
+        "🔕 #{students.first.display_name} não pratica há #{@silence_days} dias"
+      else
+        "🔕 #{students.size} alunos pagantes sumiram"
+      end
+
+    mail(to: DAISY_EMAIL, subject: subject)
+  end
+
   def draft_generation_failed(level, error_key)
     @level = level
     @error_key = error_key
