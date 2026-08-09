@@ -1,0 +1,145 @@
+  <%# — Minhas expressões escritas — %>
+  <div id="open-ended-section" style="background:var(--surface); border:1px solid var(--line); border-radius:16px; padding:22px; margin-bottom:1.5rem;">
+    <div class="oe-section-header">
+      <h2 style="font-family:'Raleway',sans-serif; font-size:1rem; font-weight:700; color:var(--ink); margin:0;">
+        ✍️ Minhas expressões escritas
+      </h2>
+      <button id="load-open-ended"
+              data-url="<%= student_open_ended_attempts_path %>"
+              style="width:30px; height:30px; border-radius:50%; border:1.5px solid var(--line);
+                     background:var(--paper); color:var(--ink-soft); font-size:1.1rem; font-weight:700;
+                     cursor:pointer; display:flex; align-items:center; justify-content:center;
+                     font-family:'Raleway',sans-serif; flex-shrink:0; line-height:1;">
+        +
+      </button>
+    </div>
+    <div id="open-ended-container" style="display:none; flex-direction:column; gap:14px; margin-top:16px;"></div>
+  </div>
+
+  <script>
+    (function() {
+      var toggleBtn = document.getElementById('load-open-ended');
+      var section   = document.getElementById('open-ended-section');
+      var container = document.getElementById('open-ended-container');
+      if (!toggleBtn || !container) return;
+
+      var loaded       = false;
+      var sectionShown = false;
+      var allExpanded  = false;
+      var initialCount = 0;
+
+      function moreButtonStyle(collapsed) {
+        return "font-family:'Plus Jakarta Sans',sans-serif; font-size:0.82rem; font-weight:600;" +
+          " border-radius:8px; padding:8px 20px; cursor:pointer; border:1px solid;" +
+          (collapsed
+            ? " color:var(--sky); background:var(--sky-tint); border-color:var(--sky-border);"
+            : " color:var(--sky); background:var(--sky-border); border-color:var(--sky-border);");
+      }
+
+      function handleMore() {
+        var moreBtn = document.getElementById('oe-more-btn');
+        if (!moreBtn) return;
+
+        if (allExpanded) {
+          // Ver menos — encolher de volta aos iniciais
+          while (container.children.length > initialCount + 1) {
+            container.removeChild(container.children[initialCount]);
+          }
+          moreBtn.dataset.offset = String(initialCount);
+          moreBtn.textContent    = 'Ver mais';
+          moreBtn.style.cssText  = moreButtonStyle(true);
+          allExpanded = false;
+          section.scrollIntoView({ behavior: 'smooth', block: 'start' });
+          return;
+        }
+
+        var offset = parseInt(moreBtn.dataset.offset);
+        var url    = moreBtn.dataset.url;
+        moreBtn.disabled    = true;
+        moreBtn.textContent = 'Carregando...';
+
+        fetch(url + '?offset=' + offset, {
+          headers: { 'Accept': 'application/json', 'X-Requested-With': 'XMLHttpRequest' }
+        })
+        .then(function(r) { return r.json(); })
+        .then(function(data) {
+          var wrap = document.getElementById('oe-more-wrap');
+          var temp = document.createElement('div');
+          temp.innerHTML = data.html;
+          while (temp.firstChild) container.insertBefore(temp.firstChild, wrap);
+
+          // Scroll para o primeiro card novo
+          var firstNew = container.children[offset];
+          if (firstNew) firstNew.scrollIntoView({ behavior: 'smooth', block: 'start' });
+
+          moreBtn.dataset.offset = data.next_offset;
+          moreBtn.disabled       = false;
+          if (data.has_more) {
+            moreBtn.textContent   = 'Ver mais';
+            moreBtn.style.cssText = moreButtonStyle(true);
+          } else {
+            moreBtn.textContent   = 'Ver menos';
+            moreBtn.style.cssText = moreButtonStyle(false);
+            allExpanded = true;
+          }
+        })
+        .catch(function() {
+          moreBtn.disabled    = false;
+          moreBtn.textContent = 'Ver mais';
+        });
+      }
+
+      function appendMoreButton(nextOffset, url) {
+        var wrap = document.createElement('div');
+        wrap.id = 'oe-more-wrap';
+        wrap.style.cssText = 'text-align:center; margin-top:6px;';
+        var btn = document.createElement('button');
+        btn.id              = 'oe-more-btn';
+        btn.dataset.offset  = nextOffset;
+        btn.dataset.url     = url;
+        btn.textContent     = 'Ver mais';
+        btn.style.cssText   = moreButtonStyle(true);
+        btn.addEventListener('click', handleMore);
+        wrap.appendChild(btn);
+        container.appendChild(wrap);
+      }
+
+      toggleBtn.addEventListener('click', function() {
+        if (loaded) {
+          sectionShown = !sectionShown;
+          container.style.display = sectionShown ? 'flex' : 'none';
+          toggleBtn.textContent   = sectionShown ? '−' : '+';
+          return;
+        }
+
+        toggleBtn.textContent = '…';
+        toggleBtn.disabled    = true;
+
+        fetch(toggleBtn.dataset.url + '?offset=0', {
+          headers: { 'Accept': 'application/json', 'X-Requested-With': 'XMLHttpRequest' }
+        })
+        .then(function(r) { return r.json(); })
+        .then(function(data) {
+          if (data.html && data.html.trim().length > 0) {
+            container.innerHTML = data.html;
+            if (data.has_more) {
+              initialCount = container.children.length;
+              appendMoreButton(data.next_offset, toggleBtn.dataset.url);
+            }
+          } else {
+            container.innerHTML = '<p style="font-family:\'Plus Jakarta Sans\',sans-serif; font-size:0.85rem; color:var(--ink-faint); padding:8px 0; margin:0;">Nenhuma expressão escrita ainda.</p>';
+          }
+          container.style.display = 'flex';
+          sectionShown = true;
+          loaded       = true;
+          toggleBtn.disabled    = false;
+          toggleBtn.textContent = '−';
+          section.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        })
+        .catch(function() {
+          toggleBtn.disabled    = false;
+          toggleBtn.textContent = '+';
+        });
+      });
+    })();
+  </script>

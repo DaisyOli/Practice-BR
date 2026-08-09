@@ -1,0 +1,27 @@
+  <%# — Conquistas (só se tiver) — %>
+  <% achieved_badges = get_all_achieved_badges(current_streak) %>
+  <% if achieved_badges.any? %>
+    <div style="background:var(--surface); border:1px solid var(--line); border-radius:16px; padding:22px; margin-bottom:1.5rem;">
+      <h2 style="font-family:'Raleway',sans-serif; font-size:1rem; font-weight:700; color:var(--ink); margin:0 0 16px 0;">
+        🏆 Conquistas
+      </h2>
+      <div style="display:flex; gap:10px; flex-wrap:wrap;">
+        <% achieved_badges.each do |badge| %>
+          <div style="background:var(--action-tint); border:1.5px solid var(--action-border); border-radius:12px; padding:12px 16px; text-align:center; min-width:100px;">
+            <div style="font-size:1.6rem; margin-bottom:5px;"><%= badge[:icon] %></div>
+            <div style="font-family:'Plus Jakarta Sans',sans-serif; font-size:0.78rem; font-weight:700; color:var(--ink); margin-bottom:2px;"><%= badge[:name] %></div>
+            <div style="font-family:'DM Mono',monospace; font-size:0.65rem; color:var(--action-ink);"><%= badge[:days] %> dias</div>
+          </div>
+        <% end %>
+        <% next_badge = get_next_badge(current_streak) %>
+        <% if next_badge %>
+          <% days_left = get_days_to_next_badge(current_streak) %>
+          <div style="background:var(--paper); border:1.5px dashed var(--line); border-radius:12px; padding:12px 16px; text-align:center; min-width:100px; opacity:0.5;">
+            <div style="font-size:1.6rem; margin-bottom:5px;"><%= next_badge[:icon] %></div>
+            <div style="font-family:'Plus Jakarta Sans',sans-serif; font-size:0.78rem; font-weight:700; color:var(--ink); margin-bottom:2px;"><%= next_badge[:name] %></div>
+            <div style="font-family:'DM Mono',monospace; font-size:0.65rem; color:var(--ink-faint);"><%= days_left %> dias restantes</div>
+          </div>
+        <% end %>
+      </div>
+    </div>
+  <% end %>

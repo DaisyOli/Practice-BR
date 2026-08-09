@@ -1,0 +1,31 @@
+  <%# — 4 Cards de Métricas — %>
+  <div class="dash-metrics-grid" id="tour-metrics" style="margin-bottom:1.5rem;">
+
+    <div style="background:var(--surface); border:1px solid var(--line); border-radius:14px; padding:18px 20px;">
+      <div style="font-family:'DM Mono',monospace; font-size:0.67rem; color:var(--ink-faint); letter-spacing:0.08em; text-transform:uppercase; margin-bottom:10px;">Sequência</div>
+      <div style="display:flex; align-items:baseline; gap:5px;">
+        <span style="font-family:'Raleway',sans-serif; font-size:2rem; font-weight:800; color:var(--action); line-height:1;"><%= current_streak %></span>
+        <span style="font-size:1.1rem; line-height:1;">🔥</span>
+      </div>
+      <div style="font-family:'Plus Jakarta Sans',sans-serif; font-size:0.78rem; color:var(--ink-soft); margin-top:6px;">dias seguidos</div>
+    </div>
+
+    <div style="background:var(--surface); border:1px solid var(--line); border-radius:14px; padding:18px 20px;">
+      <div style="font-family:'DM Mono',monospace; font-size:0.67rem; color:var(--ink-faint); letter-spacing:0.08em; text-transform:uppercase; margin-bottom:10px;">Concluídas</div>
+      <div style="font-family:'Raleway',sans-serif; font-size:2rem; font-weight:800; color:var(--brand); line-height:1;"><%= total_completed %></div>
+      <div style="font-family:'Plus Jakarta Sans',sans-serif; font-size:0.78rem; color:var(--ink-soft); margin-top:6px;">atividades feitas</div>
+    </div>
+
+    <div style="background:var(--surface); border:1px solid var(--line); border-radius:14px; padding:18px 20px;">
+      <div style="font-family:'DM Mono',monospace; font-size:0.67rem; color:var(--ink-faint); letter-spacing:0.08em; text-transform:uppercase; margin-bottom:10px;">Progresso geral</div>
+      <div style="font-family:'Raleway',sans-serif; font-size:2rem; font-weight:800; color:var(--info); line-height:1;"><%= overall_pct %>%</div>
+      <div style="font-family:'Plus Jakarta Sans',sans-serif; font-size:0.78rem; color:var(--ink-soft); margin-top:6px;">do total</div>
+    </div>
+
+    <div style="background:var(--surface); border:1px solid var(--line); border-radius:14px; padding:18px 20px;">
+      <div style="font-family:'DM Mono',monospace; font-size:0.67rem; color:var(--ink-faint); letter-spacing:0.08em; text-transform:uppercase; margin-bottom:10px;">Última nota</div>
+      <div style="font-family:'Raleway',sans-serif; font-size:2rem; font-weight:800; color:var(--violet); line-height:1;"><%= last_score || '--' %></div>
+      <div style="font-family:'Plus Jakarta Sans',sans-serif; font-size:0.78rem; color:var(--ink-soft); margin-top:6px;">no último exercício</div>
+    </div>
+
+  </div>

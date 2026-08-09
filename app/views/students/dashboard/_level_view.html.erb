@@ -1,0 +1,93 @@
+  <%# ══════════════════════════════════════════════ %>
+  <%# VISTA DE NÍVEL ESPECÍFICO                      %>
+  <%# ══════════════════════════════════════════════ %>
+
+  <% lvl_meta = cefr_colors(@current_level) %>
+
+  <div style="display:flex; align-items:center; gap:10px; margin-bottom:1.5rem;">
+    <%= link_to student_dashboard_path,
+          style: "font-family:'Plus Jakarta Sans',sans-serif; font-size:0.85rem; color:var(--ink-soft); text-decoration:none; display:flex; align-items:center; gap:4px;" do %>
+      ← Todos os níveis
+    <% end %>
+    <% if @current_level %>
+      <span style="font-family:'DM Mono',monospace; font-size:0.72rem; font-weight:700;
+                   background:<%= lvl_meta[:bg] %>; color:<%= lvl_meta[:text] %>; border:1.5px solid <%= lvl_meta[:border] %>;
+                   padding:3px 10px; border-radius:20px;">
+        <%= @current_level %>
+      </span>
+    <% end %>
+  </div>
+
+  <% if @current_level.present? %>
+    <% if @pending_activities.any? %>
+      <h2 style="font-family:'Raleway',sans-serif; font-size:1.1rem; font-weight:700; color:var(--ink); margin-bottom:1rem;">
+        Atividades disponíveis
+      </h2>
+      <div class="activities-grid" id="activities-container">
+        <%= render 'activities_grid', activities: @pending_activities %>
+      </div>
+
+      <% if @total_pending > 3 %>
+        <div class="text-center mt-4">
+          <button class="btn-giz secondary load-more-btn"
+                  data-level="<%= @current_level %>"
+                  data-offset="3"
+                  data-total="<%= @total_pending %>">
+            + Carregar mais (<%= [@total_pending - 3, 0].max %> restantes)
+          </button>
+          <div class="loading-spinner hidden">Carregando...</div>
+        </div>
+      <% end %>
+
+      <% if @completed_activities.any? %>
+        <div class="mt-4">
+          <button style="font-family:'Plus Jakarta Sans',sans-serif; font-size:0.85rem; font-weight:600;
+                         color:var(--ink-soft); background:transparent; border:1.5px solid var(--line);
+                         padding:8px 18px; border-radius:10px; cursor:pointer;"
+                  data-controller="collapse" data-collapse-target-value="#completed-activities" data-action="collapse#toggle">
+            ✓ Ver atividades concluídas (<%= @completed_activities.length %>)
+          </button>
+          <div class="hidden mt-3" id="completed-activities">
+            <div class="activities-grid">
+              <%= render 'activities_grid', activities: @completed_activities %>
+            </div>
+          </div>
+        </div>
+      <% end %>
+
+    <% else %>
+      <div style="background:var(--brand-tint); border:1.5px solid var(--brand-bright); border-radius:16px; padding:32px; text-align:center; margin-bottom:1.5rem;">
+        <div style="font-size:2.5rem; margin-bottom:12px;">🏆</div>
+        <h2 style="font-family:'Raleway',sans-serif; font-size:1.2rem; font-weight:700; color:var(--brand-deep); margin-bottom:8px;">
+          Nível <%= @current_level %> completo!
+        </h2>
+        <p style="font-family:'Plus Jakarta Sans',sans-serif; font-size:0.9rem; color:var(--brand);">
+          Você concluiu todas as atividades deste nível. Parabéns!
+        </p>
+        <% if @completed_activities.any? %>
+          <button style="margin-top:16px; font-family:'Plus Jakarta Sans',sans-serif; font-size:0.85rem;
+                         font-weight:600; color:var(--brand-deep); background:transparent; border:1.5px solid var(--brand-bright);
+                         padding:8px 20px; border-radius:10px; cursor:pointer;"
+                  data-controller="collapse" data-collapse-target-value="#completed-activities" data-action="collapse#toggle">
+            Revisar atividades →
+          </button>
+          <div class="hidden mt-3" id="completed-activities">
+            <div class="activities-grid">
+              <%= render 'activities_grid', activities: @completed_activities %>
+            </div>
+          </div>
+        <% end %>
+      </div>
+    <% end %>
+
+  <% else %>
+    <div style="background:var(--surface); border:1px solid var(--line); border-radius:16px; padding:32px; text-align:center;">
+      <div style="font-size:2rem; margin-bottom:12px;">🔍</div>
+      <p style="font-family:'Plus Jakarta Sans',sans-serif; font-size:0.9rem; color:var(--ink-soft); margin-bottom:16px;">
+        Nenhuma atividade disponível neste nível ainda.
+      </p>
+      <%= link_to "← Explorar outros níveis", student_dashboard_path,
+            style: "font-family:'Plus Jakarta Sans',sans-serif; font-size:0.85rem; font-weight:600;
+                    color:var(--info); text-decoration:none;" %>
+    </div>
+  <% end %>

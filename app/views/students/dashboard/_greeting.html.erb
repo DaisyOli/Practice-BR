@@ -1,0 +1,20 @@
+  <%# — Saudação — %>
+  <div style="margin-bottom:1.75rem;">
+    <h1 style="font-family:'Raleway',sans-serif; font-size:1.75rem; font-weight:800; color:var(--brand-deep); margin-bottom:4px;">
+      Olá<% if current_user.greeting_name %>, <%= current_user.greeting_name %><% end %>! 👋
+    </h1>
+    <p style="font-family:'Plus Jakarta Sans',sans-serif; font-size:0.95rem; color:var(--ink-soft); margin:0 0 8px 0;">
+      Que bom ter você aqui! Continue firme no seu aprendizado.
+    </p>
+    <% if current_user.professional_type.present? %>
+      <% pc = ApplicationHelper::PROFESSIONAL_COLORS[current_user.professional_type] || { bg: 'var(--neutral-tint)', text: 'var(--neutral-ink)', border: 'var(--line)' } %>
+      <div style="display:inline-flex; align-items:center; gap:8px; background:<%= pc[:bg] %>; border:1.5px solid <%= pc[:border] %>; border-radius:20px; padding:4px 12px 4px 8px;">
+        <span style="font-family:'DM Mono',monospace; font-size:0.7rem; font-weight:800; color:<%= pc[:text] %>; letter-spacing:0.04em;">
+          <%= current_user.professional_type %>
+        </span>
+        <span style="font-family:'Plus Jakarta Sans',sans-serif; font-size:0.78rem; color:<%= pc[:text] %>; opacity:0.85;">
+          Percurso profissional reconhecido
+        </span>
+      </div>
+    <% end %>
+  </div>

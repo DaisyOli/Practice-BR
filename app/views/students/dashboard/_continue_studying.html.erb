@@ -1,0 +1,141 @@
+    <%# Continue estudando %>
+    <div style="background:var(--surface); border:1px solid var(--line); border-radius:16px; padding:22px;">
+      <h2 style="font-family:'Raleway',sans-serif; font-size:1rem; font-weight:700; color:var(--ink); margin:0 0 16px 0;">
+        Continue estudando
+      </h2>
+
+      <% if continue_activity %>
+        <% cont_meta  = cefr_colors(continue_activity.level) %>
+        <% cont_cover = activity_cover(continue_activity) %>
+        <% cont_badge = activity_media_badge(continue_activity) %>
+        <% cont_q     = continue_activity.try(:questions_count).to_i %>
+        <% cont_started = QuizAttempt.where(user: current_user, activity: continue_activity).exists? %>
+
+        <div class="continue-card" id="tour-continue">
+
+          <%# Capa lateral %>
+          <div class="continue-card-image">
+            <% if cont_cover[:type] == :image %>
+              <img src="<%= cont_cover[:url] %>" alt="" style="width:100%; height:100%; object-fit:cover; display:block; position:absolute; inset:0;">
+              <% if cont_cover[:credit] %>
+                <span style="position:absolute; bottom:3px; right:5px; font-size:0.55rem; color:rgba(255,255,255,0.6); line-height:1; pointer-events:none;"><%= cont_cover[:credit] %></span>
+              <% end %>
+            <% else %>
+              <div style="width:100%; height:100%; position:absolute; inset:0; background:linear-gradient(135deg, <%= cont_meta[:bg] %> 0%, <%= cont_meta[:border] %>33 100%); display:flex; align-items:center; justify-content:center;">
+                <i class="bi <%= cont_cover[:icon] %>" style="font-size:2.8rem; color:<%= cont_meta[:border] %>; opacity:0.55;"></i>
+              </div>
+            <% end %>
+          </div>
+
+          <%# Conteúdo %>
+          <div class="continue-card-body">
+
+            <div style="display:flex; align-items:center; gap:6px; flex-wrap:wrap; margin-bottom:8px;">
+              <span style="font-family:'DM Mono',monospace; font-size:0.72rem; font-weight:700; background:<%= cont_meta[:bg] %>; color:<%= cont_meta[:text] %>; border:1.5px solid <%= cont_meta[:border] %>; padding:3px 9px; border-radius:20px;">
+                <%= continue_activity.level %>
+              </span>
+              <span style="font-family:'Plus Jakarta Sans',sans-serif; font-size:0.7rem; font-weight:600; background:var(--sky-tint); color:var(--sky); border:1.5px solid var(--sky-bright); padding:3px 8px; border-radius:20px; display:inline-flex; align-items:center; gap:3px;">
+                <i class="bi <%= cont_badge[:icon] %>" style="font-size:0.72rem;"></i> <%= cont_badge[:label] %>
+              </span>
+            </div>
+
+            <div class="continue-card-title">
+              <%= continue_activity.title %>
+            </div>
+
+            <% if continue_activity.description.present? %>
+              <p style="font-family:'Plus Jakarta Sans',sans-serif; font-size:0.82rem; color:var(--ink-soft); margin:0 0 10px 0; line-height:1.5; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden; flex:1;">
+                <%= continue_activity.description %>
+              </p>
+            <% else %>
+              <div style="flex:1;"></div>
+            <% end %>
+
+            <% if cont_q > 0 %>
+              <div style="display:flex; gap:12px; flex-wrap:wrap; margin-bottom:12px;">
+                <span style="font-family:'Plus Jakarta Sans',sans-serif; font-size:0.77rem; color:var(--ink-faint); display:flex; align-items:center; gap:4px;">
+                  <i class="bi bi-patch-question" style="color:<%= cont_meta[:border] %>;"></i>
+                  <%= cont_q %> <%= cont_q == 1 ? 'questão' : 'questões' %>
+                </span>
+                <span style="font-family:'Plus Jakarta Sans',sans-serif; font-size:0.77rem; color:var(--ink-faint); display:flex; align-items:center; gap:4px;">
+                  <i class="bi bi-clock" style="color:<%= cont_meta[:border] %>;"></i>
+                  ~<%= [1, (cont_q * 1.5).round].max %> min
+                </span>
+              </div>
+            <% end %>
+
+            <div class="continue-card-bottom">
+              <span style="font-family:'Plus Jakarta Sans',sans-serif; font-size:0.77rem; color:var(--ink-faint); display:flex; align-items:center; gap:4px; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">
+                <i class="bi bi-person" style="flex-shrink:0;"></i>
+                Prof. <%= continue_activity.teacher&.display_name %>
+              </span>
+              <%= link_to solve_activity_path(continue_activity),
+                    style: "flex-shrink:0; background:var(--brand-deep); color:var(--surface); font-family:'Plus Jakarta Sans',sans-serif; font-size:0.85rem; font-weight:700; padding:9px 20px; border-radius:10px; text-decoration:none; white-space:nowrap;" do %>
+                <%= cont_started ? 'Continuar →' : 'Iniciar →' %>
+              <% end %>
+            </div>
+
+          </div>
+        </div>
+
+      <% else %>
+        <% if last_completed_activity %>
+          <% lc_meta  = cefr_colors(last_completed_activity.level) %>
+          <% lc_cover = activity_cover(last_completed_activity) %>
+          <% lc_badge = activity_media_badge(last_completed_activity) %>
+
+          <div style="background:var(--brand-tint); border:1px solid var(--brand-bright); border-radius:10px; padding:10px 12px; margin-bottom:14px; display:flex; align-items:center; gap:8px;">
+            <span style="font-size:1rem;">🏆</span>
+            <span style="font-family:'Plus Jakarta Sans',sans-serif; font-size:0.82rem; font-weight:600; color:var(--brand-deep);">
+              Você concluiu todas as atividades disponíveis!
+            </span>
+          </div>
+
+          <div class="continue-card">
+            <div class="continue-card-image">
+              <% if lc_cover[:type] == :image %>
+                <img src="<%= lc_cover[:url] %>" alt="" style="width:100%; height:100%; object-fit:cover; display:block; position:absolute; inset:0;">
+                <% if lc_cover[:credit] %>
+                  <span style="position:absolute; bottom:3px; right:5px; font-size:0.55rem; color:rgba(255,255,255,0.6); line-height:1; pointer-events:none;"><%= lc_cover[:credit] %></span>
+                <% end %>
+              <% else %>
+                <div style="width:100%; height:100%; position:absolute; inset:0; background:linear-gradient(135deg, <%= lc_meta[:bg] %> 0%, <%= lc_meta[:border] %>33 100%); display:flex; align-items:center; justify-content:center;">
+                  <i class="bi <%= lc_cover[:icon] %>" style="font-size:2.8rem; color:<%= lc_meta[:border] %>; opacity:0.55;"></i>
+                </div>
+              <% end %>
+            </div>
+            <div class="continue-card-body">
+              <div style="display:flex; align-items:center; gap:6px; flex-wrap:wrap; margin-bottom:8px;">
+                <span style="font-family:'DM Mono',monospace; font-size:0.72rem; font-weight:700; background:<%= lc_meta[:bg] %>; color:<%= lc_meta[:text] %>; border:1.5px solid <%= lc_meta[:border] %>; padding:3px 9px; border-radius:20px;">
+                  <%= last_completed_activity.level %>
+                </span>
+                <span style="font-family:'Plus Jakarta Sans',sans-serif; font-size:0.7rem; font-weight:600; background:var(--sky-tint); color:var(--sky); border:1.5px solid var(--sky-bright); padding:3px 8px; border-radius:20px; display:inline-flex; align-items:center; gap:3px;">
+                  <i class="bi <%= lc_badge[:icon] %>" style="font-size:0.72rem;"></i> <%= lc_badge[:label] %>
+                </span>
+              </div>
+              <div style="font-family:'Raleway',sans-serif; font-size:1rem; font-weight:700; color:var(--ink); margin-bottom:6px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; flex:1;">
+                <%= last_completed_activity.title %>
+              </div>
+              <div style="border-top:1px solid var(--line-soft); padding-top:10px; display:flex; align-items:center; justify-content:space-between; gap:10px;">
+                <span style="font-family:'Plus Jakarta Sans',sans-serif; font-size:0.77rem; color:var(--ink-faint); display:flex; align-items:center; gap:4px; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">
+                  <i class="bi bi-person" style="flex-shrink:0;"></i>
+                  Prof. <%= last_completed_activity.teacher&.name %>
+                </span>
+                <%= link_to solve_activity_path(last_completed_activity),
+                      style: "flex-shrink:0; background:var(--paper); color:var(--ink-soft); border:1.5px solid var(--line); font-family:'Plus Jakarta Sans',sans-serif; font-size:0.85rem; font-weight:700; padding:9px 20px; border-radius:10px; text-decoration:none; white-space:nowrap;" do %>
+                  ↺ Refazer
+                <% end %>
+              </div>
+            </div>
+          </div>
+
+        <% else %>
+          <div style="text-align:center; padding:20px 0;">
+            <div style="font-size:2rem; margin-bottom:8px;">📚</div>
+            <p style="font-family:'Plus Jakarta Sans',sans-serif; font-size:0.88rem; color:var(--ink-soft);">
+              Nenhuma atividade disponível ainda.
+            </p>
+          </div>
+        <% end %>
+      <% end %>
+    </div>

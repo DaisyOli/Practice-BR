@@ -1,0 +1,73 @@
+  <%# — Seus Níveis (5 cards compactos) — %>
+  <div style="background:var(--surface); border:1px solid var(--line); border-radius:16px; padding:22px; margin-bottom:1.5rem;">
+    <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:16px;">
+      <h2 style="font-family:'Raleway',sans-serif; font-size:1rem; font-weight:700; color:var(--ink); margin:0;">
+        Seus níveis
+      </h2>
+      <%= link_to activities_path,
+            style: "font-family:'Plus Jakarta Sans',sans-serif; font-size:0.8rem; font-weight:600; color:var(--surface); background:var(--brand); padding:7px 16px; border-radius:8px; text-decoration:none; display:inline-flex; align-items:center; gap:6px; flex-shrink:0;" do %>
+        <i class="bi bi-search"></i> Todas as atividades
+      <% end %>
+    </div>
+    <div class="dash-levels-grid" id="tour-levels">
+      <% levels_data.each do |ld| %>
+        <% m = cefr_colors(ld[:level]) %>
+        <% is_locked = !accessible_levels.include?(ld[:level]) %>
+        <%# Cadeado do teste: nível abaixo do declarado é justamente o que a
+            assinatura devolve ("revoir les niveaux précédents", na landing).
+            Por isso este cadeado é clicável e leva pra assinatura — o de cima
+            continua mudo, porque nem assinando ele abre. %>
+        <% trial_locked = current_user.trial? && !is_locked && ld[:level] != current_user.level %>
+        <% if trial_locked %>
+          <%= link_to billing_new_path, class: "level-card-link" do %>
+            <div class="level-card-inner" style="text-align:center; border:1.5px solid var(--action-border); border-radius:12px; padding:12px 8px; background:var(--action-tint);">
+              <div style="background:var(--surface); color:var(--action-ink); border:1.5px solid var(--action-border); font-family:'DM Mono',monospace; font-size:0.85rem; font-weight:800; width:44px; height:44px; border-radius:10px; display:flex; align-items:center; justify-content:center; margin:0 auto 8px;">
+                🔒
+              </div>
+              <div style="font-family:'Plus Jakarta Sans',sans-serif; font-size:0.75rem; font-weight:600; color:var(--ink); margin-bottom:8px;"><%= ld[:level] %></div>
+              <div style="background:var(--surface); border-radius:99px; height:5px; overflow:hidden; margin-bottom:4px;">
+                <div style="width:0%; height:100%; border-radius:99px;"></div>
+              </div>
+              <div style="font-family:'DM Mono',monospace; font-size:0.65rem; color:var(--action-ink);">com a assinatura</div>
+            </div>
+          <% end %>
+        <% elsif is_locked %>
+          <div style="text-align:center; border:1.5px solid var(--paper-2); border-radius:12px; padding:12px 8px; opacity:0.4; cursor:not-allowed; position:relative;" title="Nível não liberado pelo seu professor">
+            <div style="background:var(--line-soft); color:var(--ink-faint); border:1.5px solid var(--line); font-family:'DM Mono',monospace; font-size:0.85rem; font-weight:800; width:44px; height:44px; border-radius:10px; display:flex; align-items:center; justify-content:center; margin:0 auto 8px;">
+              🔒
+            </div>
+            <div style="font-family:'Plus Jakarta Sans',sans-serif; font-size:0.75rem; font-weight:600; color:var(--ink-faint); margin-bottom:8px;"><%= ld[:level] %></div>
+            <div style="background:var(--line-soft); border-radius:99px; height:5px; overflow:hidden; margin-bottom:4px;">
+              <div style="width:0%; height:100%; border-radius:99px;"></div>
+            </div>
+            <div style="font-family:'DM Mono',monospace; font-size:0.65rem; color:var(--ink-faint);">bloqueado</div>
+          </div>
+        <% elsif ld[:empty] %>
+          <div style="text-align:center; border:1.5px solid var(--line-soft); border-radius:12px; padding:12px 8px; opacity:0.45; cursor:not-allowed;">
+            <div style="background:<%= m[:bg] %>; color:<%= m[:text] %>; border:1.5px solid <%= m[:border] %>; font-family:'DM Mono',monospace; font-size:0.85rem; font-weight:800; width:44px; height:44px; border-radius:10px; display:flex; align-items:center; justify-content:center; margin:0 auto 8px;">
+              <%= ld[:level] %>
+            </div>
+            <div style="font-family:'Plus Jakarta Sans',sans-serif; font-size:0.75rem; font-weight:600; color:var(--ink); margin-bottom:8px;"><%= m[:label] %></div>
+            <div style="background:var(--line-soft); border-radius:99px; height:5px; overflow:hidden; margin-bottom:4px;">
+              <div style="width:0%; height:100%; border-radius:99px;"></div>
+            </div>
+            <div style="font-family:'DM Mono',monospace; font-size:0.65rem; color:var(--ink-faint);">em breve</div>
+          </div>
+        <% else %>
+          <%= link_to student_dashboard_path(level: ld[:level]), class: "level-card-link" do %>
+            <div class="level-card-inner" style="text-align:center; border:1.5px solid var(--line-soft); border-radius:12px; padding:12px 8px;">
+              <div style="background:<%= m[:bg] %>; color:<%= m[:text] %>; border:1.5px solid <%= m[:border] %>; font-family:'DM Mono',monospace; font-size:0.85rem; font-weight:800; width:44px; height:44px; border-radius:10px; display:flex; align-items:center; justify-content:center; margin:0 auto 8px;">
+                <%= ld[:level] %>
+              </div>
+              <div style="font-family:'Plus Jakarta Sans',sans-serif; font-size:0.75rem; font-weight:600; color:var(--ink); margin-bottom:8px;"><%= m[:label] %></div>
+              <div style="background:var(--line-soft); border-radius:99px; height:5px; overflow:hidden; margin-bottom:4px;">
+                <div style="width:<%= ld[:pct] %>%; height:100%; border-radius:99px; background:<%= m[:bar] %>;"></div>
+              </div>
+              <div style="font-family:'DM Mono',monospace; font-size:0.65rem; color:var(--ink-faint);"><%= ld[:pct] %>%</div>
+            </div>
+          <% end %>
+        <% end %>
+      <% end %>
+    </div>
+  </div>
+
