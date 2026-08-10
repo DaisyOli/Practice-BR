@@ -181,47 +181,19 @@
       <%= render 'shared/footer' %>
     <% end %>
 
-    <!-- Toast Notifications Container -->
-    <div id="toast-container" 
-         class="toast-container position-fixed top-0 end-0 p-3" 
-         style="z-index: 1050;"
-         data-controller="toast">
+    <%# ── Mensagens de flash ──────────────────────────────────────────────
+        O flash vai direto para o controller do toast como data value; ele o
+        exibe no connect(), que o Stimulus dispara também a cada navegação do
+        Turbo. Não há script inline aqui de propósito: a versão anterior
+        disparava um evento customizado antes de registrar o ouvinte, dentro de
+        um DOMContentLoaded que o Turbo nunca redisparava. %>
+    <div id="toast-container"
+         style="position:fixed; top:1rem; right:1rem; z-index:1050;
+                display:flex; flex-direction:column; gap:10px;
+                width:min(360px, calc(100vw - 2rem)); pointer-events:auto;"
+         data-controller="toast"
+         data-toast-notice-value="<%= flash[:notice] %>"
+         data-toast-alert-value="<%= flash[:alert] %>">
     </div>
-
-    <!-- Script para conectar flash messages aos toast notifications -->
-    <script>
-      document.addEventListener('DOMContentLoaded', function() {
-        // Converter flash messages em toast notifications
-        <% if flash[:notice].present? %>
-          document.dispatchEvent(new CustomEvent('show-toast', {
-            detail: { message: '<%= j(flash[:notice]) %>', type: 'success' }
-          }));
-        <% end %>
-
-        <% if flash[:alert].present? %>
-          document.dispatchEvent(new CustomEvent('show-toast', {
-            detail: { message: '<%= j(flash[:alert]) %>', type: 'error' }
-          }));
-        <% end %>
-        
-        // Listener para eventos de toast customizados
-        document.addEventListener('show-toast', function(event) {
-          const toastController = document.querySelector('[data-controller*="toast"]');
-          if (toastController && window.Stimulus) {
-            const controller = window.Stimulus.getControllerForElementAndIdentifier(toastController, 'toast');
-            if (controller) {
-              controller.show(event.detail.message, event.detail.type);
-            }
-          }
-        });
-
-        // Listener para eventos de validação de quiz
-        document.addEventListener('quiz:validation-error', function(event) {
-          document.dispatchEvent(new CustomEvent('show-toast', {
-            detail: { message: event.detail.message, type: 'warning' }
-          }));
-        });
-      });
-    </script>
   </body>
 </html>

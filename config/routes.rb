@@ -83,7 +83,8 @@ Rails.application.routes.draw do
   namespace :admin do
     root to: "dashboard#index"
     resources :drafts, only: [:index, :destroy]
-    post "drafts/generate", to: "drafts#generate", as: :generate_draft
+    post  "drafts/generate", to: "drafts#generate",       as: :generate_draft
+    patch "drafts/targets",  to: "drafts#update_targets", as: :draft_targets
     post "trials/:id/send_reminder", to: "trials#send_reminder", as: :send_trial_reminder
     resources :activities, only: [:index]
 
