@@ -30,8 +30,10 @@
 
     <%= form_with url: admin_generate_draft_path, method: :post, local: true,
           style: "display:flex; align-items:center; gap:8px; flex-wrap:wrap;" do |f| %>
+      <%# Os níveis vêm do enum do Activity, não da tabela de metas: um nível
+          sem meta fica fora do automático mas continua escolhível na mão. %>
       <%= f.select :level,
-            [["Nível automático", ""]] + %w[A1 A2 B1 B2].map { |l| [l, l] },
+            [["Nível automático", ""]] + Activity.levels.keys.map { |l| [l, l] },
             {},
             style: "font-family:'Plus Jakarta Sans',sans-serif; font-size:0.85rem; font-weight:600;
                     border:1.5px solid var(--line); border-radius:10px; padding:10px 14px; background:var(--surface);
@@ -48,48 +50,92 @@
 
   <%# ── Progresso por nível ── %>
   <div style="background:var(--surface); border:1px solid var(--line); border-radius:16px; padding:28px; margin-bottom:1.5rem;">
-    <h2 style="font-family:'Raleway',sans-serif; font-size:1rem; font-weight:700; color:var(--ink); margin:0 0 20px;">
-      Progresso por nível
-    </h2>
-
-    <div style="display:flex; flex-direction:column; gap:14px;">
-      <% @target.each do |level, goal| %>
-        <% published = @published.fetch(level, 0) %>
-        <% pct = [(published.to_f / goal * 100).round, 100].min %>
-        <% c = cefr_colors(level) %>
-        <div style="display:flex; align-items:center; gap:14px;">
-          <span style="font-family:'DM Mono',monospace; font-size:0.72rem; font-weight:700;
-                       background:<%= c[:bg] %>; color:<%= c[:text] %>; border:1.5px solid <%= c[:border] %>;
-                       padding:3px 10px; border-radius:20px; min-width:38px; text-align:center; flex-shrink:0;">
-            <%= level %>
-          </span>
-          <div style="flex:1; background:var(--paper); border-radius:99px; height:10px; overflow:hidden;">
-            <div style="width:<%= pct %>%; height:100%; border-radius:99px; background:<%= c[:bar] %>; transition:width 0.4s;"></div>
-          </div>
-          <span style="font-family:'DM Mono',monospace; font-size:0.82rem; color:var(--ink); min-width:64px; text-align:right; flex-shrink:0;">
-            <%= published %> / <%= goal %>
-          </span>
-          <% if published >= goal %>
-            <span style="font-size:0.75rem; color:var(--brand); font-weight:700; flex-shrink:0;">✓ Meta</span>
-          <% else %>
-            <span style="font-family:'DM Mono',monospace; font-size:0.72rem; color:var(--ink-faint); flex-shrink:0;">
-              faltam <%= goal - published %>
-            </span>
-          <% end %>
-        </div>
-      <% end %>
-    </div>
-
-    <div style="margin-top:16px; padding-top:16px; border-top:1px solid var(--line-soft);">
-      <% total_published = @published.values.sum %>
-      <% total_goal = @target.values.sum %>
-      <span style="font-family:'Plus Jakarta Sans',sans-serif; font-size:0.85rem; color:var(--ink-soft);">
-        Total publicadas com IA:
-        <strong style="color:var(--ink);"><%= total_published %></strong> de
-        <strong style="color:var(--ink);"><%= total_goal %></strong>
-        (<%= [(total_published.to_f / total_goal * 100).round, 100].min %>%)
+    <div style="display:flex; align-items:baseline; justify-content:space-between; gap:12px; margin-bottom:20px;">
+      <h2 style="font-family:'Raleway',sans-serif; font-size:1rem; font-weight:700; color:var(--ink); margin:0;">
+        Progresso por nível
+      </h2>
+      <span style="font-family:'Plus Jakarta Sans',sans-serif; font-size:0.76rem; color:var(--ink-faint);">
+        publicadas + rascunhos · a mesma conta que o agente usa para decidir
       </span>
     </div>
+
+    <%= form_with url: admin_draft_targets_path, method: :patch do %>
+      <div style="display:flex; flex-direction:column; gap:14px;">
+        <% @goals.each do |level, goal| %>
+          <% count = @generated.fetch(level, 0) %>
+          <% c = cefr_colors(level) %>
+          <div style="display:flex; align-items:center; gap:14px;">
+            <span style="font-family:'DM Mono',monospace; font-size:0.72rem; font-weight:700;
+                         background:<%= c[:bg] %>; color:<%= c[:text] %>; border:1.5px solid <%= c[:border] %>;
+                         padding:3px 10px; border-radius:20px; min-width:38px; text-align:center; flex-shrink:0;">
+              <%= level %>
+            </span>
+
+            <div style="flex:1; background:var(--paper); border-radius:99px; height:10px; overflow:hidden;">
+              <% if goal %>
+                <% pct = [(count.to_f / goal * 100).round, 100].min %>
+                <div style="width:<%= pct %>%; height:100%; border-radius:99px; background:<%= c[:bar] %>; transition:width 0.4s;"></div>
+              <% end %>
+            </div>
+
+            <span style="font-family:'DM Mono',monospace; font-size:0.82rem; color:var(--ink);
+                         min-width:34px; text-align:right; flex-shrink:0;">
+              <%= count %>
+            </span>
+            <span style="font-family:'DM Mono',monospace; font-size:0.82rem; color:var(--ink-faint); flex-shrink:0;">/</span>
+            <%= number_field_tag "goals[#{level}]", goal, min: 1, placeholder: "—",
+                  "aria-label": "Meta do nível #{level}",
+                  style: "font-family:'DM Mono',monospace; font-size:0.82rem; color:var(--ink); width:62px;
+                          border:1.5px solid var(--line); border-radius:8px; padding:5px 8px;
+                          background:var(--surface); text-align:center; flex-shrink:0;" %>
+
+            <span style="font-family:'DM Mono',monospace; font-size:0.72rem; flex-shrink:0;
+                         min-width:74px; text-align:right;
+                         color:<%= goal && count >= goal ? 'var(--brand)' : 'var(--ink-faint)' %>;
+                         font-weight:<%= goal && count >= goal ? '700' : '400' %>;">
+              <% if goal.nil? %>
+                sem meta
+              <% elsif count >= goal %>
+                ✓ Meta
+              <% else %>
+                faltam <%= goal - count %>
+              <% end %>
+            </span>
+          </div>
+        <% end %>
+      </div>
+
+      <div style="margin-top:16px; padding-top:16px; border-top:1px solid var(--line-soft);
+                  display:flex; align-items:center; justify-content:space-between; gap:12px; flex-wrap:wrap;">
+        <%# Só entram no total os níveis que têm meta — somar um nível sem meta
+            inventaria um alvo que ninguém definiu. %>
+        <% with_goal     = @goals.compact %>
+        <% total_goal    = with_goal.values.sum %>
+        <% total_count   = with_goal.keys.sum { |lvl| @generated.fetch(lvl, 0) } %>
+        <span style="font-family:'Plus Jakarta Sans',sans-serif; font-size:0.85rem; color:var(--ink-soft);">
+          <% if total_goal.zero? %>
+            Nenhum nível tem meta definida.
+          <% else %>
+            Total nos níveis com meta:
+            <strong style="color:var(--ink);"><%= total_count %></strong> de
+            <strong style="color:var(--ink);"><%= total_goal %></strong>
+            (<%= [(total_count.to_f / total_goal * 100).round, 100].min %>%)
+          <% end %>
+          <% if @goals.value?(nil) %>
+            <span style="color:var(--ink-faint);">
+              · nível sem meta fica fora do automático, mas pode ser gerado escolhendo na lista acima
+            </span>
+          <% end %>
+        </span>
+
+        <button type="submit"
+                style="background:var(--action); color:var(--surface); font-family:'Plus Jakarta Sans',sans-serif;
+                       font-weight:700; font-size:0.82rem; border:none; border-radius:10px; padding:10px 20px;
+                       cursor:pointer; flex-shrink:0;">
+          Salvar metas
+        </button>
+      </div>
+    <% end %>
   </div>
 
   <%# ── Rascunhos pendentes ── %>
