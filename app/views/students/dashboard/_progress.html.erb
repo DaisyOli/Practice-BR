@@ -1,0 +1,106 @@
+    <%# Seu progresso %>
+    <div style="background:var(--surface); border:1px solid var(--line); border-radius:16px; padding:22px;">
+      <h2 style="font-family:'Raleway',sans-serif; font-size:1rem; font-weight:700; color:var(--ink); margin:0 0 18px 0;">
+        Seu progresso
+      </h2>
+
+      <%
+        s_level      = current_user.level
+        s_level_data = levels_data.find { |d| d[:level] == s_level }
+        s_done       = s_level_data&.dig(:done) || 0
+        s_meta       = s_level.present? ? cefr_colors(s_level) : {}
+        s_label      = s_meta[:label]
+        s_plural     = s_done == 1 ? '' : 's'
+        current_idx  = cefr_levels.index(s_level) || 0
+
+        # Competency stats — derivadas dos dados já carregados (sem N+1)
+        oe_ids  = @open_ended_activity_ids || Set.new
+        av_ids  = @av_activity_ids || Set.new
+        done_set = completed_ids.to_set
+        comp_stats = { co: { done: 0, total: 0 }, ce: { done: 0, total: 0 }, ee: { done: 0, total: 0 } }
+        accessible_levels.each do |lvl|
+          ld = levels_data.find { |d| d[:level] == lvl }
+          next unless ld
+          ld[:acts].each do |act|
+            comps   = activity_competencies(act, oe_ids, av_ids)
+            is_done = done_set.include?(act.id)
+            comps.each { |c| comp_stats[c][:total] += 1; comp_stats[c][:done] += 1 if is_done }
+          end
+        end
+        comp_defs = ApplicationHelper::COMPETENCY_META.map { |k, v| v.merge(key: k) }
+        visible_comps = comp_defs.select { |cd| comp_stats[cd[:key]][:total] > 0 }
+
+        # Competência mais fraca — só ela recebe o nudge
+        any_done      = comp_stats.values.sum { |s| s[:done] } > 0
+        weakest_key   = visible_comps.min_by { |cd|
+          s = comp_stats[cd[:key]]
+          s[:total] > 0 ? s[:done].to_f / s[:total] : 1.0
+        }&.dig(:key)
+      %>
+
+      <%# Zona primária: barras de competência %>
+      <% if visible_comps.any? %>
+        <div style="display:flex; flex-direction:column; gap:14px; margin-bottom:20px;">
+          <% visible_comps.each do |cd| %>
+            <%
+              key    = cd[:key]
+              done   = comp_stats[key][:done]
+              total  = comp_stats[key][:total]
+              pct    = total > 0 ? (done.to_f / total * 100).round : 0
+              nudge  = any_done && key == weakest_key
+            %>
+            <div>
+              <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:5px;">
+                <div style="display:flex; align-items:center; gap:7px;">
+                  <div style="width:24px; height:24px; border-radius:7px; background:<%= cd[:bg] %>; display:flex; align-items:center; justify-content:center; font-size:0.82rem; flex-shrink:0; line-height:1;"><%= cd[:icon] %></div>
+                  <span style="font-family:'DM Mono',monospace; font-size:0.72rem; font-weight:800; color:<%= cd[:color] %>;"><%= cd[:abbr] %></span>
+                  <span style="font-family:'Plus Jakarta Sans',sans-serif; font-size:0.8rem; font-weight:600; color:var(--ink-soft);"><%= cd[:label] %></span>
+                </div>
+                <span style="font-family:'DM Mono',monospace; font-size:0.72rem; font-weight:700; color:<%= cd[:color] %>;"><%= done %> de <%= total %></span>
+              </div>
+              <div style="height:7px; border-radius:99px; background:var(--line); overflow:hidden; margin-bottom:<%= nudge ? '5px' : '0' %>;">
+                <div class="dash-comp-bar" data-pct="<%= pct %>" style="height:100%; border-radius:99px; background:<%= cd[:bar] %>; width:0%; transition:width 0.9s cubic-bezier(0.33,1,0.68,1);"></div>
+              </div>
+              <% if nudge %>
+                <div style="display:flex; align-items:center; gap:5px; background:var(--warning-tint); border-radius:8px; padding:5px 9px; font-family:'Plus Jakarta Sans',sans-serif; font-size:0.71rem; font-weight:600; color:var(--warning);">
+                  💡 Experimente atividades de <%= cd[:label] %>
+                </div>
+              <% end %>
+            </div>
+          <% end %>
+        </div>
+        <div style="border-top:1px dashed var(--line); margin:0 0 18px;"></div>
+      <% end %>
+
+      <%# Zona secundária: nível + caminho CEFR %>
+      <% if s_level.present? %>
+        <div style="display:flex; align-items:center; gap:14px; margin-bottom:14px;">
+          <div style="width:60px; height:60px; border-radius:50%; flex-shrink:0; background:<%= s_meta[:bg] %>; border:2px solid <%= s_meta[:border] %>; display:flex; align-items:center; justify-content:center;">
+            <span style="font-family:'DM Mono',monospace; font-size:0.95rem; font-weight:800; color:<%= s_meta[:text] %>; letter-spacing:-0.02em;"><%= s_level %></span>
+          </div>
+          <div>
+            <div style="font-family:'Plus Jakarta Sans',sans-serif; font-size:0.67rem; font-weight:700; letter-spacing:0.07em; text-transform:uppercase; color:var(--ink-faint); margin-bottom:3px;"><%= s_label %></div>
+            <div style="font-family:'DM Mono',monospace; font-size:1.35rem; font-weight:800; color:<%= s_meta[:text] %>; line-height:1; margin-bottom:2px;"><%= s_done %></div>
+            <div style="font-family:'Plus Jakarta Sans',sans-serif; font-size:0.76rem; color:var(--ink-soft);">atividade<%= s_plural %> <%= s_level %> concluída<%= s_plural %></div>
+          </div>
+        </div>
+
+        <%# Pills CEFR — 3 estados: ativo / acessível / bloqueado %>
+        <div style="display:flex; gap:5px; flex-wrap:wrap;">
+          <% cefr_levels.each do |lvl| %>
+            <% lm = cefr_colors(lvl) %>
+            <% if lvl == s_level %>
+              <span style="font-family:'DM Mono',monospace; font-size:0.67rem; font-weight:800; padding:3px 9px; border-radius:20px; background:<%= lm[:border] %>; color:var(--surface);"><%= lvl %> ◉</span>
+            <% elsif accessible_levels.include?(lvl) %>
+              <span style="font-family:'DM Mono',monospace; font-size:0.67rem; font-weight:700; padding:3px 9px; border-radius:20px; background:<%= lm[:bg] %>; color:<%= lm[:text] %>; border:1.5px solid <%= lm[:border] %>;"><%= lvl %></span>
+            <% else %>
+              <span style="font-family:'DM Mono',monospace; font-size:0.67rem; font-weight:600; padding:3px 9px; border-radius:20px; background:var(--line-soft); color:var(--ink-faint);"><%= lvl %></span>
+            <% end %>
+          <% end %>
+        </div>
+      <% else %>
+        <div style="font-family:'Plus Jakarta Sans',sans-serif; font-size:0.88rem; color:var(--ink-soft);">
+          Nenhuma atividade disponível ainda.
+        </div>
+      <% end %>
+    </div>

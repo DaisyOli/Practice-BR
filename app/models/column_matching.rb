@@ -1,11 +1,17 @@
 class ColumnMatching < ApplicationRecord
+  include Derangeable
+
   belongs_to :activity
   has_many :matching_pairs, dependent: :destroy
 
   validates :activity, presence: true
 
+  # A coluna da esquerda sai por `.order(:position)` e esta aqui alimenta a da
+  # direita. Se o sorteio devolvesse a ordem original, as duas colunas saíam
+  # alinhadas linha a linha e o exercício se respondia sozinho — com 3 pares
+  # isso acontecia em 1 de cada 6 aberturas. Ver `Derangeable`.
   def shuffled_pairs
-    matching_pairs.order(:position).to_a.shuffle
+    deranged_list(matching_pairs.order(:position).to_a)
   end
 
   def pair_results(answer_string)

@@ -121,13 +121,21 @@
   var dismissed    = localStorage.getItem('pwa_banner_dismissed');
   var pushDismissed = localStorage.getItem('push_banner_dismissed');
 
-  if (isStandalone) {
-    // App instalado: verificar se já tem permissão de push
-    if (!pushDismissed && 'Notification' in window && Notification.permission === 'default') {
-      document.getElementById('pwa-push-banner').style.display = 'block';
-    }
-  } else if (!dismissed) {
-    // App não instalado: mostrar banner de instalação
+  // Receber notificação não exige instalar nada — só o iOS entrega push
+  // exclusivamente para app adicionado à tela de início. Antes o convite de
+  // ativar só aparecia DEPOIS de instalar, e o resultado foi zero inscrito com
+  // o canal inteiro pronto: chaves configuradas, serviço escrito e três lugares
+  // disparando para ninguém. Agora o pedido vem primeiro e instalar é o plano B.
+  var pushReady = 'Notification' in window &&
+                  'serviceWorker' in navigator &&
+                  'PushManager' in window &&
+                  Notification.permission === 'default' &&
+                  !(isIOS && !isStandalone);
+
+  if (pushReady && !pushDismissed) {
+    document.getElementById('pwa-push-banner').style.display = 'block';
+  } else if (!isStandalone && !dismissed) {
+    // Um banner de cada vez: os dois são fixos no rodapé e se sobreporiam.
     document.getElementById('pwa-install-banner').style.display = 'block';
     if (isIOS) {
       document.getElementById('pwa-ios-btn').style.display = 'inline-block';
@@ -161,25 +169,36 @@
   var pushBtn = document.getElementById('push-enable-btn');
   if (pushBtn) {
     pushBtn.addEventListener('click', function() {
-      var vapidKey = document.querySelector('meta[name="vapid-public-key"]').content;
+      var vapidMeta = document.querySelector('meta[name="vapid-public-key"]');
+      if (!vapidMeta || !vapidMeta.content) return;
+
+      var hide = function() {
+        document.getElementById('pwa-push-banner').style.display = 'none';
+        localStorage.setItem('push_banner_dismissed', '1');
+      };
+
       Notification.requestPermission().then(function(permission) {
-        if (permission !== 'granted') return;
-        navigator.serviceWorker.ready.then(function(reg) {
-          reg.pushManager.subscribe({
+        // Recusou: guardar a resposta e não insistir na próxima visita.
+        if (permission !== 'granted') { hide(); return; }
+
+        return navigator.serviceWorker.ready.then(function(reg) {
+          return reg.pushManager.subscribe({
             userVisibleOnly: true,
-            applicationServerKey: vapidKey
-          }).then(function(sub) {
-            var json = sub.toJSON();
-            var csrf = document.querySelector('meta[name="csrf-token"]').content;
-            fetch('/push_subscriptions', {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json', 'X-CSRF-Token': csrf },
-              body: JSON.stringify({ endpoint: json.endpoint, keys: json.keys })
-            });
-            document.getElementById('pwa-push-banner').style.display = 'none';
-            localStorage.setItem('push_banner_dismissed', '1');
+            applicationServerKey: vapidMeta.content
           });
-        });
+        }).then(function(sub) {
+          var json = sub.toJSON();
+          var csrf = document.querySelector('meta[name="csrf-token"]').content;
+          return fetch('/push_subscriptions', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'X-CSRF-Token': csrf },
+            body: JSON.stringify({ endpoint: json.endpoint, keys: json.keys })
+          });
+        // Só esconde depois que o servidor guardou a inscrição: escondendo
+        // antes, uma falha de rede deixaria o aluno achando que ativou.
+        }).then(hide);
+      }).catch(function() {
+        // Falhou no meio do caminho: o banner fica para tentar outra hora.
       });
     });
   }

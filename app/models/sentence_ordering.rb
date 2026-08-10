@@ -1,4 +1,6 @@
 class SentenceOrdering < ApplicationRecord
+  include Derangeable
+
   belongs_to :activity
   has_many :sentence_words, dependent: :destroy
 
@@ -41,7 +43,7 @@ class SentenceOrdering < ApplicationRecord
 
   def process_words!
     words = sentence.split(/\s+/)
-    positions = (1..words.length).to_a.shuffle
+    positions = deranged_positions(words.length)
 
     words.each_with_index do |word_text, i|
       sentence_words.create!(

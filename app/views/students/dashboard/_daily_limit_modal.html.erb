@@ -1,0 +1,93 @@
+<%# ── Modal limite diário ── %>
+<% if flash[:daily_limit] %>
+<div id="daily-limit-modal" style="
+  display: flex;
+  position: fixed; inset: 0; z-index: 9999;
+  background: rgba(15, 56, 38, 0.6);
+  backdrop-filter: blur(7px);
+  align-items: center; justify-content: center;
+  padding: 1.5rem;">
+
+  <div style="
+    background: var(--surface); border-radius: 24px; padding: 44px 36px 36px;
+    max-width: 370px; width: 100%; text-align: center;
+    box-shadow: 0 32px 80px rgba(0,0,0,0.24);">
+
+    <div style="margin: 0 auto 24px; width: 72px; height: 72px; background: var(--brand-tint); border-radius: 50%; display: flex; align-items: center; justify-content: center;">
+      <img src="/icons/logo-mark-transparent-64x64.png" style="width: 44px; height: 44px;" alt="">
+    </div>
+
+    <p id="dlm-title" style="font-family:'Raleway',sans-serif; font-size: 1.1rem; font-weight: 800; color: var(--brand-deep); margin: 0 0 6px; line-height: 1.3;"></p>
+    <p id="dlm-title-pt" style="font-family:'Raleway',sans-serif; font-size: 0.82rem; font-weight: 600; color: var(--ink-faint); margin: 0 0 22px; font-style: italic;"></p>
+
+    <div id="dlm-tip-box" style="background: var(--paper); border-radius: 12px; padding: 14px 16px; margin-bottom: 24px; text-align: left;">
+      <p id="dlm-tip-label" style="font-family:'Plus Jakarta Sans',sans-serif; font-size: 0.67rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.1em; color: var(--action); margin: 0 0 8px;"></p>
+      <p id="dlm-tip" style="font-family:'Plus Jakarta Sans',sans-serif; font-size: 0.88rem; color: var(--ink); margin: 0 0 8px; line-height: 1.5;"></p>
+      <p id="dlm-tip-pt" style="font-family:'Plus Jakarta Sans',sans-serif; font-size: 0.82rem; color: var(--ink-soft); margin: 0; line-height: 1.5; font-style: italic;"></p>
+    </div>
+
+    <button onclick="document.getElementById('daily-limit-modal').style.display='none';"
+            style="width: 100%; background: var(--brand); color: var(--surface); font-family:'Plus Jakarta Sans',sans-serif; font-size: 0.95rem; font-weight: 700; border: none; border-radius: 12px; padding: 13px 24px; cursor: pointer;">
+      <span id="dlm-btn"></span>
+    </button>
+  </div>
+</div>
+
+<script>
+(function() {
+  var lang = (navigator.language || navigator.userLanguage || 'pt').toLowerCase().substring(0, 2);
+
+  var content = {
+    fr: {
+      title:    "Bravo, 5 activités aujourd'hui ! 🎉",
+      title_pt: "Parabéns, 5 atividades hoje!",
+      tip_label: "Continuer dehors de l'app · Continuar fora do app",
+      tips: [
+        { t: "🎵 Écoutez une musique brésilienne et lisez les paroles.", pt: "Ouça uma música brasileira e leia a letra." },
+        { t: "📺 Regardez un épisode brésilien avec sous-titres en portugais.", pt: "Assista um episódio com legendas em português." },
+        { t: "📖 Écrivez 3 phrases en portugais dans votre cahier.", pt: "Escreva 3 frases em português no caderno." },
+        { t: "🎤 Répétez à voix haute les phrases apprises aujourd'hui.", pt: "Repita em voz alta as frases que aprendeu hoje." },
+        { t: "🎧 Écoutez un podcast brésilien pendant vos activités.", pt: "Escute um podcast brasileiro enquanto faz outra coisa." }
+      ],
+      btn: "À demain ! 👋"
+    },
+    en: {
+      title:    "5 activities done today! 🎉",
+      title_pt: "5 atividades hoje, muito bem!",
+      tip_label: "Keep going outside the app · Continuar fora do app",
+      tips: [
+        { t: "🎵 Listen to Brazilian music and follow along with the lyrics.", pt: "Ouça uma música brasileira e acompanhe a letra." },
+        { t: "📺 Watch a Brazilian show with Portuguese subtitles.", pt: "Assista uma série brasileira com legendas em português." },
+        { t: "📖 Write 3 sentences in Portuguese in your notebook.", pt: "Escreva 3 frases em português no seu caderno." },
+        { t: "🎤 Say today's sentences out loud — repeat them!", pt: "Repita em voz alta as frases que aprendeu hoje." },
+        { t: "🎧 Put on a Brazilian podcast in the background.", pt: "Coloque um podcast brasileiro para tocar de fundo." }
+      ],
+      btn: "See you tomorrow! 👋"
+    },
+    pt: {
+      title:    "5 atividades hoje, você foi longe! 🎉",
+      title_pt: "",
+      tip_label: "Para continuar praticando fora do app",
+      tips: [
+        { t: "🎵 Ouça uma música brasileira e tente entender a letra.", pt: "" },
+        { t: "📺 Assista um episódio de uma série brasileira com legenda.", pt: "" },
+        { t: "📖 Escreva 3 frases com o vocabulário de hoje no caderno.", pt: "" },
+        { t: "🎤 Repita em voz alta as frases que você aprendeu.", pt: "" },
+        { t: "🎧 Escute um podcast brasileiro enquanto faz outra coisa.", pt: "" }
+      ],
+      btn: "Até amanhã! 👋"
+    }
+  };
+
+  var d = content[lang] || content['en'];
+  var tip = d.tips[Math.floor(Math.random() * d.tips.length)];
+
+  document.getElementById('dlm-title').textContent     = d.title;
+  document.getElementById('dlm-title-pt').textContent  = d.title_pt;
+  document.getElementById('dlm-tip-label').textContent = d.tip_label;
+  document.getElementById('dlm-tip').textContent       = tip.t;
+  document.getElementById('dlm-tip-pt').textContent    = tip.pt;
+  document.getElementById('dlm-btn').textContent       = d.btn;
+})();
+</script>
+<% end %>

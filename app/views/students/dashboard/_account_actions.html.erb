@@ -1,0 +1,49 @@
+<%# Excluir conta — direito do titular (RGPD art. 17 · LGPD art. 18), então
+    precisa ser exercível sem depender de email. Fica separado do cancelamento
+    de assinatura de propósito: são coisas diferentes, e a maioria de quem clica
+    aqui só quer parar de pagar. A tela seguinte explica a diferença. %>
+<% if current_user.student_like? %>
+  <div style="text-align:center; padding:0 1rem 2.5rem; display:flex; gap:16px; justify-content:center; flex-wrap:wrap;">
+    <%= link_to data_export_path,
+          id: "my-data-link",
+          style: "font-family:'Plus Jakarta Sans',sans-serif; font-size:0.74rem; color:var(--ink-faint); text-decoration:underline;" do %>
+      Meus dados
+    <% end %>
+    <%# O rótulo diz a assinatura em voz alta pra quem tem uma. Apagar a conta
+        cancela a assinatura na hora e sem devolver o período já pago (ver
+        AccountDeletionService) — quem descobre isso só na tela seguinte já
+        clicou achando que ia só apagar dados.
+
+        Condicional porque pra trial e aluno gratuito falar em assinatura seria
+        inventar um contrato que não existe. Mesma pergunta que a tela de
+        confirmação faz, e por isso as duas usam o mesmo método. %>
+    <%# Só a frase que vale chega ao HTML. Emitir as duas e deixar o JS escolher
+        deixaria a página prometendo cancelamento a quem não tem assinatura —
+        invisível na tela, mas presente pra quem lê o código, e indistinguível
+        do caso real em qualquer teste. %>
+    <% cancels_sub = current_user.stripe_subscription_open? %>
+    <% delete_label = {
+         "pt" => cancels_sub ? "Cancelar assinatura e excluir conta"                : "Excluir minha conta",
+         "fr" => cancels_sub ? "Résilier mon abonnement et supprimer mon compte"    : "Supprimer mon compte",
+         "en" => cancels_sub ? "Cancel my subscription and delete my account"       : "Delete my account"
+       } %>
+    <%= link_to account_deletion_path,
+          id: "delete-account-link",
+          style: "font-family:'Plus Jakarta Sans',sans-serif; font-size:0.74rem; color:var(--ink-faint); text-decoration:underline;" do %>
+      <%= delete_label["pt"] %>
+    <% end %>
+  </div>
+
+  <script>
+  (function() {
+    var lang = (navigator.language || 'pt').toLowerCase().substring(0, 2);
+    var t = lang.startsWith('fr') ? { dados: "Mes données", excluir: <%= delete_label["fr"].to_json.html_safe %> }
+          : lang.startsWith('en') ? { dados: "My data",     excluir: <%= delete_label["en"].to_json.html_safe %> }
+          : null;
+    if (!t) return;
+    var set = function(id, text) { var el = document.getElementById(id); if (el) el.textContent = text; };
+    set('my-data-link', t.dados);
+    set('delete-account-link', t.excluir);
+  })();
+  </script>
+<% end %>

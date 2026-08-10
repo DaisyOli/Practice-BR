@@ -33,7 +33,18 @@ module PracticePt
     config.i18n.fallbacks = true
     
     # Configuração de fuso horário
-    config.time_zone = 'Brasilia'
+    # Paris, e não Brasília: o conteúdo é brasileiro, mas as pessoas não são.
+    # Toda a base é francófona e mora na França, e era o fuso delas que decidia
+    # coisas do dia a dia — quando a ofensiva vira de dia, quando o limite
+    # diário de exercícios reseta, quantos dias de prática o professor vê. Com
+    # Brasília o dia virava às 4h ou 5h da manhã em Paris.
+    #
+    # Os crons já diziam Europe/Paris; agora o app concorda com eles. O banco
+    # guarda tudo em UTC, então isto muda interpretação e exibição, não dado.
+    #
+    # Quando a base passar de um fuso só, isto vira coluna por usuário — hoje
+    # seria complexidade sem ninguém para servir.
+    config.time_zone = 'Paris'
 
     # Adicionar autoload para services
     config.autoload_paths += %W(#{config.root}/app/services)

@@ -1,0 +1,39 @@
+<%# Toggle lembrete semanal por email %>
+<% if current_user.student? %>
+  <div style="max-width:560px; margin:24px auto 0; padding:20px 24px; background:var(--surface); border-radius:14px; border:1px solid var(--paper-2);">
+    <div style="display:flex; align-items:center; justify-content:space-between; gap:16px;">
+      <div>
+        <div style="font-family:'Plus Jakarta Sans',sans-serif; font-size:0.88rem; font-weight:700; color:var(--ink);" id="weekly-reminder-label">
+          Lembrete semanal por email
+        </div>
+        <div style="font-family:'Plus Jakarta Sans',sans-serif; font-size:0.78rem; color:var(--ink-faint); margin-top:3px;" id="weekly-reminder-desc">
+          Receba toda segunda-feira a lista de exercícios disponíveis
+        </div>
+      </div>
+      <%= button_to student_toggle_weekly_reminder_path,
+            method: :patch,
+            form: { data: { turbo: false } },
+            style: "background:#{current_user.weekly_reminder_email? ? 'var(--brand)' : 'var(--paper-2)'}; color:#{current_user.weekly_reminder_email? ? 'var(--surface)' : 'var(--ink-faint)'}; font-family:'Plus Jakarta Sans',sans-serif; font-size:0.78rem; font-weight:700; border:none; border-radius:20px; padding:7px 16px; cursor:pointer; white-space:nowrap; flex-shrink:0;",
+            id: "weekly-toggle-btn" do %>
+        <span id="weekly-toggle-text"><%= current_user.weekly_reminder_email? ? "Ativado ✓" : "Ativar" %></span>
+      <% end %>
+    </div>
+  </div>
+
+  <script>
+  (function() {
+    var lang = navigator.language || 'pt';
+    var d = lang.startsWith('fr')
+      ? { label: "Rappel hebdomadaire par email", desc: "Recevez chaque lundi la liste de vos exercices disponibles", on: "Activé ✓", off: "Activer" }
+      : lang.startsWith('en')
+      ? { label: "Weekly email reminder", desc: "Get your list of available exercises every Monday", on: "Enabled ✓", off: "Enable" }
+      : { label: "Lembrete semanal por email", desc: "Receba toda segunda-feira a lista de exercícios disponíveis", on: "Ativado ✓", off: "Ativar" };
+    var lbl = document.getElementById('weekly-reminder-label');
+    var dsc = document.getElementById('weekly-reminder-desc');
+    var txt = document.getElementById('weekly-toggle-text');
+    if (lbl) lbl.textContent = d.label;
+    if (dsc) dsc.textContent = d.desc;
+    if (txt) txt.textContent = txt.textContent.includes('✓') ? d.on : d.off;
+  })();
+  </script>
+<% end %>

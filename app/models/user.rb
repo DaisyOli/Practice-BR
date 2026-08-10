@@ -18,6 +18,8 @@ class User < ApplicationRecord
   ROLES = %w[teacher student trial].freeze
   LANGUAGES = %w[en pt fr].freeze
   CEFR_LEVELS = %w[A1 A2 B1 B2 C1].freeze
+  # Faltas perdoadas por semana na ofensiva. Ver `#current_streak`.
+  STREAK_SHIELDS_PER_WEEK = 1
   # Francês, e não português: quem chega sem idioma declarado vem da landing
   # francófona, e é o que o resto do app já assume quando não sabe (mailers,
   # tela de fim de teste, boas-vindas). Era 'pt' aqui e 'en' no default da
@@ -309,6 +311,57 @@ class User < ApplicationRecord
 
   def never_practiced?
     quiz_attempts.none?
+  end
+
+  # Ofensiva: dias seguidos de prática, com um escudo por semana.
+  #
+  # Um dia conta quando o aluno conclui pelo menos uma atividade. Perder um dia
+  # não zera tudo — cada semana do calendário perdoa uma falta. É a diferença
+  # entre um hábito que sobrevive a uma terça-feira ruim e um número que pune
+  # quem teve uma. Duas faltas na mesma semana aí sim quebram.
+  #
+  # As datas saem no fuso do app (Paris, onde está toda a base). Se um dia
+  # houver aluno em outro fuso, o dia dele vira na hora errada — aí isto pede
+  # uma coluna de fuso por usuário. Ver `config.time_zone` em application.rb.
+  def current_streak
+    days = practice_days
+    return 0 if days.empty?
+
+    today    = Time.zone.today
+    earliest = days.min
+    # Hoje ainda não acabou: quem ainda não praticou hoje não leva falta por
+    # isso, a contagem só começa a olhar de ontem para trás.
+    cursor   = days.include?(today) ? today : today - 1
+
+    streak  = 0
+    shields = Hash.new(0)
+
+    while cursor >= earliest
+      if days.include?(cursor)
+        streak += 1
+      else
+        week = cursor.strftime('%G-%V')
+        break if shields[week] >= STREAK_SHIELDS_PER_WEEK
+
+        shields[week] += 1
+      end
+
+      cursor -= 1
+    end
+
+    streak
+  end
+
+  # Dias distintos em que houve pelo menos uma atividade concluída.
+  def practice_days
+    @practice_days ||= quiz_attempts
+                       .pluck(:submitted_at, :created_at)
+                       .map { |submitted, created| (submitted || created).in_time_zone.to_date }
+                       .to_set
+  end
+
+  def last_practice_on
+    practice_days.max
   end
 
   # A atividade que esta pessoa deveria fazer PRIMEIRO.

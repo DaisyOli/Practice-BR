@@ -1,0 +1,65 @@
+<%# Cancelamento de assinatura — apenas para alunos pagantes.
+    `stripe_subscription_open?` e não só `stripe_subscription_id.present?`: o id
+    continua gravado depois que a assinatura encerra, então a condição antiga
+    oferecia "cancelar" uma assinatura que já tinha acabado — e o POST iria pra
+    Stripe cancelar o que não existe mais.
+
+    Na prática é estado raro, porque o webhook que marca `canceled` também
+    rebaixa o papel pra `trial` (WebhooksController#handle_subscription_deleted)
+    e o `student?` aqui já barraria. Mas depender de dois campos concordarem é
+    depender de sorte, e é o mesmo método que o rótulo de exclusão e a tela de
+    confirmação usam — os três precisam enxergar a mesma assinatura. %>
+<% if current_user.student? && current_user.stripe_subscription_open? %>
+  <div style="text-align:center; padding:2rem 1rem 3rem;">
+    <% if current_user.subscription_status == "canceling" %>
+      <% end_date = current_user.subscription_current_period_end %>
+      <p class="cancel-msg" style="font-family:'Plus Jakarta Sans',sans-serif; font-size:0.82rem; color:var(--ink-faint);">
+        Sua assinatura foi cancelada. Acesso até <%= end_date&.strftime("%d/%m/%Y") %>.
+      </p>
+    <% else %>
+      <%= form_with url: billing_cancel_subscription_path, method: :post, local: false, data: { turbo: false } do %>
+        <button type="submit" class="cancel-sub-btn"
+                style="font-family:'Plus Jakarta Sans',sans-serif; font-size:0.78rem; color:var(--ink-faint); background:none; border:none; cursor:pointer; text-decoration:underline; padding:0;"
+                onclick="return confirm(window._cancelConfirm || 'Cancel your subscription?')">
+          Cancelar inscrição
+        </button>
+      <% end %>
+    <% end %>
+  </div>
+
+  <%# Estava fora do `if` e rodava pra todo mundo: quem não tem assinatura
+      recebia as três traduções de "cancelar assinatura" numa página sem botão
+      nenhum pra traduzir. Invisível, mas é a página falando de um contrato que
+      a pessoa não tem — e indistinguível do caso real em qualquer teste. %>
+  <script>
+  (function() {
+    var lang = (navigator.language || navigator.userLanguage || 'pt').toLowerCase().substring(0, 2);
+    var t = {
+      fr: {
+        btn:  "Résilier mon abonnement",
+        confirm: "Voulez-vous vraiment résilier ? Votre accès restera actif jusqu'à la fin de la période en cours.",
+        canceled: "Votre abonnement a été résilié. Accès jusqu'au"
+      },
+      pt: {
+        btn:  "Cancelar inscrição",
+        confirm: "Tem certeza? Seu acesso permanece ativo até o fim do período pago.",
+        canceled: "Assinatura cancelada. Acesso até"
+      },
+      en: {
+        btn:  "Cancel subscription",
+        confirm: "Are you sure? Your access remains active until the end of the current billing period.",
+        canceled: "Subscription canceled. Access until"
+      }
+    };
+    var d = t[lang] || t['en'];
+    window._cancelConfirm = d.confirm;
+    var btn = document.querySelector('.cancel-sub-btn');
+    if (btn) btn.textContent = d.btn;
+    var msg = document.querySelector('.cancel-msg');
+    if (msg) {
+      var dateMatch = msg.textContent.match(/\d{2}\/\d{2}\/\d{4}/);
+      if (dateMatch) msg.textContent = d.canceled + ' ' + dateMatch[0] + '.';
+    }
+  })();
+  </script>
+<% end %>

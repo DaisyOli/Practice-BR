@@ -36,7 +36,7 @@
     <% end %>
 
     <%# Streak pill — sempre visível para alunos, só se > 0 para professoras %>
-    <% streak = session[:current_streak].to_i %>
+    <% streak = current_user.current_streak %>
     <% if current_user.student? || streak > 0 %>
       <div class="hidden sm:flex items-center gap-1 px-3 py-1 rounded-full"
            style="background:rgba(255,255,255,0.12); border:1px solid rgba(255,255,255,0.2); font-family:'DM Mono',monospace; font-size:0.8rem; color:var(--action-bright);">

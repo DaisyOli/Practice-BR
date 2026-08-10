@@ -28,6 +28,22 @@ RSpec.describe "Renderização das páginas principais", type: :request do
     expect(response).to have_http_status(:ok)
   end
 
+  # A dashboard tem dois ramos bem diferentes (visão geral e filtro por nível) e
+  # virou uma pasta de partials em 05/08/2026. Renderizar os dois, com e sem
+  # histórico, é a rede que impede a refatoração de quebrar um deles em silêncio.
+  it "dashboard do aluno, filtrada por nível" do
+    sign_in student
+    get student_dashboard_path(level: 'B1')
+    expect(response).to have_http_status(:ok)
+  end
+
+  it "dashboard do aluno que já praticou (ofensiva e conquistas visíveis)" do
+    create(:quiz_attempt, user: student, activity: activity, submitted_at: Time.current)
+    sign_in student
+    get student_dashboard_path
+    expect(response).to have_http_status(:ok)
+  end
+
   it "índice de atividades (aluna)" do
     sign_in student
     get activities_path

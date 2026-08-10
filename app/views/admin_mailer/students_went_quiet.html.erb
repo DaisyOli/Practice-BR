@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta content="text/html; charset=UTF-8" http-equiv="Content-Type" />
+</head>
+<body style="margin:0; padding:0; background:#F7F5F0; font-family:'Helvetica Neue',Arial,sans-serif;">
+
+  <table width="100%" cellpadding="0" cellspacing="0" style="background:#F7F5F0; padding:40px 16px;">
+    <tr>
+      <td align="center">
+        <table width="520" cellpadding="0" cellspacing="0" style="background:#fff; border-radius:16px; border:1px solid #DDD9D2; overflow:hidden; max-width:520px;">
+
+          <tr>
+            <td style="background:#0F3826; padding:24px 32px;">
+              <div style="font-size:1.1rem; font-weight:800; color:#fff; letter-spacing:-0.02em;">Practice-BR</div>
+              <div style="font-size:0.7rem; color:#6EBD96; margin-top:3px;">Aviso interno</div>
+            </td>
+          </tr>
+
+          <tr>
+            <td style="padding:28px 32px 24px;">
+              <div style="font-size:1.8rem; margin-bottom:12px;">🔕</div>
+              <div style="font-size:1.15rem; font-weight:700; color:#1C1917; margin-bottom:6px;">
+                <%= @students.one? ? "Um aluno pagante sumiu" : "#{@students.size} alunos pagantes sumiram" %>
+              </div>
+              <p style="font-size:0.85rem; color:#5C5853; line-height:1.55; margin:0 0 18px;">
+                Sem nenhuma atividade há mais de <%= @silence_days %> dias.
+                Eles já receberam o cutucão automático — este email é para você
+                decidir se vale uma mensagem sua.
+              </p>
+
+              <table width="100%" cellpadding="0" cellspacing="0" style="font-size:0.88rem; color:#5C5853; border-top:1px solid #F0EDE8;">
+                <% @students.each do |student| %>
+                  <tr>
+                    <td style="padding:10px 0; border-bottom:1px solid #F0EDE8;">
+                      <div style="font-weight:700; color:#1C1917;">
+                        <%= student.display_name %>
+                      </div>
+                      <div style="font-size:0.78rem; color:#9C9892; margin-top:2px;">
+                        #<%= student.id %> ·
+                        nível <%= student.level.presence || "—" %> ·
+                        <% last = @last_practice[student.id] %>
+                        última atividade em <%= last ? l(last.to_date, format: :long) : "nunca" %>
+                      </div>
+                    </td>
+                  </tr>
+                <% end %>
+              </table>
+
+              <p style="font-size:0.78rem; color:#9C9892; line-height:1.55; margin:20px 0 0;">
+                Cada pessoa aparece aqui uma vez por ausência. Se voltar a
+                praticar e sumir de novo, o aviso chega outra vez.
+              </p>
+            </td>
+          </tr>
+
+        </table>
+      </td>
+    </tr>
+  </table>
+
+</body>
+</html>
