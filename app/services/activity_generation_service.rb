@@ -315,6 +315,26 @@ class ActivityGenerationService
       "inverno que exige casaco de verdade, o que é raro no resto do país; colheita da uva e vinho na serra gaúcha; indústria e agricultura familiar; cidades de porte médio com centro compacto e serviço público organizado"
   }.freeze
 
+  # O adendo de ambientação, agora como constante em vez de heredoc solto dentro
+  # do método. Precisou sair de lá para virar editável pela tela: o `{{pedido}}`
+  # ocupa o lugar do antigo `#{@prompt}`, porque texto vindo do banco não passa
+  # pela interpolação do Ruby. Ver a explicação inteira em `AiPrompt`.
+  REGION_ADDENDUM = <<~ADENDO
+    {{pedido}}
+
+    ---
+    Ambientação sorteada para esta atividade: {{regiao}}.
+    O que é comum por lá: {{ancoras}}.
+
+    Isso é onde a cena acontece, não um tema a cumprir. A fala dos personagens
+    continua em português padrão — nada de marca dialetal, sotaque escrito ou
+    gíria regional. Uma menção bem colocada basta; se não couber com
+    naturalidade, deixe a ambientação discreta e escreva uma cena boa.
+
+    Se o pedido acima já indicar outro lugar, região ou contexto, o pedido manda
+    e esta ambientação é descartada.
+  ADENDO
+
   def initialize(prompt:, teacher:)
     @prompt = prompt
     @teacher = teacher
@@ -354,21 +374,10 @@ class ActivityGenerationService
   def prompt_com_regiao
     regiao, ancoras = REGIOES.to_a.sample
 
-    <<~ADENDO
-      #{@prompt}
-
-      ---
-      Ambientação sorteada para esta atividade: #{regiao}.
-      O que é comum por lá: #{ancoras}.
-
-      Isso é onde a cena acontece, não um tema a cumprir. A fala dos personagens
-      continua em português padrão — nada de marca dialetal, sotaque escrito ou
-      gíria regional. Uma menção bem colocada basta; se não couber com
-      naturalidade, deixe a ambientação discreta e escreva uma cena boa.
-
-      Se o pedido acima já indicar outro lugar, região ou contexto, o pedido manda
-      e esta ambientação é descartada.
-    ADENDO
+    AiPrompt.render("activity_generation.region_addendum",
+                    pedido:  @prompt,
+                    regiao:  regiao,
+                    ancoras: ancoras)
   end
 
   def call_api
@@ -380,7 +389,7 @@ class ActivityGenerationService
       model: "claude-opus-4-8",
       max_tokens: 8000,
       thinking: { type: "adaptive" },
-      system: SYSTEM_PROMPT,
+      system: AiPrompt.body_for("activity_generation.system"),
       messages: [{ role: "user", content: prompt_com_regiao }]
     )
 
