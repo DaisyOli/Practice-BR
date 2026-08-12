@@ -88,6 +88,16 @@ Rails.application.routes.draw do
     post "trials/:id/send_reminder", to: "trials#send_reminder", as: :send_trial_reminder
     resources :activities, only: [:index]
 
+    # A chave tem ponto ("ai_grading.expectations.A1") e o Rails leria o ponto
+    # como separador de formato (.json, .html). A constraint diz "engula tudo
+    # menos a barra" e a chave chega inteira.
+    resources :ai_prompts, only: %i[index edit update destroy],
+              param: :key, constraints: { key: %r{[^/]+} } do
+      member do
+        post "restore/:version_id", action: :restore, as: :restore
+      end
+    end
+
     resources :activity_suggestions, only: [:index] do
       member do
         post :approve
