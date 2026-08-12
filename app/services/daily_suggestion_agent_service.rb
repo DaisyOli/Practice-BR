@@ -116,7 +116,7 @@ class DailySuggestionAgentService
       response = @client.messages.create(
         model: "claude-opus-4-8",
         max_tokens: 1500,
-        system: SYSTEM_PROMPT,
+        system: AiPrompt.body_for("daily_suggestion.system"),
         tools: TOOLS,
         messages: messages
       )

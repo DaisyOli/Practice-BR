@@ -50,6 +50,27 @@ class AiGradingService
 
   PASSING_SCORE = 70
 
+  # A moldura que envolve a régua do nível. Saiu de dentro do
+  # `correction_system_prompt` para virar editável pela tela.
+  #
+  # O `{{expectations}}` ocupa o lugar do antigo `#{expectations}`. E repare na
+  # frase "um 70 vale 70% da questão": aquele `%` é exatamente o motivo de a
+  # substituição ser `gsub` e não `format` — com `format`, este texto levantaria
+  # ArgumentError. Ver `AiPrompt`.
+  SYSTEM_FRAME = <<~PROMPT
+    Você é um avaliador de respostas de estudantes de português como segunda língua, alinhado ao QECR: a exigência acompanha o nível do aluno.
+
+    {{expectations}}
+    Regras gerais:
+    - O score vira DIRETAMENTE a fração de crédito da questão (um 70 vale 70% da questão, não é "aprovado"). Por isso notas baixas são reservadas para respostas que realmente não respondem ou são incompreensíveis — não para pequenos deslizes numa resposta que comunica bem.
+    - Nunca desconte por resposta curta se a pergunta permite resposta curta.
+    - Avalie o conteúdo da resposta, não a opinião do aluno.
+    - O feedback fala COM o aluno (use "você"), em tom caloroso.
+
+    Responda SOMENTE com JSON neste formato exato (sem markdown, sem texto extra):
+    {"score": <inteiro de 0 a 100>, "feedback": "<feedback curto em português>"}
+  PROMPT
+
   def initialize(quiz_attempt)
     @attempt = quiz_attempt
   end
@@ -88,23 +109,14 @@ class AiGradingService
 
   private
 
+  # A régua do nível da atividade, encaixada na moldura. Nível sem régua própria
+  # cai no B1, como sempre caiu — nível novo no enum não fica sem correção.
   def correction_system_prompt
     level = @attempt.activity.level.to_s
-    expectations = LEVEL_EXPECTATIONS[level] || LEVEL_EXPECTATIONS["B1"]
+    key   = "ai_grading.expectations.#{level}"
+    key   = "ai_grading.expectations.B1" unless AiPrompt.keys.include?(key)
 
-    <<~PROMPT
-      Você é um avaliador de respostas de estudantes de português como segunda língua, alinhado ao QECR: a exigência acompanha o nível do aluno.
-
-      #{expectations}
-      Regras gerais:
-      - O score vira DIRETAMENTE a fração de crédito da questão (um 70 vale 70% da questão, não é "aprovado"). Por isso notas baixas são reservadas para respostas que realmente não respondem ou são incompreensíveis — não para pequenos deslizes numa resposta que comunica bem.
-      - Nunca desconte por resposta curta se a pergunta permite resposta curta.
-      - Avalie o conteúdo da resposta, não a opinião do aluno.
-      - O feedback fala COM o aluno (use "você"), em tom caloroso.
-
-      Responda SOMENTE com JSON neste formato exato (sem markdown, sem texto extra):
-      {"score": <inteiro de 0 a 100>, "feedback": "<feedback curto em português>"}
-    PROMPT
+    AiPrompt.render("ai_grading.system", expectations: AiPrompt.body_for(key))
   end
 
   def pending_ids

@@ -168,3 +168,141 @@
     white-space: normal;
   }
 }
+
+// ── Ferramentas do painel admin ────────────────────────────────────────────
+//
+// Antes eram inline styles num grid 1fr/1fr, com o card do agente esticando
+// para acompanhar a coluna vizinha: cada ferramenta nova aumentava o vazio
+// dele. E a cor não seguia regra — os dois últimos cards ficaram verde-escuro
+// porque sobrou, e colados leem como um bloco só.
+//
+// Aqui a cor passa a significar o PAPEL da ferramenta:
+//   dark  → o caminho principal
+//   gold  → outro jeito de criar
+//   green → outro jeito de criar
+//   quiet → não cria nada; só ajuda a entender e ajustar
+//
+// Saiu do inline por causa do :hover, que atributo style não alcança.
+
+.admin-tools {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+// O traço que continua depois do texto, para o rótulo não ficar solto.
+.admin-tools__label {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-family: 'DM Mono', monospace;
+  font-size: 0.66rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--ink-faint);
+  margin: 0 0 12px;
+
+  &::after {
+    content: "";
+    flex: 1;
+    height: 1px;
+    background: var(--line);
+  }
+}
+
+.admin-tools__pair {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+
+  @media (max-width: 768px) {
+    grid-template-columns: 1fr;
+  }
+}
+
+.admin-tool {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  border-radius: 14px;
+  padding: 18px 22px;
+  text-decoration: none;
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+
+  &:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 20px var(--brand-veil);
+  }
+
+  .admin-tool__emoji {
+    font-size: 1.25rem;
+    line-height: 1;
+    flex-shrink: 0;
+  }
+
+  .admin-tool__title {
+    font-family: 'Raleway', sans-serif;
+    font-size: 0.98rem;
+    font-weight: 700;
+    line-height: 1.25;
+  }
+
+  .admin-tool__sub {
+    font-family: 'Plus Jakarta Sans', sans-serif;
+    font-size: 0.76rem;
+    margin-top: 3px;
+    line-height: 1.4;
+  }
+}
+
+.admin-tool--dark  { background: var(--brand-deep); }
+.admin-tool--green { background: var(--brand); }
+.admin-tool--gold  { background: var(--action); }
+
+.admin-tool--dark, .admin-tool--green, .admin-tool--gold {
+  .admin-tool__title { color: var(--surface); }
+  .admin-tool__sub   { color: rgba(255, 255, 255, 0.72); }
+}
+
+// O descanso depois de três blocos fortes. Branco não é falta de cor aqui —
+// é o que diz "esta ferramenta não produz conteúdo".
+.admin-tool--quiet {
+  background: var(--surface);
+  border: 1px solid var(--line);
+
+  .admin-tool__title { color: var(--ink); }
+  .admin-tool__sub   { color: var(--ink-soft); }
+}
+
+.admin-tool--hero {
+  justify-content: space-between;
+  padding: 22px 26px;
+
+  .admin-tool__emoji { font-size: 1.5rem; }
+  .admin-tool__title { font-size: 1.12rem; }
+
+  // No celular o "Ver →" e o contador não cabem na mesma linha do título.
+  @media (max-width: 600px) {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 16px;
+  }
+}
+
+.admin-tool__badge {
+  font-family: 'DM Mono', monospace;
+  font-size: 0.72rem;
+  background: rgba(255, 255, 255, 0.14);
+  color: var(--surface);
+  padding: 4px 11px;
+  border-radius: 20px;
+  flex-shrink: 0;
+}
+
+.admin-tool__go {
+  font-family: 'Plus Jakarta Sans', sans-serif;
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: var(--brand-soft);
+  flex-shrink: 0;
+}
