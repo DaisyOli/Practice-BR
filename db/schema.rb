@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.1].define(version: 2026_08_10_154500) do
+ActiveRecord::Schema[7.1].define(version: 2026_08_11_120000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
 
@@ -101,6 +101,21 @@ ActiveRecord::Schema[7.1].define(version: 2026_08_10_154500) do
     t.datetime "updated_at", null: false
     t.index ["activity_id"], name: "index_ai_generations_on_activity_id"
     t.index ["teacher_id"], name: "index_ai_generations_on_teacher_id"
+  end
+
+  create_table "ai_prompt_versions", force: :cascade do |t|
+    t.bigint "ai_prompt_id", null: false
+    t.text "body", null: false
+    t.datetime "created_at", null: false
+    t.index ["ai_prompt_id"], name: "index_ai_prompt_versions_on_ai_prompt_id"
+  end
+
+  create_table "ai_prompts", force: :cascade do |t|
+    t.string "key", null: false
+    t.text "body", null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["key"], name: "index_ai_prompts_on_key", unique: true
   end
 
   create_table "audio_transcriptions", force: :cascade do |t|
@@ -390,6 +405,7 @@ ActiveRecord::Schema[7.1].define(version: 2026_08_10_154500) do
   add_foreign_key "activity_ratings", "users"
   add_foreign_key "ai_generations", "activities"
   add_foreign_key "ai_generations", "users", column: "teacher_id"
+  add_foreign_key "ai_prompt_versions", "ai_prompts"
   add_foreign_key "audio_transcriptions", "users"
   add_foreign_key "column_matchings", "activities"
   add_foreign_key "matching_pairs", "column_matchings"
