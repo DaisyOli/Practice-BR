@@ -56,51 +56,82 @@
 
   </div>
 
-  <%# ── Ferramentas de Produção de Conteúdo ── %>
-  <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-bottom:1.5rem;">
+  <%# ── Ferramentas ───────────────────────────────────────────────────────────
+      Dois grupos, e a cor diz o papel: escuro é o caminho principal, dourado e
+      verde são os outros dois jeitos de criar, e branco com borda é o que não
+      produz nada — só ajuda a entender e ajustar.
 
-    <%= link_to admin_drafts_path,
-          style: "display:flex; align-items:center; justify-content:space-between;
-                  background:var(--brand-deep); border-radius:14px; padding:20px 24px;
-                  text-decoration:none;" do %>
-      <div style="display:flex; align-items:center; gap:14px;">
-        <span style="font-size:1.4rem;">✨</span>
-        <div>
-          <div style="font-family:'Raleway',sans-serif; font-size:1rem; font-weight:700; color:var(--surface);">
-            Agente de Conteúdo
-          </div>
-          <div style="font-family:'Plus Jakarta Sans',sans-serif; font-size:0.8rem; color:rgba(255,255,255,0.6); margin-top:2px;">
-            <%= Activity.where(ai_generated: true, draft: true).count %> rascunho(s) aguardando
+      Antes era um grid 1fr/1fr onde o card do agente esticava para acompanhar a
+      coluna vizinha: cada ferramenta nova aumentava o vazio dele, e a cor não
+      seguia regra nenhuma. Layout e cores agora vivem em
+      components/_dashboard.scss (`.admin-tool*`) — saíram do inline por causa do
+      :hover, que atributo style não alcança. %>
+
+  <div style="margin-bottom:1.5rem;">
+
+    <p class="admin-tools__label">Criar conteúdo</p>
+
+    <div class="admin-tools" style="margin-bottom:2rem;">
+      <%= link_to admin_drafts_path, class: "admin-tool admin-tool--dark admin-tool--hero" do %>
+        <div style="display:flex; align-items:center; gap:14px;">
+          <span class="admin-tool__emoji">✨</span>
+          <div>
+            <div class="admin-tool__title">Agente de Conteúdo</div>
+            <div class="admin-tool__sub">o caminho principal — a IA escreve, você revisa</div>
           </div>
         </div>
+        <div style="display:flex; align-items:center; gap:14px;">
+          <%# Zero rascunho não vira "0 rascunhos": o crachá some, e a ausência
+              já diz que não há nada esperando. %>
+          <% rascunhos = Activity.where(ai_generated: true, draft: true).count %>
+          <% if rascunhos.positive? %>
+            <span class="admin-tool__badge"><%= rascunhos %> rascunho<%= rascunhos == 1 ? '' : 's' %></span>
+          <% end %>
+          <span class="admin-tool__go">Ver →</span>
+        </div>
+      <% end %>
+
+      <div class="admin-tools__pair">
+        <%= link_to generate_from_video_activities_path, class: "admin-tool admin-tool--gold" do %>
+          <span class="admin-tool__emoji">🎬</span>
+          <div>
+            <div class="admin-tool__title">Do Vídeo</div>
+            <div class="admin-tool__sub">URL + transcrição → atividade</div>
+          </div>
+        <% end %>
+
+        <%= link_to admin_activity_suggestions_path, class: "admin-tool admin-tool--green" do %>
+          <% pendentes = ActivitySuggestion.pending.count %>
+          <span class="admin-tool__emoji">🔎</span>
+          <div>
+            <div class="admin-tool__title">Sugestões do Dia</div>
+            <div class="admin-tool__sub">
+              <%= pendentes.zero? ? "nada pendente agora" : "#{pendentes} pendente#{pendentes == 1 ? '' : 's'}" %>
+            </div>
+          </div>
+        <% end %>
       </div>
-      <span style="font-family:'Plus Jakarta Sans',sans-serif; font-size:0.85rem; font-weight:700; color:var(--brand-soft);">Ver →</span>
-    <% end %>
+    </div>
 
-    <div style="display:flex; flex-direction:column; gap:10px;">
-      <%= link_to generate_from_video_activities_path,
-            style: "flex:1; display:flex; align-items:center; gap:12px; background:var(--action); border-radius:12px; padding:14px 20px; text-decoration:none;" do %>
-        <span style="font-size:1.1rem;">🎬</span>
+    <p class="admin-tools__label">Entender e ajustar</p>
+
+    <div class="admin-tools__pair">
+      <%= link_to admin_activities_path, class: "admin-tool admin-tool--quiet" do %>
+        <span class="admin-tool__emoji">⭐</span>
         <div>
-          <div style="font-family:'Plus Jakarta Sans',sans-serif; font-size:0.88rem; font-weight:700; color:var(--surface);">Do Vídeo</div>
-          <div style="font-family:'Plus Jakarta Sans',sans-serif; font-size:0.72rem; color:rgba(255,255,255,0.75);">URL + transcrição → atividade</div>
+          <div class="admin-tool__title">Atividades por Avaliação</div>
+          <div class="admin-tool__sub">o que os alunos gostaram, e o que não</div>
         </div>
       <% end %>
-      <%= link_to admin_activity_suggestions_path,
-            style: "flex:1; display:flex; align-items:center; gap:12px; background:var(--brand); border-radius:12px; padding:14px 20px; text-decoration:none;" do %>
-        <span style="font-size:1.1rem;">🔎</span>
+
+      <%= link_to admin_ai_prompts_path, class: "admin-tool admin-tool--quiet" do %>
+        <% reescritos = AiPrompt.count %>
+        <span class="admin-tool__emoji">🗣️</span>
         <div>
-          <% pending_count = ActivitySuggestion.pending.count %>
-          <div style="font-family:'Plus Jakarta Sans',sans-serif; font-size:0.88rem; font-weight:700; color:var(--surface);">Sugestões do Dia</div>
-          <div style="font-family:'Plus Jakarta Sans',sans-serif; font-size:0.72rem; color:rgba(255,255,255,0.75);"><%= pending_count %> pendente<%= pending_count != 1 ? 's' : '' %></div>
-        </div>
-      <% end %>
-      <%= link_to admin_activities_path,
-            style: "flex:1; display:flex; align-items:center; gap:12px; background:var(--brand-deep); border-radius:12px; padding:14px 20px; text-decoration:none;" do %>
-        <span style="font-size:1.1rem;">⭐</span>
-        <div>
-          <div style="font-family:'Plus Jakarta Sans',sans-serif; font-size:0.88rem; font-weight:700; color:var(--surface);">Atividades por Avaliação</div>
-          <div style="font-family:'Plus Jakarta Sans',sans-serif; font-size:0.72rem; color:rgba(255,255,255,0.75);">Melhores e menos apreciadas</div>
+          <div class="admin-tool__title">A voz das IAs</div>
+          <div class="admin-tool__sub">
+            <%= reescritos.zero? ? "tudo no texto original" : "#{reescritos} reescrito#{reescritos == 1 ? '' : 's'}" %>
+          </div>
         </div>
       <% end %>
     </div>
