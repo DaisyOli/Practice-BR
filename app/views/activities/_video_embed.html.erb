@@ -1,50 +1,45 @@
 <%# Renderiza player para YouTube, Vimeo ou arquivo de vídeo direto (.mp4/.webm/.ogg) %>
 <%# Uso: render 'activities/video_embed', url: activity.video_url, link_label: "Assistir no YouTube" %>
+<%#
+  Regra deste partial: ele NUNCA pode terminar sem renderizar nada. Antes, um
+  link do YouTube de que não se conseguia extrair o ID (um Short, uma live) caía
+  num `if` sem `else`, e a seção "VÍDEO" aparecia como uma caixa vazia — o vídeo
+  estava salvo, mas parecia perdido. Todo caminho aqui termina em player ou aviso.
+%>
+
+<% url = url.to_s.strip %>
 
 <% embed_type = if url.match?(/youtube\.com|youtu\.be/) then :youtube
                 elsif url.match?(/vimeo\.com/) then :vimeo
                 elsif url.match?(/\.(mp4|webm|ogg)(\?.*)?$/i) then :direct
                 end %>
 
-<% if embed_type == :youtube %>
-  <% yt_id = url.match(/(?:youtube\.com\/(?:[^\/]+\/.+\/|(?:v|e(?:mbed)?)\/|.*[?&]v=)|youtu\.be\/)([^"&?\/\s]{11})/)&.[](1) %>
-  <% if yt_id %>
-    <div style="position:relative; padding-bottom:56.25%; height:0; overflow:hidden; border-radius:10px;">
-      <iframe src="https://www.youtube.com/embed/<%= yt_id %>"
-              style="position:absolute; top:0; left:0; width:100%; height:100%; border:0;"
-              allowfullscreen
-              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture">
-      </iframe>
-    </div>
-    <% if defined?(link_label) && link_label.present? %>
-      <div style="margin-top:8px; text-align:right;">
-        <%= link_to url, target: "_blank", rel: "noopener noreferrer",
-              style: "font-family:'Plus Jakarta Sans',sans-serif; font-size:0.78rem; color:var(--action); text-decoration:none; display:inline-flex; align-items:center; gap:4px;" do %>
-          <i class="bi bi-box-arrow-up-right"></i> <%= link_label %>
-        <% end %>
-      </div>
-    <% end %>
-  <% end %>
+<%# Cobre watch?v=, youtu.be, embed/, shorts/ e live/ — os dois últimos são os
+    links que o YouTube dá quando se compartilha pelo celular. %>
+<% yt_id = url[%r{(?:youtube\.com/(?:watch\?(?:.*&)?v=|embed/|shorts/|live/|v/|e/)|youtu\.be/)([\w-]{11})}, 1] %>
 
-<% elsif embed_type == :vimeo %>
-  <% vimeo_id = url.match(/vimeo\.com\/(?:video\/)?(\d+)/)&.[](1) %>
-  <% if vimeo_id %>
-    <div style="position:relative; padding-bottom:56.25%; height:0; overflow:hidden; border-radius:10px;">
-      <iframe src="https://player.vimeo.com/video/<%= vimeo_id %>"
-              style="position:absolute; top:0; left:0; width:100%; height:100%; border:0;"
-              allowfullscreen
-              allow="autoplay; fullscreen; picture-in-picture">
-      </iframe>
-    </div>
-    <% if defined?(link_label) && link_label.present? %>
-      <div style="margin-top:8px; text-align:right;">
-        <%= link_to url, target: "_blank", rel: "noopener noreferrer",
-              style: "font-family:'Plus Jakarta Sans',sans-serif; font-size:0.78rem; color:var(--action); text-decoration:none; display:inline-flex; align-items:center; gap:4px;" do %>
-          <i class="bi bi-box-arrow-up-right"></i> <%= link_label %>
-        <% end %>
-      </div>
-    <% end %>
-  <% end %>
+<%# Vimeo não listado vem como vimeo.com/ID/HASH, e o player exige o hash em ?h= %>
+<% vimeo_id, vimeo_hash = url.match(%r{vimeo\.com/(?:video/)?(\d+)(?:/(\w+))?})&.captures %>
+
+<% if embed_type == :youtube && yt_id %>
+  <div style="position:relative; padding-bottom:56.25%; height:0; overflow:hidden; border-radius:10px;">
+    <iframe src="https://www.youtube.com/embed/<%= yt_id %>"
+            style="position:absolute; top:0; left:0; width:100%; height:100%; border:0;"
+            allowfullscreen
+            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture">
+    </iframe>
+  </div>
+  <%= render 'activities/video_embed_link', url: url, link_label: (defined?(link_label) ? link_label : nil) %>
+
+<% elsif embed_type == :vimeo && vimeo_id %>
+  <div style="position:relative; padding-bottom:56.25%; height:0; overflow:hidden; border-radius:10px;">
+    <iframe src="https://player.vimeo.com/video/<%= vimeo_id %><%= "?h=#{vimeo_hash}" if vimeo_hash %>"
+            style="position:absolute; top:0; left:0; width:100%; height:100%; border:0;"
+            allowfullscreen
+            allow="autoplay; fullscreen; picture-in-picture">
+    </iframe>
+  </div>
+  <%= render 'activities/video_embed_link', url: url, link_label: (defined?(link_label) ? link_label : nil) %>
 
 <% elsif embed_type == :direct %>
   <video controls style="width:100%; max-height:320px; border-radius:10px; display:block;">
@@ -52,7 +47,16 @@
   </video>
 
 <% else %>
-  <p style="font-family:'Plus Jakarta Sans',sans-serif; font-size:0.88rem; color:var(--ink-faint);">
-    <%= t('activities.invalid_video_url') %>
-  </p>
+  <%# Não deu para montar o player. O link continua salvo, então mostramos ele
+      clicável em vez de deixar a caixa vazia. %>
+  <div style="font-family:'Plus Jakarta Sans',sans-serif; font-size:0.85rem; color:var(--ink-soft);">
+    <p style="margin:0 0 8px;">
+      <i class="bi bi-exclamation-triangle" style="margin-right:5px; color:var(--action);"></i>
+      <%= t('activities.video_embed_failed') %>
+    </p>
+    <% if url.present? %>
+      <%= link_to url, url, target: "_blank", rel: "noopener noreferrer",
+            style: "color:var(--action); word-break:break-all;" %>
+    <% end %>
+  </div>
 <% end %>

@@ -1,20 +1,3 @@
-<% unless @quill_loaded %>
-  <% @quill_loaded = true %>
-  <% content_for :head do %>
-    <link href="https://cdn.quilljs.com/1.3.7/quill.snow.css" rel="stylesheet">
-    <script src="https://cdn.quilljs.com/1.3.7/quill.min.js"></script>
-    <style>
-      .ql-toolbar.ql-snow { border-radius: 8px 8px 0 0; border-color: var(--line); font-family: 'Plus Jakarta Sans', sans-serif; padding: 3px 8px; }
-      .ql-toolbar.ql-snow button { padding: 2px; width: 22px; height: 20px; }
-      .ql-toolbar.ql-snow .ql-formats { margin-right: 8px; line-height: 1; }
-      .ql-container.ql-snow { border-radius: 0 0 8px 8px; border-color: var(--line); font-family: 'Plus Jakarta Sans', sans-serif; font-size: 0.9rem; }
-      .ql-editor { min-height: 80px; padding: 6px 10px 4px; line-height: 1.65; color: var(--ink); }
-      .quill-tall .ql-editor { min-height: 140px; padding: 12px 15px 6px; }
-      .ql-editor.ql-blank::before { color: var(--ink-faint); font-style: normal; }
-    </style>
-  <% end %>
-<% end %>
-
 <div id="<%= section_id %>" style="background:var(--action-tint); border:1px solid var(--action-border); border-left:4px solid var(--action); border-radius:14px; margin-bottom:14px; overflow:hidden;">
 
   <%# Section header %>

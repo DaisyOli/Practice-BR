@@ -22,6 +22,35 @@
 // 📦 BIBLIOTECAS DE TERCEIROS (auto-hospedadas — nada carrega de CDN)
 @import "vendor/bootstrap-icons";     // 🎨 Ícones bi-*
 @import "vendor/shepherd";            // 🚶 CSS base do tour (customização logo abaixo)
+@import "vendor/quill-snow";          // ✍️  CSS base do editor de texto (customização logo abaixo)
+
+// Quill — customização do design system.
+// Antes isto vivia repetido em quatro partials, dentro de um `content_for :head`
+// que o Turbo não esperava carregar. Ver o comentário no topo do layout.
+.ql-toolbar.ql-snow {
+  border-radius: 8px 8px 0 0;
+  border-color: var(--line);
+  font-family: 'Plus Jakarta Sans', sans-serif;
+  padding: 3px 8px;
+
+  button { padding: 2px; width: 22px; height: 20px; }
+  .ql-formats { margin-right: 8px; line-height: 1; }
+}
+.ql-container.ql-snow {
+  border-radius: 0 0 8px 8px;
+  border-color: var(--line);
+  font-family: 'Plus Jakarta Sans', sans-serif;
+  font-size: 0.9rem;
+}
+.ql-editor {
+  min-height: 80px;
+  padding: 6px 10px 4px;
+  line-height: 1.65;
+  color: var(--ink);
+
+  &.ql-blank::before { color: var(--ink-faint); font-style: normal; }
+}
+.quill-tall .ql-editor { min-height: 140px; padding: 12px 15px 6px; }
 
 // Shepherd.js onboarding tour — design system customization
 .shepherd-element {

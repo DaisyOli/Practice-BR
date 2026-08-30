@@ -49,6 +49,17 @@
     <!-- Shepherd.js onboarding tour (CSS vai junto com application.scss) -->
     <%= javascript_include_tag "shepherd.min", "data-turbo-track": "reload" %>
 
+    <%#
+      Quill (editor de texto rico). Precisa estar AQUI, no layout, e não num
+      `content_for :head` das telas que usam o editor: numa navegação do Turbo,
+      o head novo só é esperado para as folhas de estilo — os <script> são
+      anexados sem await (ver mergeHead no turbo.min.js). O <body> novo já
+      rodava chamando `new Quill(...)` antes do arquivo terminar de baixar,
+      dava ReferenceError e o campo do enunciado simplesmente não aparecia.
+      Aqui a tag é sempre a mesma entre páginas, então o Turbo nem a recarrega.
+    %>
+    <%= javascript_include_tag "quill.min", "data-turbo-track": "reload" %>
+
     <!-- Metatags da página -->
     <%= page_head %>
 
