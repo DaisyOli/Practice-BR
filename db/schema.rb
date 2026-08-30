@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.1].define(version: 2026_08_11_120000) do
+ActiveRecord::Schema[7.1].define(version: 2026_08_12_140000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
 
@@ -390,6 +390,12 @@ ActiveRecord::Schema[7.1].define(version: 2026_08_11_120000) do
     t.datetime "trial_reopened_at"
     t.datetime "language_chosen_at"
     t.datetime "quiet_alert_sent_at"
+    t.string "org_name"
+    t.string "org_siret"
+    t.string "org_nda"
+    t.text "org_address"
+    t.string "org_signatory"
+    t.string "training_title"
     t.index ["email"], name: "index_users_on_email", unique: true
     t.index ["invitation_token"], name: "index_users_on_invitation_token", unique: true
     t.index ["invited_by_id"], name: "index_users_on_invited_by_id"
