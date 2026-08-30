@@ -1,0 +1,35 @@
+<%#
+  Um campo do formulário do organismo. Seis campos com a mesma anatomia
+  (rótulo, dica, input, erro) pediam um lugar só — mudar o espaçamento aqui
+  muda nos seis.
+
+  locals: form, field, label, hint, placeholder, area (opcional)
+%>
+<% area ||= false %>
+<% errors = form.object.errors[field] %>
+
+<div style="margin-bottom:20px;">
+  <%= form.label field, label,
+        style: "display:block; font-family:'DM Mono',monospace; font-size:0.68rem; font-weight:700;
+                text-transform:uppercase; letter-spacing:0.08em; color:var(--ink-soft); margin-bottom:6px;" %>
+
+  <div style="font-family:'Plus Jakarta Sans',sans-serif; font-size:0.78rem; color:var(--ink-faint); margin-bottom:8px; line-height:1.5;">
+    <%= hint %>
+  </div>
+
+  <% style = "width:100%; font-family:'Plus Jakarta Sans',sans-serif; font-size:0.9rem; color:var(--ink);
+              background:var(--surface); border:1.5px solid #{errors.any? ? 'var(--error-border)' : 'var(--line)'};
+              border-radius:10px; padding:10px 12px;" %>
+
+  <% if area %>
+    <%= form.text_area field, rows: 3, placeholder: placeholder, style: style %>
+  <% else %>
+    <%= form.text_field field, placeholder: placeholder, style: style %>
+  <% end %>
+
+  <% if errors.any? %>
+    <div style="font-family:'Plus Jakarta Sans',sans-serif; font-size:0.78rem; color:var(--error-deep); margin-top:6px; font-weight:600;">
+      <%= errors.to_sentence %>
+    </div>
+  <% end %>
+</div>

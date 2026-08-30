@@ -44,6 +44,26 @@ class User < ApplicationRecord
   validates :level, presence: true, inclusion: { in: CEFR_LEVELS }, if: :student_like?
   validates :professional_type, inclusion: { in: PROFESSIONAL_TYPES }, allow_blank: true
 
+  # ---- Organismo de formação ----------------------------------------------------
+  #
+  # Campos opcionais: só a professora que emite atestação preenche. A cobrança
+  # não vem daqui — vem da atestação, que se recusa a sair completa sem eles.
+  # Validar presença aqui travaria o cadastro de quem nunca vai emitir nada.
+  #
+  # O que é validado é o FORMATO, e só quando há algo escrito: um SIRET errado
+  # num documento que vai para um financiador é pior que um SIRET ausente,
+  # porque o ausente se vê e o errado passa.
+  validates :org_siret, format: { with: /\A\d{14}\z/,
+                                  message: "deve ter 14 dígitos" },
+                        allow_blank: true
+  validate  :siret_checksum_must_match, if: -> { org_siret.present? }
+  validates :org_name,       length: { maximum: 120 }, allow_blank: true
+  validates :org_signatory,  length: { maximum: 120 }, allow_blank: true
+  validates :training_title, length: { maximum: 150 }, allow_blank: true
+
+  normalizes :org_siret, with: ->(s) { s.to_s.gsub(/\s/, "") }
+  normalizes :org_nda,   with: ->(s) { s.to_s.strip }
+
   before_validation :set_default_language, on: :create
   before_update :stamp_password_set_at, if: :will_save_change_to_encrypted_password?
   after_commit :notify_admin_if_teacher_joined
@@ -299,6 +319,42 @@ class User < ApplicationRecord
     name.presence
   end
 
+  # ---- Organismo de formação ----------------------------------------------------
+  #
+  # O que uma attestation de formation precisa mostrar para ser um documento e
+  # não um relatório: quem emitiu (razão social), com que identidade fiscal
+  # (SIRET), sob que registro de formação (NDA), qual é a ação de formação e
+  # quem assina. Faltando qualquer um, o financiador recusa antes de olhar as
+  # horas.
+  ORGANISME_FIELDS = {
+    org_name:       "raison sociale",
+    org_siret:      "SIRET",
+    org_nda:        "número de declaração de atividade",
+    org_address:    "endereço",
+    org_signatory:  "nome de quem assina",
+    training_title: "intitulé da formação"
+  }.freeze
+
+  def organisme_complete?
+    missing_organisme_fields.empty?
+  end
+
+  # Devolve os rótulos em português, para a tela dizer o que falta em vez de só
+  # dizer que falta.
+  def missing_organisme_fields
+    ORGANISME_FIELDS.reject { |field, _| public_send(field).present? }.values
+  end
+
+  def organisme_started?
+    ORGANISME_FIELDS.keys.any? { |field| public_send(field).present? }
+  end
+
+  # "85194793700013" -> "851 947 937 00013", como se escreve num documento.
+  def formatted_siret
+    return nil if org_siret.blank?
+    org_siret.gsub(/\A(\d{3})(\d{3})(\d{3})(\d{5})\z/, '\1 \2 \3 \4')
+  end
+
   def accessible_levels
     return [] if level.blank?
     idx = CEFR_LEVELS.index(level)
@@ -426,6 +482,33 @@ class User < ApplicationRecord
   end
 
   private
+
+  # O SIRET carrega o próprio dígito verificador, pelo algoritmo de Luhn — o
+  # mesmo dos cartões de crédito. Vale a pena checar aqui porque o erro que isto
+  # pega é o mais comum e o mais silencioso: dois dígitos trocados de lugar.
+  #
+  # Um SIRET ausente a professora vê na hora. Um SIRET com um dígito errado
+  # atravessa a tela, atravessa o PDF, e só aparece quando o financiador
+  # devolve o documento.
+  #
+  # Soma da direita para a esquerda dobrando um dígito sim, um não; dobrado que
+  # passa de 9 perde 9. O total tem que fechar em múltiplo de 10.
+  def siret_checksum_must_match
+    digits = org_siret.to_s
+    return if digits.length != 14 # o validador de formato já reclamou
+
+    total = digits.chars.reverse.each_with_index.sum do |char, index|
+      d = char.to_i
+      next d if index.even?
+
+      doubled = d * 2
+      doubled > 9 ? doubled - 9 : doubled
+    end
+
+    return if (total % 10).zero?
+
+    errors.add(:org_siret, "não passa na verificação — confira se algum dígito está trocado")
+  end
 
   # Se o aluno já tem tentativas suficientes no próprio nível declarado e
   # está reprovando nelas, puxa peso desse nível pros mais fáceis logo

@@ -1,8 +1,29 @@
 class TeachersController < ApplicationController
   before_action :authenticate_user!, except: []
-  before_action :require_teacher!, only: [:students, :student_profile, :student_activities, :student_written, :student_attestation, :update_student_level, :remove_student, :clear_student_comments, :more_ratings]
+  before_action :require_teacher!, only: [:students, :student_profile, :student_activities, :student_written, :student_attestation, :update_student_level, :remove_student, :clear_student_comments, :more_ratings, :organisation, :update_organisation]
 
   def dashboard
+  end
+
+  # Os dados legais de quem emite a atestação. Cada professora é o próprio
+  # organismo de formação: o Practice-BR é ferramenta, e por isso o SIRET que
+  # sai no PDF é o dela, não o nosso.
+  def organisation
+    @teacher = current_user
+  end
+
+  def update_organisation
+    @teacher = current_user
+
+    if @teacher.update(organisation_params)
+      redirect_to teacher_organisation_path,
+                  notice: @teacher.organisme_complete? ?
+                    "Dados salvos. Suas atestações já saem completas." :
+                    "Dados salvos. Ainda falta: #{@teacher.missing_organisme_fields.to_sentence}."
+    else
+      flash.now[:alert] = @teacher.errors.full_messages.to_sentence
+      render :organisation, status: :unprocessable_entity
+    end
   end
 
   def more_ratings
@@ -182,6 +203,10 @@ class TeachersController < ApplicationController
   end
 
   private
+
+  def organisation_params
+    params.require(:user).permit(*User::ORGANISME_FIELDS.keys)
+  end
 
   def require_teacher!
     redirect_to root_path unless current_user&.teacher?

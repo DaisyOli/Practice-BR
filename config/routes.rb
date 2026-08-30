@@ -9,6 +9,9 @@ Rails.application.routes.draw do
   get 'students/open_ended_attempts', to: 'students#open_ended_attempts', as: 'student_open_ended_attempts'
   get 'teacher_dashboard', to: 'teachers#dashboard'
   get 'teachers/ratings/more', to: 'teachers#more_ratings', as: 'teacher_more_ratings'
+  # URL em português, código em inglês — mesmo padrão do "excluir-conta".
+  get    'teachers/organismo',                       to: 'teachers#organisation',          as: 'teacher_organisation'
+  patch  'teachers/organismo',                       to: 'teachers#update_organisation'
   get    'teachers/students',                        to: 'teachers#students',              as: 'teacher_students'
   get    'teachers/students/:id/activities',          to: 'teachers#student_activities',    as: 'teacher_student_activities'
   get    'teachers/students/:id/written',             to: 'teachers#student_written',       as: 'teacher_student_written'
