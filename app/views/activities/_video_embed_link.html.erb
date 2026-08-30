@@ -1,0 +1,9 @@
+<%# Link "assistir no site original" abaixo do player embutido %>
+<% if link_label.present? %>
+  <div style="margin-top:8px; text-align:right;">
+    <%= link_to url, target: "_blank", rel: "noopener noreferrer",
+          style: "font-family:'Plus Jakarta Sans',sans-serif; font-size:0.78rem; color:var(--action); text-decoration:none; display:inline-flex; align-items:center; gap:4px;" do %>
+      <i class="bi bi-box-arrow-up-right"></i> <%= link_label %>
+    <% end %>
+  </div>
+<% end %>

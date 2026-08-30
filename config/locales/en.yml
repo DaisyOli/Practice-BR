@@ -295,7 +295,7 @@ en:
     save_image: "Save image"
     save_video: "Save video"
     confirm_delete_video: "Are you sure you want to delete the video?"
-    invalid_video_url: "Invalid video URL. Please use a YouTube link."
+    video_embed_failed: "Couldn't build the player for this link. It is still saved — you can open it directly:"
     add_text: "Text"
     explanation_text_label: "Explanatory text"
     explanation_text_placeholder: "Add explanatory text for this activity"

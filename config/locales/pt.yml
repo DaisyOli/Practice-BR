@@ -211,7 +211,7 @@ pt:
     save_image: "Salvar imagem"
     save_video: "Salvar vídeo"
     confirm_delete_video: "Tem certeza que deseja excluir o vídeo?"
-    invalid_video_url: "URL de vídeo inválida. Use um link do YouTube."
+    video_embed_failed: "Não consegui montar o player para este link. Ele continua salvo — dá para abrir direto:"
     add_text: "Texto"
     explanation_text_label: "Texto explicativo"
     explanation_text_placeholder: "Adicione um texto explicativo para esta atividade"

@@ -265,7 +265,7 @@ fr:
     save_image: "Enregistrer l'image"
     save_video: "Enregistrer la vidéo"
     confirm_delete_video: "Êtes-vous sûr de vouloir supprimer la vidéo ?"
-    invalid_video_url: "URL vidéo invalide. Veuillez utiliser un lien YouTube."
+    video_embed_failed: "Impossible d'afficher le lecteur pour ce lien. Il reste enregistré — vous pouvez l'ouvrir directement :"
     add_text: "Texte"
     explanation_text_label: "Texte explicatif"
     explanation_text_placeholder: "Ajoutez un texte explicatif pour cette activité"
