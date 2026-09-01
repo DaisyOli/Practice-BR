@@ -529,7 +529,11 @@
               <% if @activity.explanation_text.present? %>
                 <% explanation_html = @activity.explanation_text.include?('<') ? sanitize(@activity.explanation_text, tags: %w[p br strong em u ol ul li], attributes: []) : simple_format(@activity.explanation_text) %>
                 <% if @activity.explanation_is_transcript? %>
-                  <details style="border:1px solid var(--line); border-radius:10px; overflow:hidden; margin-bottom:4px;">
+                  <%# flex-shrink:0 é o que devolve a rolagem no desktop. Esta coluna
+                      é um flex column de altura fixa; um filho com overflow:hidden
+                      pode ser espremido até caber. Sem isso, o <details> encolhia e
+                      cortava a transcrição em vez de a coluna ganhar barra de rolagem. %>
+                  <details style="border:1px solid var(--line); border-radius:10px; overflow:hidden; flex-shrink:0; margin-bottom:4px;">
                     <summary style="display:flex; align-items:center; gap:8px; padding:10px 14px; cursor:pointer; font-family:'Plus Jakarta Sans',sans-serif; font-size:0.82rem; font-weight:600; color:var(--ink-soft); background:var(--surface-2); list-style:none; user-select:none;">
                       <span style="font-size:1rem;">📄</span>
                       <%= t('quiz.see_transcript', default: 'Ver transcrição') %>
