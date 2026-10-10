@@ -98,8 +98,23 @@ class ActivitiesController < ApplicationController
     return render json: { error: "Nenhum áudio recebido." }, status: :unprocessable_entity unless audio
 
     transcription = AudioTranscription.create!(user: current_user, status: "queued")
-    transcription.audio_file.attach(io: audio, filename: audio.original_filename, content_type: audio.content_type)
-    AudioTranscriptionJob.perform_later(transcription.id)
+
+    # O attach grava o registro no banco e só depois sobe o arquivo pro
+    # Cloudinary. Se o upload falha (de 29/07 a 10/10/2026 a chave estava sem
+    # permissão), o job nunca era enfileirado: a transcrição ficava "queued"
+    # pra sempre e o aluno via "Erro de conexão". Agora ela vira "failed" e o
+    # aluno recebe uma mensagem que diz o que aconteceu.
+    begin
+      transcription.audio_file.attach(io: audio, filename: audio.original_filename, content_type: audio.content_type)
+      enqueued = AudioTranscriptionJob.perform_later(transcription.id)
+      raise "AudioTranscriptionJob não foi enfileirado" unless enqueued
+    rescue => e
+      Rails.logger.error "transcribe_audio: #{e.class} - #{e.message}"
+      Sentry.capture_exception(e)
+      error = "Não conseguimos receber seu áudio. Tente digitar sua resposta."
+      transcription.update(status: "failed", error_message: error)
+      return render json: { error: error }, status: :service_unavailable
+    end
 
     render json: { transcription_id: transcription.id }
   end

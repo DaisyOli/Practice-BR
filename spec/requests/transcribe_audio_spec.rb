@@ -51,6 +51,37 @@ RSpec.describe "Transcrição de áudio em background", type: :request do
         expect(JSON.parse(response.body)["transcription_id"]).to eq(transcription.id)
       end
     end
+
+    # Regressão do bug de produção (set/2026): a chave do Cloudinary estava sem
+    # permissão, o upload estourava 500 e a transcrição ficava "queued" pra
+    # sempre, sem job. O aluno via "Erro de conexão".
+    context "quando o upload do áudio falha" do
+      before do
+        allow_any_instance_of(ActiveStorage::Attached::One).to receive(:attach)
+          .and_raise(ActiveStorage::IntegrityError, "missing permissions")
+      end
+
+      it "marca a transcrição como falha, não enfileira o job e devolve mensagem em JSON" do
+        expect {
+          post transcribe_activity_path(activity), params: { audio: audio_file }
+        }.not_to have_enqueued_job(AudioTranscriptionJob)
+
+        expect(response).to have_http_status(:service_unavailable)
+        expect(response.parsed_body["error"]).to eq("Não conseguimos receber seu áudio. Tente digitar sua resposta.")
+        expect(AudioTranscription.last.status).to eq("failed")
+      end
+    end
+
+    context "quando o job não consegue ser enfileirado" do
+      before { allow(AudioTranscriptionJob).to receive(:perform_later).and_return(false) }
+
+      it "marca a transcrição como falha em vez de deixá-la presa na fila" do
+        post transcribe_activity_path(activity), params: { audio: audio_file }
+
+        expect(response).to have_http_status(:service_unavailable)
+        expect(AudioTranscription.last.status).to eq("failed")
+      end
+    end
   end
 
   describe "GET /activities/:slug/transcribe_status" do
