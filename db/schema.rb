@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.1].define(version: 2026_10_15_090000) do
+ActiveRecord::Schema[7.1].define(version: 2026_10_15_100000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
 
@@ -61,8 +61,8 @@ ActiveRecord::Schema[7.1].define(version: 2026_10_15_090000) do
     t.boolean "explanation_is_transcript"
     t.string "unsplash_cover_url"
     t.string "unsplash_cover_credit"
-    t.integer "trial_showcase_position"
-    t.index ["level", "trial_showcase_position"], name: "index_activities_on_level_and_trial_showcase_position", unique: true, where: "(trial_showcase_position IS NOT NULL)"
+    t.integer "path_position"
+    t.index ["level", "path_position"], name: "index_activities_on_level_and_path_position", unique: true, where: "(path_position IS NOT NULL)"
     t.index ["slug"], name: "index_activities_on_slug", unique: true
     t.index ["teacher_id"], name: "index_activities_on_teacher_id"
   end

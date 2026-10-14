@@ -26,10 +26,12 @@ class Activity < ApplicationRecord
   scope :by_level, ->(level) { where(level: level) }
   scope :published, -> { where(draft: false) }
 
-  # Vitrine do teste: até 3 atividades por nível, escolhidas no painel admin
-  # (Admin::ShowcaseController), na ordem em que quem chega deve encontrá-las.
-  TRIAL_SHOWCASE_SLOTS = 3
-  scope :in_trial_showcase, -> { where.not(trial_showcase_position: nil).order(:trial_showcase_position) }
+  # Percurso do nível: até 10 atividades em ordem, escolhidas no painel admin
+  # (Admin::PathController). As 3 primeiras são a vitrine do teste — quem testa
+  # faz o começo do caminho e, ao assinar, continua da 4ª.
+  PATH_SLOTS  = 10
+  TRIAL_SLOTS = 3
+  scope :in_path, -> { where.not(path_position: nil).order(:path_position) }
   scope :with_questions_count, -> {
     left_outer_joins(:questions)
       .group(:id)
@@ -37,9 +39,9 @@ class Activity < ApplicationRecord
   }
 
   before_validation :generate_slug, if: :should_generate_slug?
-  # Mudou de nível, sai da vitrine: ela foi escolhida para um nível, e a mesma
+  # Mudou de nível, sai do percurso: ele foi montado para um nível, e a mesma
   # posição no nível novo pode já estar ocupada.
-  before_save :leave_trial_showcase, if: -> { will_save_change_to_level? && trial_showcase_position.present? }
+  before_save :leave_path, if: -> { will_save_change_to_level? && path_position.present? }
   after_create      :fetch_unsplash_cover
   after_commit      :clear_cache
   
@@ -144,7 +146,7 @@ class Activity < ApplicationRecord
     nil
   end
 
-  def leave_trial_showcase
-    self.trial_showcase_position = nil
+  def leave_path
+    self.path_position = nil
   end
 end

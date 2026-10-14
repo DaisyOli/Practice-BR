@@ -116,13 +116,13 @@
     <p class="admin-tools__label">Entender e ajustar</p>
 
     <div style="margin-bottom:12px;">
-      <%= link_to admin_showcase_path, class: "admin-tool admin-tool--green" do %>
-        <% escolhidas = Activity.published.in_trial_showcase.count %>
-        <span class="admin-tool__emoji">🪟</span>
+      <%= link_to admin_path_path, class: "admin-tool admin-tool--green" do %>
+        <% montados = Activity.published.in_path.distinct.count(:level) %>
+        <span class="admin-tool__emoji">🧭</span>
         <div>
-          <div class="admin-tool__title">Vitrine do teste</div>
+          <div class="admin-tool__title">Percurso por nível</div>
           <div class="admin-tool__sub">
-            <%= escolhidas.zero? ? "nenhuma escolhida — o teste mostra a mais recente" : "#{escolhidas} escolhida#{escolhidas == 1 ? '' : 's'} pelos níveis" %>
+            <%= montados.zero? ? "nenhum montado — a sugestão é automática" : "#{montados} de 5 níveis com percurso · as 3 primeiras são o teste" %>
           </div>
         </div>
       <% end %>

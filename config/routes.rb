@@ -90,8 +90,10 @@ Rails.application.routes.draw do
     patch "drafts/targets",  to: "drafts#update_targets", as: :draft_targets
     post "trials/:id/send_reminder", to: "trials#send_reminder", as: :send_trial_reminder
     resources :activities, only: [:index]
-    get   "vitrine", to: "showcase#index",  as: :showcase
-    patch "vitrine", to: "showcase#update"
+    get   "percurso", to: "path#index", as: :path
+    patch "percurso", to: "path#update"
+    # O endereço antigo, de quando era só a vitrine do teste.
+    get   "vitrine",  to: redirect("/admin/percurso")
 
     # A chave tem ponto ("ai_grading.expectations.A1") e o Rails leria o ponto
     # como separador de formato (.json, .html). A constraint diz "engula tudo
