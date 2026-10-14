@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.1].define(version: 2026_08_12_140000) do
+ActiveRecord::Schema[7.1].define(version: 2026_10_14_100000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
 
@@ -347,6 +347,15 @@ ActiveRecord::Schema[7.1].define(version: 2026_08_12_140000) do
     t.index ["activity_id"], name: "index_suggestions_on_activity_id"
   end
 
+  create_table "trial_events", force: :cascade do |t|
+    t.bigint "user_id", null: false
+    t.string "kind", null: false
+    t.jsonb "details", default: {}, null: false
+    t.datetime "created_at", null: false
+    t.index ["user_id", "kind"], name: "index_trial_events_on_user_id_and_kind", unique: true
+    t.index ["user_id"], name: "index_trial_events_on_user_id"
+  end
+
   create_table "users", force: :cascade do |t|
     t.string "email", default: "", null: false
     t.string "encrypted_password", default: "", null: false
@@ -396,6 +405,9 @@ ActiveRecord::Schema[7.1].define(version: 2026_08_12_140000) do
     t.text "org_address"
     t.string "org_signatory"
     t.string "training_title"
+    t.datetime "first_access_at"
+    t.datetime "first_activity_opened_at"
+    t.datetime "first_nudge_sent_at"
     t.index ["email"], name: "index_users_on_email", unique: true
     t.index ["invitation_token"], name: "index_users_on_invitation_token", unique: true
     t.index ["invited_by_id"], name: "index_users_on_invited_by_id"
@@ -424,4 +436,5 @@ ActiveRecord::Schema[7.1].define(version: 2026_08_12_140000) do
   add_foreign_key "sentence_orderings", "activities"
   add_foreign_key "sentence_words", "sentence_orderings"
   add_foreign_key "suggestions", "activities"
+  add_foreign_key "trial_events", "users"
 end

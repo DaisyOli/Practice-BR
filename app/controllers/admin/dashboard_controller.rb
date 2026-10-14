@@ -5,6 +5,10 @@ module Admin
       @teachers = teacher_stats
       @trials   = User.trials.order(created_at: :desc)
       @trial_summary = trial_summary
+      # Contas de teste fora da conta: com 5 pessoas no mês, uma conta da Daisy
+      # muda a taxa inteira. Ids em TRIAL_FUNNEL_EXCLUDE_IDS (separados por vírgula).
+      @trial_funnel = TrialFunnel.new(from: 30.days.ago,
+                                      exclude_ids: ENV["TRIAL_FUNNEL_EXCLUDE_IDS"].to_s.split(",")).stats
     end
 
     private

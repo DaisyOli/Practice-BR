@@ -2,6 +2,49 @@
 # antes de eles saírem — os emails do teste são os únicos que falam com gente que
 # ainda não decidiu nada sobre a plataforma.
 class TrialMailerPreview < ActionMailer::Preview
+  def welcome_fr
+    TrialMailer.welcome_email(pessoa("fr"))
+  end
+
+  def welcome_pt
+    TrialMailer.welcome_email(pessoa("pt", nome: "Marina"))
+  end
+
+  def welcome_en
+    TrialMailer.welcome_email(pessoa("en"))
+  end
+
+  # Lembrete do mesmo dia (~4h depois do cadastro, sem ter começado).
+  def first_nudge_fr
+    TrialMailer.first_nudge_email(pessoa("fr"), atividade)
+  end
+
+  def first_nudge_pt
+    TrialMailer.first_nudge_email(pessoa("pt", nome: "Marina"), atividade)
+  end
+
+  def first_nudge_en
+    TrialMailer.first_nudge_email(pessoa("en"), atividade)
+  end
+
+  # Recuperação manual (rake trial_recovery:run). Duas versões: com e sem a
+  # extensão de 48h — a frase do prazo muda.
+  def recovery_fr
+    TrialMailer.recovery_email(pessoa("fr"), atividade)
+  end
+
+  def recovery_fr_com_extensao
+    TrialMailer.recovery_email(pessoa("fr"), atividade, extended: true)
+  end
+
+  def recovery_pt
+    TrialMailer.recovery_email(pessoa("pt", nome: "Marina"), atividade)
+  end
+
+  def recovery_en
+    TrialMailer.recovery_email(pessoa("en"), atividade)
+  end
+
   def activation_fr
     TrialMailer.activation_email(pessoa("fr"), atividade)
   end
@@ -25,11 +68,11 @@ class TrialMailerPreview < ActionMailer::Preview
   # Reabertura: o email de quem nunca chegou a usar o teste. É o que as 4
   # pessoas reais receberiam na primeira rodada.
   def reopen_fr
-    TrialMailer.reopen_email(pessoa("fr"), "token-de-exemplo")
+    TrialMailer.reopen_email(pessoa("fr"), atividade)
   end
 
   def reopen_pt
-    TrialMailer.reopen_email(pessoa("pt", nome: "Marina"), "token-de-exemplo")
+    TrialMailer.reopen_email(pessoa("pt", nome: "Marina"), atividade)
   end
 
   # Quem nunca abriu uma atividade: é o caso de 4 das 5 pessoas reais.

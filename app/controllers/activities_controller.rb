@@ -55,7 +55,8 @@ class ActivitiesController < ApplicationController
       redirect_to student_dashboard_path, flash: { daily_limit: true } and return
     end
     @questions = load_questions
-    
+    record_trial_first_activity_opened
+
     if params[:show_score] == 'true' && session[:quiz_attempt_id].present?
       @quiz_attempt = QuizAttempt.find_by(id: session[:quiz_attempt_id])
       if @quiz_attempt && @quiz_attempt.activity_id == @activity.id
@@ -63,6 +64,9 @@ class ActivitiesController < ApplicationController
         @score = @quiz_attempt.score
         @total_correct = @quiz_attempt.results["total_correct"]
         @total_questions = @quiz_attempt.results["total_questions"]
+        # No teste, o fim de uma atividade é o melhor momento para oferecer a
+        # próxima: sem isto os botões eram só "ver detalhes" e "tentar de novo".
+        @trial_next = current_user.suggested_first_activity if current_user.trial_access_active?
       end
     else
       session.delete(:show_score_data) if session[:show_score_data]&.dig("activity_id") == @activity.id
@@ -406,6 +410,15 @@ class ActivitiesController < ApplicationController
     unless current_user&.teacher?
       redirect_to root_path, alert: "Acesso restrito a professores."
     end
+  end
+
+  # "Abriu uma atividade" é o degrau do funil entre entrar e terminar: separa
+  # quem não achou por onde começar de quem começou e desistiu no meio — dois
+  # problemas com soluções diferentes. Uma escrita na vida da conta.
+  def record_trial_first_activity_opened
+    return unless current_user&.trial? && current_user.first_activity_opened_at.nil?
+
+    current_user.update_column(:first_activity_opened_at, Time.current)
   end
 
   def check_trial_level_restriction!

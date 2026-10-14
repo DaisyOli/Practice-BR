@@ -122,11 +122,14 @@ Rails.application.configure do
         cron: "0 7 * * 1 Europe/Paris",
         class: "WeeklyReminderJob"
       },
-      # Meia hora depois do lembrete do 3º dia, de propósito: os dois nunca
-      # falam com a mesma pessoa (um é de quem começou, outro de quem não),
-      # mas se um dia se cruzarem, chegam em horas diferentes.
+      # De hora em hora, das 8h às 21h de Paris: o lembrete do mesmo dia sai
+      # ~4h depois do cadastro e o D+1 sai perto das 24h, em vez de esperar a
+      # manhã seguinte. A janela de horário é o "não mandar de madrugada". Cada
+      # email tem trava própria no banco (TrialSequenceJob#send_once), então
+      # rodar 14 vezes por dia não repete nada. Não cruza com o lembrete do 3º
+      # dia (7h): um fala com quem começou, o outro com quem não.
       trial_sequence: {
-        cron: "30 7 * * * Europe/Paris",
+        cron: "5 8-21 * * * Europe/Paris",
         class: "TrialSequenceJob"
       },
       # A cada 6h (não 1x/dia): o gatilho é "48h desde a última atividade",

@@ -12,6 +12,7 @@ class ApplicationController < ActionController::Base
   before_action :configure_permitted_parameters, if: :devise_controller?
   before_action :check_trial_restrictions!
   before_action :check_payment_status!
+  before_action :record_trial_first_access
   around_action :switch_locale
 
   def after_sign_in_path_for(resource)
@@ -60,8 +61,43 @@ class ApplicationController < ActionController::Base
     else
       # Aluno da landing page: trial de 3 atividades ou 7 dias
       return if controller_name == "home" && action_name == "trial_expired"
+      return if viewing_own_trial_result?
       redirect_to trial_expired_path if current_user.trial_expired? || current_user.trial_exhausted?
     end
+  end
+
+  # O teste acabou, mas o resultado do que a pessoa já fez continua sendo dela.
+  #
+  # Sem isto, quem enviava a 3ª atividade era mandado para a tela de fim antes
+  # de ver a própria nota: o envio gasta a última vaga, e o redirecionamento
+  # para o resultado já encontrava o teste encerrado. Achado pela Daisy testando
+  # o fluxo em 14/10/2026. Fica liberado só o que mostra uma tentativa que já
+  # existe — resultado, correção da IA em andamento e avaliação da atividade —,
+  # nunca uma atividade nova.
+  TRIAL_RESULT_ACTIONS = {
+    "activities"       => %w[resolve_quiz quiz_results grading_status],
+    "activity_ratings" => %w[create update]
+  }.freeze
+
+  def viewing_own_trial_result?
+    actions = TRIAL_RESULT_ACTIONS[controller_name]
+    return false unless actions&.include?(action_name)
+    # Em resolve_quiz, só a tela de nota — sem o show_score é o formulário de
+    # responder de novo.
+    return false if action_name == "resolve_quiz" && params[:show_score] != "true"
+
+    slug = params[:activity_slug] || params[:slug]
+    current_user.quiz_attempts.joins(:activity).exists?(activities: { slug: slug })
+  end
+
+  # Primeira vez que a pessoa do teste aparece logada, por qualquer caminho:
+  # link da landing, link de email, senha. É o "entrou na plataforma" do funil
+  # (TrialFunnel). Escreve uma vez na vida da conta — depois disso a condição
+  # é falsa e não custa nada.
+  def record_trial_first_access
+    return unless current_user&.trial? && current_user.first_access_at.nil?
+
+    current_user.update_column(:first_access_at, Time.current)
   end
 
   # Cartão recusado não corta o acesso na hora: o aluno tem
