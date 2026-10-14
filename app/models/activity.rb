@@ -25,6 +25,11 @@ class Activity < ApplicationRecord
   scope :ordered, -> { order(created_at: :desc) }
   scope :by_level, ->(level) { where(level: level) }
   scope :published, -> { where(draft: false) }
+
+  # Vitrine do teste: até 3 atividades por nível, escolhidas no painel admin
+  # (Admin::ShowcaseController), na ordem em que quem chega deve encontrá-las.
+  TRIAL_SHOWCASE_SLOTS = 3
+  scope :in_trial_showcase, -> { where.not(trial_showcase_position: nil).order(:trial_showcase_position) }
   scope :with_questions_count, -> {
     left_outer_joins(:questions)
       .group(:id)
@@ -32,6 +37,9 @@ class Activity < ApplicationRecord
   }
 
   before_validation :generate_slug, if: :should_generate_slug?
+  # Mudou de nível, sai da vitrine: ela foi escolhida para um nível, e a mesma
+  # posição no nível novo pode já estar ocupada.
+  before_save :leave_trial_showcase, if: -> { will_save_change_to_level? && trial_showcase_position.present? }
   after_create      :fetch_unsplash_cover
   after_commit      :clear_cache
   
@@ -134,5 +142,9 @@ class Activity < ApplicationRecord
     )
   rescue StandardError
     nil
+  end
+
+  def leave_trial_showcase
+    self.trial_showcase_position = nil
   end
 end

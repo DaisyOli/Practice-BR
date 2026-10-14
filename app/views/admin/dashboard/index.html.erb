@@ -115,6 +115,19 @@
 
     <p class="admin-tools__label">Entender e ajustar</p>
 
+    <div style="margin-bottom:12px;">
+      <%= link_to admin_showcase_path, class: "admin-tool admin-tool--green" do %>
+        <% escolhidas = Activity.published.in_trial_showcase.count %>
+        <span class="admin-tool__emoji">🪟</span>
+        <div>
+          <div class="admin-tool__title">Vitrine do teste</div>
+          <div class="admin-tool__sub">
+            <%= escolhidas.zero? ? "nenhuma escolhida — o teste mostra a mais recente" : "#{escolhidas} escolhida#{escolhidas == 1 ? '' : 's'} pelos níveis" %>
+          </div>
+        </div>
+      <% end %>
+    </div>
+
     <div class="admin-tools__pair">
       <%= link_to admin_activities_path, class: "admin-tool admin-tool--quiet" do %>
         <span class="admin-tool__emoji">⭐</span>

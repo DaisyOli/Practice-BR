@@ -125,7 +125,11 @@ class StudentDashboardPresenter
     return @best_candidate if defined?(@best_candidate)
 
     @best_candidate =
-      if last_support && pending_activities.any?
+      # No teste, a próxima segue a Vitrine (User#suggested_first_activity) —
+      # a mesma escolha do "Comece por aqui" e dos emails.
+      if user.trial?
+        user.suggested_first_activity
+      elsif last_support && pending_activities.any?
         names = attachment_names_for(pending_activities.map(&:id))
         pending_activities.find { |act| support_of(act, names) != last_support } ||
           pending_activities.first
