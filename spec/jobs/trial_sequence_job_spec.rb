@@ -170,8 +170,9 @@ RSpec.describe TrialSequenceJob, type: :job do
   end
 
   describe "volta (dias depois do fim)" do
-    it "faz o último chamado" do
-      pessoa = teste(trial_activities_used: 3, trial_ended_email_sent_at: 6.days.ago)
+    it "faz o último chamado, 8 dias depois do fim" do
+      pessoa = teste(trial_activities_used: 3, trial_ended_email_sent_at: 9.days.ago,
+                     trial_next_step_sent_at: 5.days.ago)
 
       expect { described_class.perform_now }
         .to have_enqueued_mail(TrialMailer, :winback_email).with(pessoa, disponivel)
@@ -179,8 +180,9 @@ RSpec.describe TrialSequenceJob, type: :job do
       expect(pessoa.reload.trial_winback_sent_at).to be_present
     end
 
-    it "não atropela o email do fim — espera os dias combinados" do
-      teste(trial_activities_used: 3, trial_ended_email_sent_at: 1.day.ago)
+    it "não atropela os emails anteriores — espera os dias combinados" do
+      teste(trial_activities_used: 3, trial_ended_email_sent_at: 6.days.ago,
+            trial_next_step_sent_at: 3.days.ago)
 
       expect { described_class.perform_now }
         .not_to have_enqueued_mail(TrialMailer, :winback_email)
@@ -193,6 +195,48 @@ RSpec.describe TrialSequenceJob, type: :job do
 
       expect { described_class.perform_now }
         .not_to have_enqueued_mail(TrialMailer, :winback_email)
+    end
+  end
+
+  describe "Fase B: a próxima do percurso (3 dias depois do fim)" do
+    def praticou(**attrs)
+      pessoa = teste(trial_activities_used: 3, **attrs)
+      create(:quiz_attempt, user: pessoa, activity: create(:activity, :B1, draft: false))
+      pessoa
+    end
+
+    it "mostra a próxima atividade do percurso a quem praticou" do
+      quarta = create(:activity, :B1, draft: false, title: "A quarta")
+      Activity.set_path!("B1", [quarta.id])
+      pessoa = praticou(trial_ended_email_sent_at: 4.days.ago)
+
+      expect { described_class.perform_now }
+        .to have_enqueued_mail(TrialMailer, :next_step_email).with(pessoa, quarta)
+    end
+
+    it "espera os 3 dias" do
+      praticou(trial_ended_email_sent_at: 1.day.ago)
+
+      expect { described_class.perform_now }.not_to have_enqueued_mail(TrialMailer, :next_step_email)
+    end
+
+    it "não fala com quem nunca praticou" do
+      teste(trial_activities_used: 0, trial_expires_at: 1.day.ago, trial_reopened_at: 10.days.ago,
+            trial_ended_email_sent_at: 4.days.ago)
+
+      expect { described_class.perform_now }.not_to have_enqueued_mail(TrialMailer, :next_step_email)
+    end
+
+    it "não quebra a promessa de quem já recebeu o 'último email'" do
+      praticou(trial_ended_email_sent_at: 20.days.ago, trial_winback_sent_at: 10.days.ago)
+
+      expect { described_class.perform_now }.not_to have_enqueued_mail
+    end
+
+    it "para quando a pessoa assina" do
+      praticou(trial_ended_email_sent_at: 4.days.ago, stripe_customer_id: "cus_1")
+
+      expect { described_class.perform_now }.not_to have_enqueued_mail
     end
   end
 

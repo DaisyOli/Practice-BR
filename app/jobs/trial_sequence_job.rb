@@ -16,8 +16,14 @@
 #   4h–20h sem ter começado       → mesmo dia (TrialMailer#first_nudge_email)
 #   D+1 sem ter começado          → ativação (TrialMailer#activation_email)
 #   venceu sem nunca ter começado → reabertura de 7 dias (TrialMailer#reopen_email)
-#   fim do teste (esgotou/venceu) → fim (TrialMailer#ended_email)
-#   +5 dias                       → volta (TrialMailer#winback_email)
+#   fim do teste (esgotou/venceu) → balanço pessoal (TrialMailer#ended_email)
+#   +3 dias, se praticou          → a próxima do percurso (TrialMailer#next_step_email)
+#   +8 dias                       → a última (TrialMailer#winback_email)
+#
+# Os três depois do fim são a "Fase B" (2026-10-15): o balanço mostra à pessoa o
+# que ela fez, o do meio mostra uma atividade concreta que a assinatura abre, e
+# o último promete silêncio. Sem desconto, por decisão da Daisy. Para no
+# instante em que a pessoa assina: assinante sai de `candidates`.
 #
 # O lembrete do 3º dia (TrialReminderJob) continua existindo e agora só fala com
 # quem COMEÇOU — os dois não se cruzam.
@@ -33,14 +39,15 @@ class TrialSequenceJob < ApplicationJob
   # Distância mínima entre o lembrete do mesmo dia e o D+1.
   NUDGE_SPACING     = 12.hours
   REOPEN_FOR        = 7.days
-  WINBACK_AFTER     = 5.days
+  NEXT_STEP_AFTER   = 3.days
+  WINBACK_AFTER     = 8.days
 
   def perform
     candidates.find_each do |trial|
       # No máximo um email por pessoa por rodada. Sem isto, alguém que esgotou o
       # teste no primeiro dia receberia dois emails na mesma manhã.
       send_first_nudge(trial) || send_activation(trial) || send_reopen(trial) ||
-        send_ended(trial) || send_winback(trial)
+        send_ended(trial) || send_next_step(trial) || send_winback(trial)
     end
   end
 
@@ -124,6 +131,25 @@ class TrialSequenceJob < ApplicationJob
     total = total_activities_for(trial)
     send_once(trial, :trial_ended_email_sent_at) do
       TrialMailer.ended_email(trial, total).deliver_later
+    end
+  end
+
+  # A próxima atividade do percurso — a 4ª, para quem fez as 3 do teste. Só
+  # para quem praticou: a quem nunca abriu nada, "a próxima" não diz nada.
+  def send_next_step(trial)
+    return false if trial.trial_next_step_sent_at.present?
+    # Quem já recebeu o "último email" (antes de este existir) não recebe mais
+    # nada: ele prometeu silêncio.
+    return false if trial.trial_winback_sent_at.present?
+    return false if trial.trial_ended_email_sent_at.blank?
+    return false if trial.trial_ended_email_sent_at > NEXT_STEP_AFTER.ago
+    return false if trial.quiz_attempts.none?
+
+    activity = trial.next_path_activity || first_activity_for(trial)
+    return false if activity.nil?
+
+    send_once(trial, :trial_next_step_sent_at) do
+      TrialMailer.next_step_email(trial, activity).deliver_later
     end
   end
 

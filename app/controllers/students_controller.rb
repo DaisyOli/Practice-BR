@@ -13,7 +13,10 @@ class StudentsController < ApplicationController
     #
     # Some sozinho: na segunda visita a pessoa já tem uma tentativa e o bloco não
     # aparece mais. Não precisa de flag, de "não mostrar de novo", nem de coluna.
-    @start_here = current_user.suggested_first_activity if current_user.never_practiced?
+    # Teste encerrado: nada de "Comece por aqui" — a atividade levaria à tela
+    # de fim. Quem chega aqui depois do teste vê a faixa de fim (_trial_ended).
+    trial_over  = current_user.trial? && !current_user.trial_access_active?
+    @start_here = current_user.suggested_first_activity if current_user.never_practiced? && !trial_over
 
     # Liga o passo do tour que mostra onde ficam as expressões escritas
     # corrigidas pela IA — só depois de existir alguma para ver.

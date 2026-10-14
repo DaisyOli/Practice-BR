@@ -62,6 +62,7 @@ class ApplicationController < ActionController::Base
       # Aluno da landing page: trial de 3 atividades ou 7 dias
       return if controller_name == "home" && action_name == "trial_expired"
       return if viewing_own_trial_result?
+      return if browsing_after_trial?
       redirect_to trial_expired_path if current_user.trial_expired? || current_user.trial_exhausted?
     end
   end
@@ -78,6 +79,17 @@ class ApplicationController < ActionController::Base
     "activities"       => %w[resolve_quiz quiz_results grading_status],
     "activity_ratings" => %w[create update]
   }.freeze
+
+  # Depois do teste a dashboard continua aberta, só para consulta: as
+  # atividades feitas, as notas e as expressões escritas corrigidas pela IA —
+  # com uma faixa no topo que leva à assinatura. Era um muro (redirect para a
+  # tela de fim) no melhor momento para mostrar à pessoa o que ela conseguiu.
+  # Atividade nova continua levando à tela de fim, que é onde se assina.
+  TRIAL_BROWSING_ACTIONS = { "students" => %w[dashboard open_ended_attempts load_more] }.freeze
+
+  def browsing_after_trial?
+    TRIAL_BROWSING_ACTIONS[controller_name]&.include?(action_name)
+  end
 
   def viewing_own_trial_result?
     actions = TRIAL_RESULT_ACTIONS[controller_name]
