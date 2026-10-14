@@ -17,17 +17,23 @@
 # "Uma vez só" não depende de ninguém lembrar: o índice único de trial_events
 # (user_id, kind) recusa o segundo registro, mesmo com duas execuções juntas.
 class TrialRecovery
-  EXTENSION = 48.hours
+  # Abaixo disto de prazo restante, o teste é reaberto. Quanto ele ganha é
+  # parâmetro (`extension:`): 48h na recuperação de 12–13/10, 7 dias na
+  # campanha da base antiga — quem largou o teste há semanas não está
+  # esperando o email, e 48h é pouco para ver e voltar.
+  EXTENSION_THRESHOLD = 48.hours
+  EXTENSION_KINDS     = %w[extension extension_48h].freeze
 
   Row = Struct.new(:user, :eligible, :reason, :welcome, :will_extend, keyword_init: true)
 
   # `from` e `to` são datas (inclusive) no fuso da aplicação — Paris
   # (config.time_zone). 12/10 começa à meia-noite de Paris, não de Londres.
-  def initialize(from:, to:)
-    @range = Time.zone.parse(from.to_s).beginning_of_day..Time.zone.parse(to.to_s).end_of_day
+  def initialize(from:, to:, extension: 48.hours)
+    @range     = Time.zone.parse(from.to_s).beginning_of_day..Time.zone.parse(to.to_s).end_of_day
+    @extension = extension
   end
 
-  attr_reader :range
+  attr_reader :range, :extension
 
   def report
     users_in_window.map do |user|
@@ -76,7 +82,11 @@ class TrialRecovery
     return "já foi aluno pagante (tem cliente na Stripe)" if user.stripe_customer_id.present?
     return "convite de professora, não veio da landing"   if user.invitation_created_at.present?
     return "admin"                                        if user.admin?
-    return "já fez atividade"                             if user.quiz_attempts.exists?
+    return "pediu para não receber emails"                if user.marketing_emails_opted_out?
+    # Quem fez 1 ou 2 entra (com texto próprio). Quem fez as 3 terminou o teste
+    # pelo número de atividades — mais prazo não muda nada; a conversa com essa
+    # pessoa é sobre assinar.
+    return "já fez as 3 atividades"                       if user.quiz_attempts.count >= 3
     return "já recebeu a recuperação"                     if user.trial_events.exists?(kind: "recovery_email")
     return "sem atividade publicada no nível #{user.level}" if user.suggested_first_activity.nil?
 
@@ -84,7 +94,7 @@ class TrialRecovery
   end
 
   def extension_due?(user)
-    user.trial_expires_at.nil? || user.trial_expires_at < EXTENSION.from_now
+    user.trial_expires_at.nil? || user.trial_expires_at < EXTENSION_THRESHOLD.from_now
   end
 
   # Tudo numa transação: o registro de auditoria, a extensão e o email na fila
@@ -98,20 +108,23 @@ class TrialRecovery
                          details: { "window" => [range.begin.to_date, range.end.to_date].map(&:iso8601),
                                     "activity_id" => activity.id })
 
-      if extension_due?(user) && !user.trial_events.exists?(kind: "extension_48h")
+      if extension_due?(user) && !user.trial_events.exists?(kind: EXTENSION_KINDS)
         before = user.trial_expires_at
-        after  = EXTENSION.from_now
+        after  = extension.from_now
         user.update_columns(trial_expires_at: after)
-        TrialEvent.create!(user: user, kind: "extension_48h",
-                           details: { "from" => before&.iso8601, "to" => after.iso8601 })
+        TrialEvent.create!(user: user, kind: "extension",
+                           details: { "from" => before&.iso8601, "to" => after.iso8601,
+                                      "hours" => (extension / 1.hour).round })
         extended = true
       end
 
-      # Este email faz o papel do lembrete do mesmo dia e do D+1. Marcar os dois
-      # impede a sequência automática de mandar mais um logo em seguida.
+      # Este email faz o papel dos lembretes automáticos (mesmo dia, D+1 e o do
+      # 3º dia de quem começou). Marcar os três impede a sequência de mandar
+      # mais um logo em seguida.
       now = Time.current
       user.update_columns(first_nudge_sent_at:      user.first_nudge_sent_at || now,
-                          activation_nudge_sent_at: user.activation_nudge_sent_at || now)
+                          activation_nudge_sent_at: user.activation_nudge_sent_at || now,
+                          trial_reminder_sent_at:   user.trial_reminder_sent_at || now)
 
       TrialMailer.recovery_email(user, activity, extended: extended).deliver_later
       true

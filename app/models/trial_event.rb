@@ -8,7 +8,9 @@
 # O índice único (user_id, kind) é a trava de "uma vez só": duas execuções
 # simultâneas da recuperação não conseguem gravar o mesmo evento duas vezes.
 class TrialEvent < ApplicationRecord
-  KINDS = %w[recovery_email extension_48h].freeze
+  # `extension_48h` é o nome antigo (recuperação de 12–13/10); `extension`
+  # guarda a duração nos detalhes.
+  KINDS = %w[recovery_email extension extension_48h].freeze
 
   belongs_to :user
 

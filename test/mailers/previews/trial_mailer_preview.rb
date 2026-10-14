@@ -37,6 +37,14 @@ class TrialMailerPreview < ActionMailer::Preview
     TrialMailer.recovery_email(pessoa("fr"), atividade, extended: true)
   end
 
+  # Campanha da base antiga: cadastro de julho que já recebeu o "último email".
+  def recovery_fr_antigo_com_promessa
+    pessoa = pessoa("fr")
+    pessoa.created_at = 3.months.ago
+    pessoa.trial_winback_sent_at = 2.months.ago
+    TrialMailer.recovery_email(pessoa, atividade, extended: true)
+  end
+
   def recovery_pt
     TrialMailer.recovery_email(pessoa("pt", nome: "Marina"), atividade)
   end

@@ -263,6 +263,11 @@ class User < ApplicationRecord
 
   DAILY_STUDENT_LIMIT = 5
 
+  # Pediu para não receber lembretes nem campanhas (ver MarketingEmail).
+  def marketing_emails_opted_out?
+    marketing_emails_opted_out_at.present?
+  end
+
   def trial_access_active?
     trial? && !trial_expired? && !trial_exhausted?
   end

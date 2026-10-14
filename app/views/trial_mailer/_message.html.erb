@@ -83,6 +83,14 @@
               <% else %>
                 © Practice-BR
               <% end %>
+              <%# Descadastro em todo email que a pessoa não pediu (MarketingEmail). %>
+              <br>
+              <a href="<%= unsubscribe_url(token: UnsubscribeToken.generate(user)) %>" style="color:#9C9892;">
+                <% if user.language == "fr" %>Ne plus recevoir ces emails
+                <% elsif user.language == "en" %>Stop receiving these emails
+                <% else %>Não quero mais receber estes emails
+                <% end %>
+              </a>
             </p>
           </td>
         </tr>

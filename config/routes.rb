@@ -126,6 +126,14 @@ Rails.application.routes.draw do
   # leva direto ao destino do email. Ver TrialEmailLink.
   get "entrar", to: "trial_starts#link", as: :trial_link
 
+  # Descadastro dos emails não transacionais. O GET só mostra a pergunta — quem
+  # descadastra é o POST, para o robô de antivírus que abre links não
+  # descadastrar ninguém por engano. O POST também atende o clique único do
+  # Gmail (cabeçalho List-Unsubscribe-Post).
+  get  "descadastrar",          to: "unsubscribes#show",    as: :unsubscribe
+  post "descadastrar",          to: "unsubscribes#create"
+  post "descadastrar/reativar", to: "unsubscribes#destroy", as: :resubscribe
+
   # Assinatura Stripe
   get  "assinar",              to: "billing#new",              as: :billing_new
   post "assinar/checkout",     to: "billing#create_checkout",  as: :billing_checkout

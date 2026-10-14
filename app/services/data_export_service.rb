@@ -51,7 +51,8 @@ class DataExportService
       percurso_profissional: @user.professional_type,
       conta_criada_em:       @user.created_at&.iso8601,
       convite_aceito_em:     @user.invitation_accepted_at&.iso8601,
-      lembrete_semanal:      @user.weekly_reminder_email
+      lembrete_semanal:      @user.weekly_reminder_email,
+      emails_de_lembrete_cancelados_em: @user.marketing_emails_opted_out_at&.iso8601
     }.compact
   end
 

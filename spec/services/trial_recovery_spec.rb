@@ -37,13 +37,15 @@ RSpec.describe TrialRecovery do
 
     it "explica por que cada pessoa está fora" do
       fez    = trial_em("2026-10-12 10:00")
-      create(:quiz_attempt, user: fez, activity: atividade)
+      3.times { create(:quiz_attempt, user: fez, activity: create(:activity, :B1, draft: false)) }
+      saiu   = trial_em("2026-10-12 10:30", marketing_emails_opted_out_at: 1.day.ago)
       pagou  = trial_em("2026-10-12 11:00", stripe_customer_id: "cus_1")
       aluno  = create(:user, :student, created_at: Time.zone.parse("2026-10-12 12:00"))
       ok     = trial_em("2026-10-13 09:00")
 
       linhas = recovery.report.index_by { |r| r.user.id }
-      expect(linhas[fez.id].reason).to eq("já fez atividade")
+      expect(linhas[fez.id].reason).to eq("já fez as 3 atividades")
+      expect(linhas[saiu.id].reason).to eq("pediu para não receber emails")
       expect(linhas[pagou.id].reason).to include("Stripe")
       expect(linhas[aluno.id].reason).to include("não é trial")
       expect(linhas[ok.id].eligible).to be true
@@ -77,11 +79,11 @@ RSpec.describe TrialRecovery do
 
     it "pula aprovado que ficou inelegível entre a prévia e o envio" do
       pessoa = trial_em("2026-10-12 10:00")
-      create(:quiz_attempt, user: pessoa, activity: atividade)
+      pessoa.update_column(:marketing_emails_opted_out_at, Time.current)
 
       resultado = nil
       expect { resultado = recovery.run!([pessoa.id]) }.not_to have_enqueued_mail
-      expect(resultado[:skipped][pessoa.id]).to eq("já fez atividade")
+      expect(resultado[:skipped][pessoa.id]).to eq("pediu para não receber emails")
     end
 
     it "pula id que não é da janela" do
@@ -108,7 +110,7 @@ RSpec.describe TrialRecovery do
 
       pessoa.reload
       expect(pessoa.trial_expires_at).to be_within(1.second).of(Time.zone.parse("2026-10-16 10:00"))
-      evento = pessoa.trial_events.find_by(kind: "extension_48h")
+      evento = pessoa.trial_events.find_by(kind: "extension")
       expect(Time.zone.parse(evento.details["from"])).to eq(Time.zone.parse("2026-10-14 20:00"))
     end
 
@@ -119,7 +121,7 @@ RSpec.describe TrialRecovery do
 
       expect(pessoa.reload.trial_access_active?).to be true
       corpo = CGI.unescapeHTML(ActionMailer::Base.deliveries.last.body.encoded)
-      expect(corpo).to include("Acrescentamos 48 horas")
+      expect(corpo).to include("Reabrimos seu teste")
       expect(corpo).to include("16/10/2026")
     end
 
@@ -181,6 +183,52 @@ RSpec.describe TrialRecovery do
 
       expect(pessoa.reload.quiz_attempts.count).to eq(1)
       expect(pessoa.trial_activities_used).to eq(1)
+    end
+  end
+
+  describe "campanha da base antiga" do
+    let(:campanha) { described_class.new(from: "2026-07-01", to: "2026-10-13", extension: 7.days) }
+
+    it "reabre por 7 dias quem venceu há meses" do
+      pessoa = trial_em("2026-07-20 10:00", trial_expires_at: Time.zone.parse("2026-08-09 07:30"))
+
+      campanha.run!([pessoa.id])
+
+      expect(pessoa.reload.trial_expires_at).to be_within(1.second).of(7.days.from_now)
+      expect(pessoa.trial_events.find_by(kind: "extension").details["hours"]).to eq(168)
+    end
+
+    it "inclui quem fez 1 ou 2, com o texto de quem já começou" do
+      pessoa = trial_em("2026-08-20 10:00", trial_expires_at: 1.month.ago, language: "pt")
+      create(:quiz_attempt, user: pessoa, activity: create(:activity, :B1, draft: false))
+
+      perform_enqueued_jobs { campanha.run!([pessoa.id]) }
+
+      corpo = CGI.unescapeHTML(ActionMailer::Base.deliveries.last.body.encoded)
+      expect(corpo).to include("Você fez 1 das 3 atividades")
+      expect(corpo).to include("Continuar →")
+      expect(corpo).to include("há algum tempo")
+    end
+
+    it "admite a promessa quebrada para quem recebeu o 'último email'" do
+      pessoa = trial_em("2026-07-20 10:00", trial_expires_at: 2.months.ago,
+                        trial_winback_sent_at: 50.days.ago, language: "fr")
+
+      perform_enqueued_jobs { campanha.run!([pessoa.id]) }
+
+      corpo = CGI.unescapeHTML(ActionMailer::Base.deliveries.last.body.encoded)
+      expect(corpo).to include("notre dernier email serait le dernier")
+      expect(corpo).to include("il y a quelque temps")
+    end
+
+    it "não dispara o lembrete do 3º dia logo depois, para quem já começou" do
+      pessoa = trial_em("2026-09-20 10:00", trial_expires_at: 1.week.ago)
+      create(:quiz_attempt, user: pessoa, activity: create(:activity, :B1, draft: false))
+      pessoa.update_column(:trial_activities_used, 1)
+
+      campanha.run!([pessoa.id])
+
+      expect { TrialReminderJob.perform_now }.not_to have_enqueued_mail(TrialMailer, :reminder_email)
     end
   end
 end
