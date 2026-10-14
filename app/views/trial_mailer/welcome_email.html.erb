@@ -17,7 +17,10 @@
                 Practice-BR
               </div>
               <div style="font-size:0.8rem; color:#6EBD96; margin-top:4px;">
-                Plataforma de Português para Estrangeiros
+                <% if @user.language == "fr" %>Plateforme de Portugais pour Étrangers
+                <% elsif @user.language == "en" %>Portuguese Learning Platform
+                <% else %>Plataforma de Português para Estrangeiros
+                <% end %>
               </div>
             </td>
           </tr>
@@ -25,7 +28,7 @@
           <%# Corpo %>
           <tr>
             <td style="padding:36px 36px 28px;">
-              <div style="font-size:2rem; margin-bottom:16px;">🔖</div>
+              <div style="font-size:2rem; margin-bottom:16px;">🌱</div>
               <h1 style="font-size:1.2rem; font-weight:700; color:#1C1917; margin:0 0 12px;">
                 <%= @copy[:title] %>
               </h1>

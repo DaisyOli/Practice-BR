@@ -275,6 +275,30 @@
       <% end %>
     </div>
 
+    <%# Funil de ativação dos últimos 30 dias (TrialFunnel). A pergunta que ele
+        responde é uma só: quem pediu o teste chegou a fazer uma atividade? %>
+    <% f = @trial_funnel %>
+    <div style="background:var(--paper); border:1px solid var(--line); border-radius:12px; padding:14px 18px; margin-bottom:1.5rem;">
+      <div style="font-family:'DM Mono',monospace; font-size:0.65rem; color:var(--ink-faint); letter-spacing:0.08em; text-transform:uppercase; margin-bottom:8px;">
+        Ativação · últimos 30 dias
+      </div>
+      <div style="font-family:'Plus Jakarta Sans',sans-serif; font-size:0.88rem; color:var(--ink); line-height:1.7;">
+        <strong><%= f[:requested] %></strong> pediram →
+        <strong><%= f[:accessed] %></strong> entraram →
+        <strong><%= f[:opened_activity] %></strong> abriram uma atividade →
+        <strong><%= f[:completed_first] %></strong> concluíram a primeira
+        <span style="color:var(--brand); font-weight:700;">(<%= f[:activation_rate] %>%)</span>
+        · <%= f[:expired_untouched] %> venceram sem nada
+      </div>
+      <% if f[:activated_after].any? %>
+        <div style="font-family:'Plus Jakarta Sans',sans-serif; font-size:0.78rem; color:var(--ink-soft); margin-top:4px;">
+          Primeira atividade depois de:
+          <%= f[:activated_after].map { |label, n| "#{label} (#{n})" }.join(" · ") %>
+          — ordem no tempo, não prova de causa.
+        </div>
+      <% end %>
+    </div>
+
     <%# Tabela de trials %>
     <% if @trials.empty? %>
       <div style="text-align:center; padding:24px; color:var(--ink-faint); font-family:'Plus Jakarta Sans',sans-serif; font-size:0.88rem;">

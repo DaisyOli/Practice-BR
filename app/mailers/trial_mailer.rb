@@ -1,61 +1,69 @@
 class TrialMailer < ApplicationMailer
   INTERNAL_EMAIL = "contato@practicebr.com".freeze
 
-  # O papel deste email mudou em 2026-07-31. Antes ele era o portão: a pessoa
-  # se cadastrava e só entrava clicando aqui. Hoje a landing já a coloca dentro
-  # do app, então quando este email chega ela **já está praticando** — e o texto
-  # precisa dizer isso, senão manda alguém "entrar" num lugar onde já está.
+  # O papel deste email mudou duas vezes.
   #
-  # Agora ele é o caminho de volta: guarda o link pra quando ela fechar o
-  # navegador. Ver TrialStartToken e TrialStartsController.
+  # Até 2026-07-31 ele era o portão: a pessoa só entrava clicando aqui. Depois
+  # virou "o caminho de volta" e passou a dizer "você já está na Practice-BR" —
+  # o que só é verdade se o redirecionamento da landing deu certo. E o botão
+  # levava para "Criar nova senha": voltar exigia inventar uma senha, a mesma
+  # barreira que zerou a ativação em julho.
+  #
+  # Desde 2026-10-14 ele serve aos dois casos com uma frase só: boas-vindas e um
+  # botão que leva direto à primeira atividade, já logado, de qualquer aparelho
+  # (TrialEmailLink). Quem já está dentro cai na atividade; quem fechou a aba
+  # também. A senha continua sendo pedida no fim do teste, não no começo.
   WELCOME = {
     "fr" => {
-      subject: "Votre lien pour revenir sur Practice-BR",
-      title:   "Gardez ce lien",
-      lead:    "Vous êtes déjà sur Practice-BR — cet email est là pour que vous retrouviez le chemin quand vous reviendrez.",
+      subject:  "Bienvenue sur Practice-BR · votre première activité 🌱",
+      title:    "Bienvenue sur Practice-BR",
+      lead:     "Votre essai gratuit est ouvert. Ce sont des activités courtes de portugais, à votre niveau, avec le résultat tout de suite — la première prend quelques minutes.",
       includes: "Votre essai comprend",
-      level:   "Niveau enregistré",
-      count:   "Jusqu'à <strong>3 activités</strong> à votre niveau",
-      until:   "Valable jusqu'au",
-      cta:     "Retourner sur Practice-BR →",
-      note:    "En cliquant, vous créerez un mot de passe pour garder votre progression. Ce lien reste valable pendant toute la durée de votre essai.",
-      after:   "Une fois les 3 activités terminées, vous pourrez vous abonner pour continuer.",
-      footer:  "© Practice-BR · Ceci est un message automatique, merci de ne pas y répondre."
+      level:    "Niveau",
+      count:    "<strong>3 activités</strong> à votre niveau",
+      until:    "Ouvert jusqu'au",
+      cta:      "Commencer mon premier exercice →",
+      note:     "Ce bouton vous fait entrer directement, sans mot de passe, depuis n'importe quel appareil. Gardez cet email : il vous ramène ici pendant tout l'essai.",
+      after:    "Une fois les 3 activités terminées, vous pourrez vous abonner pour continuer.",
+      footer:   "© Practice-BR · Ceci est un message automatique, merci de ne pas y répondre."
     },
     "en" => {
-      subject: "Your link back to Practice-BR",
-      title:   "Keep this link",
-      lead:    "You're already on Practice-BR — this email is here so you can find your way back later.",
+      subject:  "Welcome to Practice-BR · your first activity 🌱",
+      title:    "Welcome to Practice-BR",
+      lead:     "Your free trial is open. These are short Portuguese activities at your level, with your result right away — the first one takes a few minutes.",
       includes: "Your trial includes",
-      level:   "Registered level",
-      count:   "Up to <strong>3 activities</strong> at your level",
-      until:   "Valid until",
-      cta:     "Back to Practice-BR →",
-      note:    "Clicking will let you create a password to keep your progress. This link stays valid for the whole length of your trial.",
-      after:   "Once you've done the 3 activities, you can subscribe to keep going.",
-      footer:  "© Practice-BR · This is an automated message, please do not reply."
+      level:    "Level",
+      count:    "<strong>3 activities</strong> at your level",
+      until:    "Open until",
+      cta:      "Start my first exercise →",
+      note:     "This button takes you straight in, no password needed, from any device. Keep this email: it brings you back here for the whole trial.",
+      after:    "Once you've done the 3 activities, you can subscribe to keep going.",
+      footer:   "© Practice-BR · This is an automated message, please do not reply."
     },
     "pt" => {
-      subject: "Seu link para voltar à Practice-BR",
-      title:   "Guarde este link",
-      lead:    "Você já está na Practice-BR — este email existe para você achar o caminho de volta depois.",
+      subject:  "Boas-vindas à Practice-BR · sua primeira atividade 🌱",
+      title:    "Boas-vindas à Practice-BR",
+      lead:     "Seu teste gratuito está aberto. São atividades curtas de português, no seu nível, com o resultado na hora — a primeira leva poucos minutos.",
       includes: "Seu teste inclui",
-      level:   "Nível cadastrado",
-      count:   "Até <strong>3 atividades</strong> no seu nível",
-      until:   "Válido até",
-      cta:     "Voltar para a Practice-BR →",
-      note:    "Ao clicar, você vai criar uma senha para guardar seu progresso. O link continua valendo durante todo o seu teste.",
-      after:   "Quando terminar as 3 atividades, você pode assinar para continuar.",
-      footer:  "© Practice-BR · Este é um email automático, por favor não responda."
+      level:    "Nível",
+      count:    "<strong>3 atividades</strong> no seu nível",
+      until:    "Aberto até",
+      cta:      "Começar meu primeiro exercício →",
+      note:     "Este botão te leva direto pra dentro, sem senha, de qualquer aparelho. Guarde este email: ele te traz de volta durante todo o teste.",
+      after:    "Quando terminar as 3 atividades, você pode assinar para continuar.",
+      footer:   "© Practice-BR · Este é um email automático, por favor não responda."
     }
   }.freeze
 
-  def welcome_email(user, reset_token)
-    @user        = user
-    @reset_token = reset_token
-    @login_url   = edit_user_password_url(reset_password_token: reset_token, host: default_url_options[:host], protocol: default_url_options[:protocol] || "https")
-    @expires_at  = format_date(user.trial_expires_at.to_date, user.language)
-    @copy        = WELCOME.fetch(user.language, WELCOME["fr"])
+  # O segundo argumento era o token de redefinir senha, que o botão usava. Ficou
+  # opcional e ignorado só para os emails que já estavam na fila no momento do
+  # deploy não quebrarem por número de argumentos.
+  def welcome_email(user, _legacy_reset_token = nil)
+    @user       = user
+    @activity   = user.suggested_first_activity
+    @login_url  = trial_entry_url(user, to: @activity ? "activity" : "dashboard", activity: @activity)
+    @expires_at = format_date(user.trial_expires_at.to_date, user.language)
+    @copy       = WELCOME.fetch(user.language, WELCOME["fr"])
 
     mail(to: user.email, subject: @copy[:subject])
   end
@@ -107,7 +115,46 @@ class TrialMailer < ApplicationMailer
     @days_left  = [((user.trial_expires_at - Time.current) / 1.day).ceil, 0].max
     @feitas     = user.trial_activities_used.to_i
     @expires_at = format_date(user.trial_expires_at.to_date, user.language)
-    @url        = student_dashboard_url
+    @url        = trial_entry_url(user, to: "dashboard")
+
+    mail(to: user.email, subject: @copy[:subject])
+  end
+
+  # Lembrete do mesmo dia (≥ 4h depois do cadastro), pra quem ainda não fez
+  # nenhuma atividade. Existe por causa de um padrão medido em 2026-08-03: de
+  # quem começou, todo mundo começou no mesmo dia — 0h, 0,2h, 0,3h, 0,8h, 15h.
+  # Ninguém começou no dia seguinte. O D+1 chegava tarde para a janela em que a
+  # vontade ainda está quente.
+  FIRST_NUDGE = {
+    "fr" => {
+      subject: "Cinq minutes de portugais aujourd'hui ? · cinco minutinhos 🌱",
+      title:   "Votre première activité est prête",
+      lead:    "Vous avez ouvert votre essai tout à l'heure. On vous a choisi une activité à votre niveau : quelques minutes suffisent, et vous voyez votre résultat tout de suite.",
+      cta:     "Commencer mon premier exercice →",
+      note:    "Votre essai est ouvert jusqu'au %{ate}. Le bouton vous fait entrer directement, sans mot de passe."
+    },
+    "en" => {
+      subject: "Five minutes of Portuguese today? · cinco minutinhos 🌱",
+      title:   "Your first activity is ready",
+      lead:    "You opened your trial earlier today. We picked an activity at your level: a few minutes is enough, and you see your result right away.",
+      cta:     "Start my first exercise →",
+      note:    "Your trial is open until %{ate}. The button takes you straight in, no password needed."
+    },
+    "pt" => {
+      subject: "Cinco minutinhos de português hoje? 🌱",
+      title:   "Sua primeira atividade está pronta",
+      lead:    "Você abriu seu teste há pouco. Escolhemos uma atividade no seu nível: poucos minutos bastam, e você vê o resultado na hora.",
+      cta:     "Começar meu primeiro exercício →",
+      note:    "Seu teste está aberto até %{ate}. O botão te leva direto pra dentro, sem senha."
+    }
+  }.freeze
+
+  def first_nudge_email(user, activity)
+    @user     = user
+    @activity = activity
+    @copy     = FIRST_NUDGE.fetch(user.language, FIRST_NUDGE["fr"])
+    @note     = @copy[:note] % { ate: format_date(user.trial_expires_at.to_date, user.language) }
+    @url      = trial_entry_url(user, to: "activity", activity: activity)
 
     mail(to: user.email, subject: @copy[:subject])
   end
@@ -151,7 +198,7 @@ class TrialMailer < ApplicationMailer
     @activity = activity
     @copy     = ACTIVATION.fetch(user.language, ACTIVATION["fr"])
     @dias     = [((user.trial_expires_at - Time.current) / 1.day).ceil, 0].max
-    @url      = solve_activity_url(activity)
+    @url      = trial_entry_url(user, to: "activity", activity: activity)
 
     mail(to: user.email, subject: @copy[:subject])
   end
@@ -163,37 +210,38 @@ class TrialMailer < ApplicationMailer
   #    landing nunca criou senha, e o link do email original vale 8 dias. Passado
   #    o prazo, essa pessoa está **trancada para fora da própria conta** — um
   #    convite sem link novo seria um convite para uma porta fechada.
+  #
+  #    Até 2026-10-14 o link novo era o de redefinir senha: reabrir o teste
+  #    passava por "Criar nova senha". Agora é o TrialEmailLink, que entra direto.
   REOPEN = {
     "fr" => {
       subject: "On vous rouvre l'essai · seu teste, de novo 🌱",
       title:   "Vos 3 activités n'ont jamais servi",
       lead:    "Vous aviez créé un accès et la semaine est passée sans qu'on se croise. Ça arrive. On vous rouvre l'essai pour 7 jours — mêmes 3 activités, à votre niveau, sans rien payer.",
       cta:     "Ouvrir mon essai →",
-      note:    "Ce lien vous fait entrer directement et vous laisse choisir un mot de passe. Il est valable 8 jours."
+      note:    "Ce lien vous fait entrer directement, sans mot de passe. Il est valable 8 jours."
     },
     "en" => {
       subject: "We're reopening your trial · seu teste, de novo 🌱",
       title:   "Your 3 activities were never used",
       lead:    "You created an access and the week went by without us crossing paths. It happens. We're reopening your trial for 7 days — same 3 activities, at your level, nothing to pay.",
       cta:     "Open my trial →",
-      note:    "This link takes you straight in and lets you pick a password. It's valid for 8 days."
+      note:    "This link takes you straight in, no password needed. It's valid for 8 days."
     },
     "pt" => {
       subject: "Reabrimos seu teste 🌱",
       title:   "Suas 3 atividades nunca foram usadas",
       lead:    "Você criou um acesso e a semana passou sem a gente se encontrar. Acontece. Reabrimos seu teste por 7 dias — as mesmas 3 atividades, no seu nível, sem pagar nada.",
       cta:     "Abrir meu teste →",
-      note:    "Este link te leva direto pra dentro e deixa você criar uma senha. Vale por 8 dias."
+      note:    "Este link te leva direto pra dentro, sem senha. Vale por 8 dias."
     }
   }.freeze
 
-  def reopen_email(user, reset_token)
+  def reopen_email(user, activity = nil)
     @user     = user
     @copy     = REOPEN.fetch(user.language, REOPEN["fr"])
     @activity = nil
-    @url      = edit_user_password_url(reset_password_token: reset_token,
-                                       host: default_url_options[:host],
-                                       protocol: default_url_options[:protocol] || "https")
+    @url      = trial_entry_url(user, to: activity ? "activity" : "dashboard", activity: activity)
 
     mail(to: user.email, subject: @copy[:subject])
   end
@@ -241,7 +289,7 @@ class TrialMailer < ApplicationMailer
     @title  = usou ? copy[:title] : copy[:title_unused]
     @lead   = (usou ? copy[:lead] : copy[:lead_unused]) % { total: total_activities }
     @copy   = copy
-    @url    = billing_new_url
+    @url    = trial_entry_url(user, to: "billing")
 
     mail(to: user.email, subject: copy[:subject])
   end
@@ -276,8 +324,72 @@ class TrialMailer < ApplicationMailer
     @user     = user
     @activity = activity
     @copy     = WINBACK.fetch(user.language, WINBACK["fr"])
-    @url      = billing_new_url
+    @url      = trial_entry_url(user, to: "billing")
 
     mail(to: user.email, subject: @copy[:subject])
+  end
+
+  # ---- Recuperação manual (TrialRecovery) ------------------------------------
+  #
+  # Não faz parte da sequência automática: sai uma vez, por decisão da Daisy,
+  # para quem se cadastrou numa janela específica e não fez nenhuma atividade.
+  # O texto admite o que pode ter dado errado ("se pediram uma senha"), porque
+  # até 2026-10-14 os emails levavam a uma tela de login para quem não tinha
+  # senha — e é justamente isso que este email corrige.
+  RECOVERY = {
+    "fr" => {
+      subject:  "Votre essai Practice-BR vous attend · seu teste 🌱",
+      title:    "Revenir est plus simple maintenant",
+      lead:     "Vous avez ouvert un essai sur Practice-BR il y a quelques jours. Si on vous a demandé un mot de passe pour revenir, c'était à nous de faire mieux : ce bouton vous fait entrer directement, sur n'importe quel appareil, et vous emmène à une activité choisie pour votre niveau.",
+      cta:      "Commencer mon premier exercice →",
+      note:     "Votre essai est ouvert jusqu'au %{ate}.",
+      extended: "On vous a ajouté 48 heures : votre essai est ouvert jusqu'au %{ate}."
+    },
+    "en" => {
+      subject:  "Your Practice-BR trial is waiting · seu teste 🌱",
+      title:    "Coming back is simpler now",
+      lead:     "You opened a trial on Practice-BR a few days ago. If you were asked for a password to come back, that was on us: this button takes you straight in, on any device, to an activity picked for your level.",
+      cta:      "Start my first exercise →",
+      note:     "Your trial is open until %{ate}.",
+      extended: "We've added 48 hours: your trial is open until %{ate}."
+    },
+    "pt" => {
+      subject:  "Seu teste na Practice-BR está esperando 🌱",
+      title:    "Voltar ficou mais simples",
+      lead:     "Você abriu um teste na Practice-BR há alguns dias. Se pediram uma senha para você voltar, a falha foi nossa: este botão te leva direto pra dentro, de qualquer aparelho, numa atividade escolhida para o seu nível.",
+      cta:      "Começar meu primeiro exercício →",
+      note:     "Seu teste está aberto até %{ate}.",
+      extended: "Acrescentamos 48 horas: seu teste está aberto até %{ate}."
+    }
+  }.freeze
+
+  # `extended` vem de quem chama, não é deduzido aqui: só o TrialRecovery sabe
+  # se a extensão foi concedida nesta rodada.
+  def recovery_email(user, activity, extended: false)
+    @user     = user
+    @activity = activity
+    @copy     = RECOVERY.fetch(user.language, RECOVERY["fr"])
+    @note     = @copy[extended ? :extended : :note] %
+                { ate: format_date(user.trial_expires_at.to_date, user.language) }
+    @url      = trial_entry_url(user, to: "activity", activity: activity)
+
+    mail(to: user.email, subject: @copy[:subject])
+  end
+
+  private
+
+  # O link de todo botão dos emails do teste. Quem nunca escolheu senha recebe o
+  # TrialEmailLink, que entra sem login; quem já tem senha recebe o endereço
+  # normal, porque consegue entrar sozinha e o link de login não vale pra ela.
+  def trial_entry_url(user, to:, activity: nil)
+    if TrialEmailLink.usable_by?(user)
+      trial_link_url(token: TrialEmailLink.generate(user, to: to, activity: activity))
+    else
+      case to
+      when "activity" then activity ? solve_activity_url(activity) : student_dashboard_url
+      when "billing"  then billing_new_url
+      else                 student_dashboard_url
+      end
+    end
   end
 end

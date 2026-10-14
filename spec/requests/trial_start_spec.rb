@@ -43,7 +43,7 @@ RSpec.describe "Entrada do trial pela landing", type: :request do
       end
 
       boas_vindas = ActionMailer::Base.deliveries.find { |m| m.to == ["fr2@email.com"] }
-      expect(boas_vindas.subject).to include("Votre lien pour revenir")
+      expect(boas_vindas.subject).to include("Bienvenue sur Practice-BR")
     end
 
     it "continua mandando o email — ele virou o caminho de volta, não sumiu" do

@@ -6,6 +6,8 @@ require 'rails_helper'
 #
 # Esta sequência é o que existe entre "entrou" e "sumiu para sempre".
 RSpec.describe TrialSequenceJob, type: :job do
+  include ActiveJob::TestHelper
+
   let!(:disponivel) { create(:activity, :B1, draft: false) }
 
   def teste(**attrs)
@@ -65,18 +67,18 @@ RSpec.describe TrialSequenceJob, type: :job do
       expect(pessoa.trial_expires_at).to be > 6.days.from_now
     end
 
-    it "manda um link de acesso novo — a pessoa está trancada pra fora" do
+    it "manda um link que entra sem senha — a pessoa está trancada pra fora" do
       # Quem entrou pela landing nunca criou senha, e o link do email original
-      # vale 8 dias. Um convite sem token novo levaria a uma porta fechada.
-      pessoa = teste(trial_expires_at: 1.day.ago, created_at: 12.days.ago,
-                     trial_activities_used: 0, reset_password_sent_at: 12.days.ago)
+      # vale 8 dias. Até 2026-10-14 o link novo era o de criar senha; agora entra
+      # direto.
+      pessoa = teste(trial_expires_at: 1.day.ago, created_at: 12.days.ago, trial_activities_used: 0)
 
-      described_class.perform_now
+      perform_enqueued_jobs { described_class.perform_now }
 
-      pessoa.reload
-      expect(pessoa.reset_password_token).to be_present
-      expect(pessoa.reset_password_sent_at).to be_within(1.minute).of(Time.current)
-      expect(pessoa.reset_password_period_valid?).to be true
+      corpo = ActionMailer::Base.deliveries.last.body.encoded
+      token = CGI.unescape(corpo[%r{/entrar\?token=([^"&]+)}, 1])
+      expect(TrialEmailLink.redeem(token).user).to eq(pessoa)
+      expect(corpo).not_to include("reset_password_token")
     end
 
     it "não reabre pra quem já praticou — essa pessoa viu o produto" do
@@ -224,6 +226,100 @@ RSpec.describe TrialSequenceJob, type: :job do
 
       pessoa.reload
       expect([pessoa.activation_nudge_sent_at, pessoa.trial_ended_email_sent_at].compact.size).to eq(1)
+    end
+  end
+
+  describe "lembrete do mesmo dia (4h sem ter começado)" do
+    it "fala com quem entrou há 4 horas e não fez nada" do
+      pessoa = teste(created_at: 5.hours.ago)
+
+      expect { described_class.perform_now }
+        .to have_enqueued_mail(TrialMailer, :first_nudge_email).with(pessoa, disponivel)
+
+      expect(pessoa.reload.first_nudge_sent_at).to be_present
+    end
+
+    it "não fala com quem acabou de chegar" do
+      teste(created_at: 2.hours.ago)
+
+      expect { described_class.perform_now }
+        .not_to have_enqueued_mail(TrialMailer, :first_nudge_email)
+    end
+
+    it "não fala com quem já concluiu uma atividade" do
+      pessoa = teste(created_at: 5.hours.ago)
+      create(:quiz_attempt, user: pessoa, activity: disponivel)
+
+      expect { described_class.perform_now }
+        .not_to have_enqueued_mail(TrialMailer, :first_nudge_email)
+    end
+
+    it "é pulado se passou da janela — chegaria colado no D+1" do
+      teste(created_at: 22.hours.ago)
+
+      expect { described_class.perform_now }
+        .not_to have_enqueued_mail(TrialMailer, :first_nudge_email)
+    end
+
+    it "não manda link para teste vencido" do
+      teste(created_at: 5.hours.ago, trial_expires_at: 1.minute.ago)
+
+      expect { described_class.perform_now }
+        .not_to have_enqueued_mail(TrialMailer, :first_nudge_email)
+    end
+
+    it "segura o D+1 até 12h depois do lembrete do mesmo dia" do
+      teste(created_at: 25.hours.ago, first_nudge_sent_at: 3.hours.ago)
+
+      expect { described_class.perform_now }
+        .not_to have_enqueued_mail(TrialMailer, :activation_email)
+    end
+
+    it "manda o D+1 quando o espaço já passou" do
+      teste(created_at: 26.hours.ago, first_nudge_sent_at: 21.hours.ago)
+
+      expect { described_class.perform_now }
+        .to have_enqueued_mail(TrialMailer, :activation_email)
+    end
+  end
+
+  describe "rodar de novo não repete nada" do
+    # O job roda de hora em hora. Cada email tem uma coluna que só uma execução
+    # consegue marcar.
+    it "duas rodadas seguidas mandam um email só" do
+      teste(created_at: 5.hours.ago)
+
+      expect {
+        described_class.perform_now
+        described_class.perform_now
+      }.to have_enqueued_mail(TrialMailer, :first_nudge_email).once
+    end
+
+    it "não manda se outra execução já marcou a pessoa entre a leitura e o envio" do
+      pessoa = teste(created_at: 5.hours.ago)
+      # Simula a corrida: a outra execução marca a coluna no banco depois que
+      # esta já conferiu a pessoa na memória e logo antes de ela reservar.
+      allow(User).to receive(:transaction).and_wrap_original do |original, *args, &bloco|
+        User.where(id: pessoa.id).update_all(first_nudge_sent_at: Time.current)
+        original.call(*args, &bloco)
+      end
+
+      expect { described_class.perform_now }
+        .not_to have_enqueued_mail(TrialMailer, :first_nudge_email)
+    end
+  end
+
+  describe "os links dos emails" do
+    it "entram sem senha e levam à atividade" do
+      pessoa = teste(created_at: 5.hours.ago)
+
+      perform_enqueued_jobs { described_class.perform_now }
+
+      corpo = ActionMailer::Base.deliveries.last.body.encoded
+      token = CGI.unescape(corpo[%r{/entrar\?token=([^"&]+)}, 1])
+      resultado = TrialEmailLink.redeem(token)
+      expect(resultado.user).to eq(pessoa)
+      expect(resultado.activity_id).to eq(disponivel.id)
     end
   end
 end

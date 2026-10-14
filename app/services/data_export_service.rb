@@ -28,6 +28,7 @@ class DataExportService
     dados[:respostas_em_audio]     = respostas_em_audio
     dados[:avaliacoes_que_voce_deu] = avaliacoes
     dados[:notificacoes]           = notificacoes
+    dados[:registros_do_teste]     = registros_do_teste if @user.trial_events.exists?
     dados[:atividades_criadas]     = atividades_criadas if @user.teacher?
 
     dados
@@ -117,6 +118,14 @@ class DataExportService
         observacao: "Guardamos o endereço técnico que permite enviar a notificação. " \
                     "Ele não é exportado aqui por ser credencial, não informação sua."
       }
+    end
+  end
+
+  # O que a plataforma fez com o teste da pessoa por decisão manual: email de
+  # recuperação e extensão de prazo (ver TrialEvent). É dado sobre ela.
+  def registros_do_teste
+    @user.trial_events.order(:created_at).map do |evento|
+      { tipo: evento.kind, detalhes: evento.details, em: evento.created_at&.iso8601 }
     end
   end
 

@@ -27,13 +27,10 @@ module Api
           return render_error(:unprocessable_entity, user.errors.full_messages.first)
         end
 
-        raw_token, hashed_token = Devise.token_generator.generate(User, :reset_password_token)
-        user.update_columns(
-          reset_password_token: hashed_token,
-          reset_password_sent_at: Time.current
-        )
-
-        TrialMailer.welcome_email(user, raw_token).deliver_later
+        # O email de boas-vindas não carrega mais um link de redefinir senha: o
+        # botão dele entra sem senha (TrialEmailLink). Quem quiser uma senha
+        # cria no fim do teste, ou pelo "Esqueci minha senha".
+        TrialMailer.welcome_email(user).deliver_later
         TrialMailer.notification_email(user).deliver_later
 
         # `start_url` é a mudança que importa: a landing redireciona pra ele em

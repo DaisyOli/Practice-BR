@@ -47,4 +47,50 @@ class TrialStartsController < ApplicationController
       redirect_to new_user_session_path, alert: EXPIRED
     end
   end
+
+  # Entrada pelos emails do teste (ver TrialEmailLink). Diferente do `show`, o
+  # link não queima: email é aberto duas vezes, no celular e no computador, e
+  # antivírus de email clica antes da pessoa.
+  LINK_EXPIRED = "Este link de acesso expirou. Para entrar, use \"Esqueci minha senha\" " \
+                 "com o seu email — enviamos um link novo na hora.".freeze
+
+  def link
+    result = TrialEmailLink.redeem(params[:token])
+
+    if result.nil?
+      return redirect_to(after_sign_in_path_for(current_user)) if user_signed_in?
+      return redirect_to(new_user_session_path, alert: LINK_EXPIRED)
+    end
+
+    user = result.user
+    unless current_user == user
+      user.remember_me = true
+      sign_in(user)
+    end
+
+    redirect_to destination_for(result)
+  end
+
+  private
+
+  # O destino vem assinado no token; aqui só se confere se ele ainda faz
+  # sentido. Uma atividade que saiu do ar, de outro nível, ou já feita leva à
+  # dashboard — onde o bloco "Comece por aqui" oferece a próxima. Teste vencido
+  # não precisa de caso especial: o check_trial_restrictions! manda para a tela
+  # de fim de teste em qualquer destino.
+  def destination_for(result)
+    case result.destination
+    when "billing"
+      billing_new_path
+    when "activity"
+      activity = Activity.published.find_by(id: result.activity_id)
+      if activity && !result.user.locked_activity?(activity)
+        solve_activity_path(activity)
+      else
+        student_dashboard_path
+      end
+    else
+      student_dashboard_path
+    end
+  end
 end

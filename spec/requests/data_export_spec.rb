@@ -151,7 +151,8 @@ RSpec.describe "Exportação de dados", type: :request do
         "quiz_attempts"        => :atividades_respondidas,
         "audio_transcriptions" => :respostas_em_audio,
         "activity_ratings"     => :avaliacoes_que_voce_deu,
-        "push_subscriptions"   => :notificacoes
+        "push_subscriptions"   => :notificacoes,
+        "trial_events"         => :registros_do_teste
       }
 
       esquecidas = tabelas_com_dono - cobertas.keys

@@ -1,0 +1,21 @@
+  <%# — Status do teste — quanto falta e até quando.
+        Antes disto a dashboard não dizia nada: a pessoa só descobria que o teste
+        tinha 3 atividades e 7 dias pelo email, ou ao bater na tela de fim. Saber
+        o tamanho do que se tem nas mãos é o que deixa começar sem receio. %>
+  <% if current_user.trial_access_active? %>
+    <% feitas = current_user.trial_activities_used.to_i %>
+    <div style="display:flex; flex-wrap:wrap; align-items:center; gap:10px 16px; background:var(--brand-mist); border:1px solid var(--brand-soft); border-radius:12px; padding:12px 16px; margin-bottom:1.25rem;">
+      <span style="font-family:'DM Mono',monospace; font-size:0.67rem; color:var(--brand-deep); letter-spacing:0.08em; text-transform:uppercase;">
+        Seu teste gratuito 🌱
+      </span>
+      <span style="display:inline-flex; align-items:center; gap:6px; font-family:'Plus Jakarta Sans',sans-serif; font-size:0.85rem; color:var(--ink);">
+        <% 3.times do |i| %>
+          <span style="display:inline-block; width:10px; height:10px; border-radius:50%; background:<%= i < feitas ? 'var(--brand)' : 'var(--line)' %>;"></span>
+        <% end %>
+        <strong><%= feitas %> de 3</strong> atividades
+      </span>
+      <span style="font-family:'Plus Jakarta Sans',sans-serif; font-size:0.85rem; color:var(--ink-soft);">
+        aberto até <strong><%= l(current_user.trial_expires_at.to_date, format: "%d/%m") %></strong>
+      </span>
+    </div>
+  <% end %>
