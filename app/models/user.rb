@@ -437,16 +437,26 @@ class User < ApplicationRecord
   # Só do nível declarado: durante o teste é o único que abre, e mandar alguém
   # para uma porta trancada é pior que não mandar nada.
   #
-  # Primeiro a Vitrine do teste (a ordem escolhida pela Daisy no painel); sem
-  # vitrine para o nível, ou com ela já toda feita, a mais recente publicada.
+  # Primeiro o percurso do nível (a ordem escolhida pela Daisy no painel); sem
+  # percurso, ou com ele já todo feito, a mais recente publicada.
   def suggested_first_activity
     return nil if level.blank?
 
-    candidates = Activity.published
-                         .where(level: level)
-                         .where.not(id: quiz_attempts.select(:activity_id))
+    next_path_activity ||
+      Activity.published.where(level: level)
+              .where.not(id: quiz_attempts.select(:activity_id))
+              .order(created_at: :desc).first
+  end
 
-    candidates.in_trial_showcase.first || candidates.order(created_at: :desc).first
+  # A próxima atividade do percurso do nível que a pessoa ainda não fez, ou nil
+  # se não houver percurso ou ele estiver completo. Vale para teste e
+  # assinatura: quem já fez muitas atividades só pula o que já fez.
+  def next_path_activity
+    return nil if level.blank?
+
+    Activity.published.where(level: level).in_path
+            .where.not(id: quiz_attempts.select(:activity_id))
+            .first
   end
 
   # Peso decrescente por distância do nível declarado: favorece o nível do

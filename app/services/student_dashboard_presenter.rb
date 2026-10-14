@@ -125,9 +125,14 @@ class StudentDashboardPresenter
     return @best_candidate if defined?(@best_candidate)
 
     @best_candidate =
-      # No teste, a próxima segue a Vitrine (User#suggested_first_activity) —
-      # a mesma escolha do "Comece por aqui" e dos emails.
-      if user.trial?
+      # Primeiro o percurso do nível, para todo aluno: é a ordem pedagógica que
+      # a Daisy montou, e quem chega começa pelo mais simples. Terminado o
+      # percurso, o teste segue a mesma escolha do "Comece por aqui" e dos
+      # emails; o aluno pagante volta ao sorteio por nível com alternância de
+      # suporte, abaixo.
+      if (path = user.next_path_activity)
+        path
+      elsif user.trial?
         user.suggested_first_activity
       elsif last_support && pending_activities.any?
         names = attachment_names_for(pending_activities.map(&:id))

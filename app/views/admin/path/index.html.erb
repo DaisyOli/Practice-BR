@@ -1,5 +1,5 @@
 <% content_for :head do %>
-  <title>Vitrine do teste · Admin · Practice-BR</title>
+  <title>Percurso por nível · Admin · Practice-BR</title>
 <% end %>
 
 <div class="dash-outer" style="max-width:900px; margin:0 auto;">
@@ -12,21 +12,23 @@
 
   <div style="margin-bottom:1.5rem;">
     <h1 style="font-family:'Raleway',sans-serif; font-size:1.75rem; font-weight:700; color:var(--ink); margin:0 0 6px;">
-      🪟 Vitrine do teste
+      🧭 Percurso por nível
     </h1>
     <p style="font-family:'Plus Jakarta Sans',sans-serif; font-size:0.95rem; color:var(--ink-soft); margin:0;">
-      As atividades que quem chega pelo teste encontra primeiro, nesta ordem: no "Comece por aqui",
-      nos emails e no cartão de próxima atividade. A pessoa continua livre para fazer outras do nível.
+      Até 10 atividades por nível, na ordem em que quem chega deve fazê-las — do mais simples ao mais
+      exigente. Vale para todo aluno, por trás: é o que aparece no "Comece por aqui", no "Continue
+      estudando", nos emails e no cartão de próxima atividade, pulando o que ele já fez. Terminado o
+      percurso, volta a sugestão automática. <strong>As 3 primeiras são a vitrine do teste.</strong>
     </p>
   </div>
 
   <div style="background:var(--brand-mist); border:1px solid var(--brand-soft); border-radius:12px; padding:14px 18px; margin-bottom:1.5rem;
               font-family:'Plus Jakarta Sans',sans-serif; font-size:0.88rem; color:var(--brand-deep); line-height:1.5;">
-    💡 Inclua em cada nível uma atividade com <strong>✍️ questão aberta</strong>: a correção da IA é o que mais
-    impressiona, e assim ela acontece dentro do teste. Para a 1ª posição, prefira uma curta.
+    💡 Nas 3 primeiras (o teste), inclua uma atividade com <strong>✍️ questão aberta</strong>: a correção da IA é o
+    que mais impressiona. Para a 1ª posição, prefira uma curta.
   </div>
 
-  <%= form_with url: admin_showcase_path, method: :patch do %>
+  <%= form_with url: admin_path_path, method: :patch do %>
     <% @levels.each do |lvl| %>
       <div style="background:var(--surface); border:1px solid var(--line); border-radius:16px; padding:22px 24px; margin-bottom:1.25rem;">
         <div style="display:flex; align-items:baseline; justify-content:space-between; gap:12px; flex-wrap:wrap; margin-bottom:14px;">
@@ -35,21 +37,24 @@
           </h2>
           <span style="font-family:'Plus Jakarta Sans',sans-serif; font-size:0.78rem; color:var(--ink-faint);">
             <% if lvl[:chosen].empty? && lvl[:fallback] %>
-              sem vitrine — hoje o teste mostra "<%= lvl[:fallback].title %>"
+              sem percurso — hoje o teste mostra "<%= lvl[:fallback].title %>"
             <% elsif lvl[:activities].empty? %>
               nenhuma atividade publicada neste nível
             <% end %>
           </span>
         </div>
 
-        <% (1..Activity::TRIAL_SHOWCASE_SLOTS).each do |pos| %>
-          <% current = lvl[:chosen].find { |a| a.trial_showcase_position == pos } %>
+        <% (1..Activity::PATH_SLOTS).each do |pos| %>
+          <% current = lvl[:chosen].find { |a| a.path_position == pos } %>
           <div style="display:flex; align-items:center; gap:12px; margin-bottom:10px;">
             <span style="flex-shrink:0; width:28px; height:28px; border-radius:50%; background:var(--brand-tint); color:var(--brand-deep);
                          display:flex; align-items:center; justify-content:center; font-family:'DM Mono',monospace; font-size:0.8rem; font-weight:700;">
               <%= pos %>
             </span>
-            <select name="showcase[<%= lvl[:level] %>][<%= pos %>]"
+            <span style="flex-shrink:0; width:52px; font-family:'DM Mono',monospace; font-size:0.62rem; color:var(--brand); letter-spacing:0.04em;">
+              <%= "🌱 teste" if pos <= Activity::TRIAL_SLOTS %>
+            </span>
+            <select name="path[<%= lvl[:level] %>][<%= pos %>]"
                     style="flex:1; min-width:0; padding:10px 12px; border:1.5px solid var(--line); border-radius:10px;
                            font-family:'Plus Jakarta Sans',sans-serif; font-size:0.88rem; color:var(--ink); background:var(--surface);">
               <option value="">— nenhuma —</option>
@@ -67,7 +72,7 @@
     <button type="submit"
             style="width:100%; background:var(--action); color:var(--surface); border:none; border-radius:12px; padding:14px;
                    font-family:'Plus Jakarta Sans',sans-serif; font-size:1rem; font-weight:700; cursor:pointer;">
-      Salvar vitrine
+      Salvar percurso
     </button>
   <% end %>
 </div>
