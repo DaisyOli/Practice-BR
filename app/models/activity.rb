@@ -1,6 +1,7 @@
 class Activity < ApplicationRecord
   belongs_to :teacher, class_name: 'User'
   has_many :questions, dependent: :destroy
+  has_many :path_suggestions, dependent: :destroy
   has_many :quiz_attempts, dependent: :destroy
   has_many :suggestions, dependent: :destroy
   has_many :sentence_orderings, dependent: :destroy
@@ -32,6 +33,18 @@ class Activity < ApplicationRecord
   PATH_SLOTS  = 10
   TRIAL_SLOTS = 3
   scope :in_path, -> { where.not(path_position: nil).order(:path_position) }
+
+  # Grava o percurso de um nível na ordem de `ids`. Limpa e regrava numa
+  # transação, para nunca esbarrar no índice único no meio de uma troca de
+  # posições. Ignora id repetido, rascunho e atividade de outro nível.
+  def self.set_path!(level, ids)
+    transaction do
+      where(level: level).where.not(path_position: nil).update_all(path_position: nil)
+      ids.map(&:to_i).uniq.first(PATH_SLOTS).each.with_index(1) do |id, position|
+        published.where(level: level, id: id).update_all(path_position: position)
+      end
+    end
+  end
   scope :with_questions_count, -> {
     left_outer_joins(:questions)
       .group(:id)
@@ -44,6 +57,9 @@ class Activity < ApplicationRecord
   before_save :leave_path, if: -> { will_save_change_to_level? && path_position.present? }
   after_create      :fetch_unsplash_cover
   after_commit      :clear_cache
+  # Publicou: o agente do percurso avalia se ela entra no caminho do nível e
+  # deixa a sugestão para a Daisy aprovar (PathSuggestion). Nunca muda sozinho.
+  after_commit      :request_path_evaluation, if: :just_published?
   
   enum level: {
     A1: 'A1',
@@ -148,5 +164,18 @@ class Activity < ApplicationRecord
 
   def leave_path
     self.path_position = nil
+  end
+
+  def just_published?
+    return false if draft?
+
+    previously_new_record? || saved_change_to_draft?
+  end
+
+  def request_path_evaluation
+    PathSuggestion.request_for_new!(self)
+  rescue StandardError => e
+    # Uma falha aqui não pode desfazer a publicação da professora.
+    Rails.logger.error "[LevelPath] avaliação não pedida para #{id}: #{e.class}: #{e.message}"
   end
 end

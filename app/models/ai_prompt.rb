@@ -42,7 +42,7 @@ class AiPrompt < ApplicationRecord
   #
   # Um método e não uma constante de propósito: `Activity.levels` só existe
   # depois que o autoload carrega o model, e uma constante avaliada no corpo da
-  # classe rodaria cedo demais. Nove entradas são baratas de montar.
+  # classe rodaria cedo demais. Uma dúzia de entradas é barata de montar.
   def self.registry
     entries = {
       "activity_generation.system" => {
@@ -70,6 +70,22 @@ class AiPrompt < ApplicationRecord
         default: -> { AiGradingService::SYSTEM_FRAME },
         placeholders: %w[expectations],
         markers:      %w[score feedback]
+      },
+
+      "level_path.system" => {
+        group:   "Percurso por nível",
+        label:   "Montar o percurso",
+        hint:    "Como o agente ordena as 10 atividades de um nível e escolhe o tema de cada uma. Ele precisa terminar chamando a ferramenta propose_path.",
+        default: -> { LevelPathAgent::SYSTEM_PROMPT },
+        markers: %w[propose_path]
+      },
+
+      "level_path.new_activity" => {
+        group:   "Percurso por nível",
+        label:   "Atividade nova",
+        hint:    "Como o agente decide se uma atividade recém-publicada entra no percurso. Ele precisa terminar chamando a ferramenta evaluate_new_activity.",
+        default: -> { LevelPathAgent::NEW_ACTIVITY_PROMPT },
+        markers: %w[evaluate_new_activity]
       },
 
       "daily_suggestion.system" => {

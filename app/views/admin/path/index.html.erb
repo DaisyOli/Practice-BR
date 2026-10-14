@@ -2,6 +2,18 @@
   <title>Percurso por nível · Admin · Practice-BR</title>
 <% end %>
 
+<%# Botões que vivem dentro do formulário grande, mas enviam formulários
+    próprios (HTML não aceita formulário dentro de formulário): ficam aqui
+    fora e são ligados pelo atributo `form=`. %>
+<% @levels.each do |lvl| %>
+  <%= form_with url: admin_suggest_path_path, method: :post, id: "sugerir-#{lvl[:level]}" do %>
+    <input type="hidden" name="level" value="<%= lvl[:level] %>">
+  <% end %>
+  <% if lvl[:proposal] %>
+    <%= form_with url: admin_dismiss_path_suggestion_path(lvl[:proposal]), method: :post, id: "descartar-#{lvl[:level]}" do %><% end %>
+  <% end %>
+<% end %>
+
 <div class="dash-outer" style="max-width:900px; margin:0 auto;">
 
   <%= link_to admin_root_path,
@@ -24,47 +36,148 @@
 
   <div style="background:var(--brand-mist); border:1px solid var(--brand-soft); border-radius:12px; padding:14px 18px; margin-bottom:1.5rem;
               font-family:'Plus Jakarta Sans',sans-serif; font-size:0.88rem; color:var(--brand-deep); line-height:1.5;">
-    💡 Nas 3 primeiras (o teste), inclua uma atividade com <strong>✍️ questão aberta</strong>: a correção da IA é o
-    que mais impressiona. Para a 1ª posição, prefira uma curta.
+    💡 Não lembra das atividades? Clique em <strong>✨ Sugerir com o agente</strong> no nível: ele lê todas, propõe
+    a ordem com um motivo para cada posição e um tema para cada atividade. Nada muda até você salvar.
   </div>
+
+  <%# ── Atividades novas que o agente acha que entram no percurso ── %>
+  <% if @new_activity_suggestions.any? %>
+    <div style="background:var(--surface); border:1.5px solid var(--brand-soft); border-radius:16px; padding:20px 24px; margin-bottom:1.5rem;">
+      <h2 style="font-family:'Raleway',sans-serif; font-size:1.05rem; font-weight:800; color:var(--ink); margin:0 0 12px;">
+        🆕 Atividades novas para o percurso
+      </h2>
+      <% @new_activity_suggestions.each do |s| %>
+        <% p = s.payload %>
+        <% sai = p["replaces_activity_id"] && Activity.find_by(id: p["replaces_activity_id"]) %>
+        <div style="border-top:1px solid var(--line-soft); padding:12px 0; font-family:'Plus Jakarta Sans',sans-serif;">
+          <div style="font-size:0.92rem; color:var(--ink); margin-bottom:4px;">
+            <strong><%= s.activity.title %></strong>
+            <span style="font-family:'DM Mono',monospace; font-size:0.72rem; color:var(--ink-faint);"> · <%= s.level %><%= " · #{s.activity.theme}" if s.activity.theme.present? %></span>
+          </div>
+          <div style="font-size:0.85rem; color:var(--brand-deep); margin-bottom:4px;">
+            <% if p["decision"] == "replace" %>
+              Sugestão: posição <%= p["position"] %>, no lugar de "<%= sai&.title || '—' %>"
+            <% else %>
+              Sugestão: entrar na posição <%= p["position"] %> e empurrar as seguintes
+            <% end %>
+            <%= " · 🌱 mexe no teste" if p["position"].to_i <= Activity::TRIAL_SLOTS %>
+          </div>
+          <div style="font-size:0.82rem; color:var(--ink-soft); line-height:1.5; margin-bottom:10px;"><%= p["reason"] %></div>
+          <div style="display:flex; gap:8px;">
+            <%= button_to "Aceitar", admin_accept_path_suggestion_path(s), method: :post,
+                  style: "background:var(--brand); color:var(--surface); border:none; border-radius:8px; padding:7px 16px; font-weight:700; font-size:0.82rem; cursor:pointer;" %>
+            <%= button_to "Ignorar", admin_dismiss_path_suggestion_path(s), method: :post,
+                  style: "background:none; color:var(--ink-soft); border:1px solid var(--line); border-radius:8px; padding:7px 16px; font-size:0.82rem; cursor:pointer;" %>
+          </div>
+        </div>
+      <% end %>
+    </div>
+  <% end %>
 
   <%= form_with url: admin_path_path, method: :patch do %>
     <% @levels.each do |lvl| %>
-      <div style="background:var(--surface); border:1px solid var(--line); border-radius:16px; padding:22px 24px; margin-bottom:1.25rem;">
-        <div style="display:flex; align-items:baseline; justify-content:space-between; gap:12px; flex-wrap:wrap; margin-bottom:14px;">
-          <h2 style="font-family:'Raleway',sans-serif; font-size:1.1rem; font-weight:800; color:var(--ink); margin:0;">
-            <%= lvl[:level] %>
-          </h2>
-          <span style="font-family:'Plus Jakarta Sans',sans-serif; font-size:0.78rem; color:var(--ink-faint);">
-            <% if lvl[:chosen].empty? && lvl[:fallback] %>
-              sem percurso — hoje o teste mostra "<%= lvl[:fallback].title %>"
-            <% elsif lvl[:activities].empty? %>
-              nenhuma atividade publicada neste nível
-            <% end %>
-          </span>
+      <% proposal = lvl[:proposal] %>
+      <% proposed = proposal ? proposal.payload["path"].map { |p| p["activity_id"] } : nil %>
+      <% reasons  = proposal ? proposal.payload["path"].to_h { |p| [p["activity_id"], p["reason"]] } : {} %>
+      <% themes   = proposal ? proposal.payload["themes"] : {} %>
+
+      <div id="nivel-<%= lvl[:level] %>" style="background:var(--surface); border:1px solid var(--line); border-radius:16px; padding:22px 24px; margin-bottom:1.25rem;">
+        <div style="display:flex; align-items:center; justify-content:space-between; gap:12px; flex-wrap:wrap; margin-bottom:14px;">
+          <div>
+            <h2 style="font-family:'Raleway',sans-serif; font-size:1.1rem; font-weight:800; color:var(--ink); margin:0;">
+              <%= lvl[:level] %>
+            </h2>
+            <span style="font-family:'Plus Jakarta Sans',sans-serif; font-size:0.78rem; color:var(--ink-faint);">
+              <% if lvl[:chosen].empty? && lvl[:fallback] %>
+                sem percurso — hoje o teste mostra "<%= lvl[:fallback].title %>"
+              <% elsif lvl[:activities].empty? %>
+                nenhuma atividade publicada neste nível
+              <% end %>
+            </span>
+          </div>
+          <% if lvl[:working] %>
+            <span style="font-family:'Plus Jakarta Sans',sans-serif; font-size:0.82rem; color:var(--brand-deep);">
+              ☕ O agente está lendo as atividades do <%= lvl[:level] %>…
+            </span>
+          <% elsif lvl[:activities].any? %>
+            <button type="submit" form="sugerir-<%= lvl[:level] %>"
+                    style="background:var(--brand-tint); color:var(--brand-deep); border:1px solid var(--brand-soft); border-radius:10px;
+                           padding:8px 14px; font-family:'Plus Jakarta Sans',sans-serif; font-size:0.82rem; font-weight:700; cursor:pointer;">
+              ✨ Sugerir com o agente
+            </button>
+          <% end %>
         </div>
 
-        <% (1..Activity::PATH_SLOTS).each do |pos| %>
-          <% current = lvl[:chosen].find { |a| a.path_position == pos } %>
-          <div style="display:flex; align-items:center; gap:12px; margin-bottom:10px;">
-            <span style="flex-shrink:0; width:28px; height:28px; border-radius:50%; background:var(--brand-tint); color:var(--brand-deep);
-                         display:flex; align-items:center; justify-content:center; font-family:'DM Mono',monospace; font-size:0.8rem; font-weight:700;">
-              <%= pos %>
-            </span>
-            <span style="flex-shrink:0; width:52px; font-family:'DM Mono',monospace; font-size:0.62rem; color:var(--brand); letter-spacing:0.04em;">
-              <%= "🌱 teste" if pos <= Activity::TRIAL_SLOTS %>
-            </span>
-            <select name="path[<%= lvl[:level] %>][<%= pos %>]"
-                    style="flex:1; min-width:0; padding:10px 12px; border:1.5px solid var(--line); border-radius:10px;
-                           font-family:'Plus Jakarta Sans',sans-serif; font-size:0.88rem; color:var(--ink); background:var(--surface);">
-              <option value="">— nenhuma —</option>
-              <% lvl[:activities].each do |a| %>
-                <option value="<%= a.id %>" <%= "selected" if current&.id == a.id %>>
-                  <%= a.title %> — <%= @traits[a.id] %>
-                </option>
-              <% end %>
-            </select>
+        <% if lvl[:failed] && !proposal && !lvl[:working] %>
+          <div style="background:var(--error-tint); border:1px solid var(--error-border); border-radius:10px; padding:10px 14px; margin-bottom:12px;
+                      font-family:'Plus Jakarta Sans',sans-serif; font-size:0.82rem; color:var(--error-deep);">
+            A última sugestão não deu certo: <%= lvl[:failed].error_message %>
           </div>
+        <% end %>
+
+        <% if proposal %>
+          <div style="background:var(--brand-mist); border:1px solid var(--brand-soft); border-radius:10px; padding:12px 14px; margin-bottom:14px;
+                      font-family:'Plus Jakarta Sans',sans-serif; font-size:0.84rem; color:var(--brand-deep); line-height:1.5;">
+            <strong>✨ Sugestão do agente</strong> — já está preenchida abaixo. Revise, mude o que quiser e salve.
+            <% if proposal.payload["summary"].present? %>
+              <div style="margin-top:6px; color:var(--ink-soft);"><%= proposal.payload["summary"] %></div>
+            <% end %>
+            <button type="submit" form="descartar-<%= lvl[:level] %>"
+                    style="margin-top:8px; background:none; border:none; padding:0; color:var(--ink-soft); text-decoration:underline; font-size:0.8rem; cursor:pointer;">
+              Descartar sugestão e voltar ao que está salvo
+            </button>
+          </div>
+        <% end %>
+
+        <% (1..Activity::PATH_SLOTS).each do |pos| %>
+          <% selected_id = proposed ? proposed[pos - 1] : lvl[:chosen].find { |a| a.path_position == pos }&.id %>
+          <div style="margin-bottom:10px;">
+            <div style="display:flex; align-items:center; gap:12px;">
+              <span style="flex-shrink:0; width:28px; height:28px; border-radius:50%; background:var(--brand-tint); color:var(--brand-deep);
+                           display:flex; align-items:center; justify-content:center; font-family:'DM Mono',monospace; font-size:0.8rem; font-weight:700;">
+                <%= pos %>
+              </span>
+              <span style="flex-shrink:0; width:52px; font-family:'DM Mono',monospace; font-size:0.62rem; color:var(--brand); letter-spacing:0.04em;">
+                <%= "🌱 teste" if pos <= Activity::TRIAL_SLOTS %>
+              </span>
+              <select name="path[<%= lvl[:level] %>][<%= pos %>]"
+                      style="flex:1; min-width:0; padding:10px 12px; border:1.5px solid var(--line); border-radius:10px;
+                             font-family:'Plus Jakarta Sans',sans-serif; font-size:0.88rem; color:var(--ink); background:var(--surface);">
+                <option value="">— nenhuma —</option>
+                <% lvl[:activities].each do |a| %>
+                  <option value="<%= a.id %>" <%= "selected" if selected_id == a.id %>>
+                    <%= a.title %> — <%= @traits[a.id] %>
+                  </option>
+                <% end %>
+              </select>
+            </div>
+            <% if selected_id && reasons[selected_id].present? %>
+              <div style="margin:4px 0 0 92px; font-family:'Plus Jakarta Sans',sans-serif; font-size:0.76rem; color:var(--ink-soft); line-height:1.4;">
+                ↳ <%= reasons[selected_id] %>
+              </div>
+            <% end %>
+          </div>
+        <% end %>
+
+        <%# Temas: o que vai agrupar a lista que as professoras mandam aos alunos. %>
+        <% if lvl[:activities].any? %>
+          <details style="margin-top:14px;" <%= "open" if proposal %>>
+            <summary style="cursor:pointer; font-family:'Plus Jakarta Sans',sans-serif; font-size:0.84rem; font-weight:700; color:var(--ink-soft);">
+              🏷️ Temas das atividades (<%= lvl[:activities].count { |a| a.theme.present? } %>/<%= lvl[:activities].size %> com tema)
+              <%= "— propostos pelo agente" if proposal %>
+            </summary>
+            <div style="display:grid; grid-template-columns:1fr; gap:6px; margin-top:10px;">
+              <% lvl[:activities].each do |a| %>
+                <label style="display:flex; align-items:center; gap:10px; font-family:'Plus Jakarta Sans',sans-serif; font-size:0.82rem; color:var(--ink);">
+                  <span style="flex:1; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;"><%= a.title %></span>
+                  <input type="text" name="themes[<%= a.id %>]" maxlength="40"
+                         value="<%= themes[a.id.to_s].presence || a.theme %>"
+                         placeholder="tema"
+                         style="width:170px; padding:6px 10px; border:1.5px solid var(--line); border-radius:8px; font-size:0.82rem; background:var(--surface); color:var(--ink);">
+                </label>
+              <% end %>
+            </div>
+          </details>
         <% end %>
       </div>
     <% end %>
@@ -72,7 +185,12 @@
     <button type="submit"
             style="width:100%; background:var(--action); color:var(--surface); border:none; border-radius:12px; padding:14px;
                    font-family:'Plus Jakarta Sans',sans-serif; font-size:1rem; font-weight:700; cursor:pointer;">
-      Salvar percurso
+      Salvar percurso e temas
     </button>
   <% end %>
 </div>
+
+<%# Enquanto o agente trabalha, a página se atualiza sozinha. %>
+<% if @working_any %>
+  <script>setTimeout(function () { window.location.reload(); }, 15000);</script>
+<% end %>

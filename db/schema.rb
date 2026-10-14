@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.1].define(version: 2026_10_15_100000) do
+ActiveRecord::Schema[7.1].define(version: 2026_10_15_110000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
 
@@ -62,6 +62,7 @@ ActiveRecord::Schema[7.1].define(version: 2026_10_15_100000) do
     t.string "unsplash_cover_url"
     t.string "unsplash_cover_credit"
     t.integer "path_position"
+    t.string "theme"
     t.index ["level", "path_position"], name: "index_activities_on_level_and_path_position", unique: true, where: "(path_position IS NOT NULL)"
     t.index ["slug"], name: "index_activities_on_slug", unique: true
     t.index ["teacher_id"], name: "index_activities_on_teacher_id"
@@ -280,6 +281,21 @@ ActiveRecord::Schema[7.1].define(version: 2026_10_15_100000) do
     t.index ["paragraph_ordering_id"], name: "index_paragraph_sentences_on_paragraph_ordering_id"
   end
 
+  create_table "path_suggestions", force: :cascade do |t|
+    t.string "level", null: false
+    t.string "kind", null: false
+    t.string "status", default: "queued", null: false
+    t.bigint "activity_id"
+    t.jsonb "payload", default: {}, null: false
+    t.text "error_message"
+    t.string "resolution"
+    t.datetime "resolved_at"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["activity_id"], name: "index_path_suggestions_on_activity_id"
+    t.index ["level", "kind", "status"], name: "index_path_suggestions_on_level_and_kind_and_status"
+  end
+
   create_table "push_subscriptions", force: :cascade do |t|
     t.bigint "user_id", null: false
     t.text "endpoint", null: false
@@ -432,6 +448,7 @@ ActiveRecord::Schema[7.1].define(version: 2026_10_15_100000) do
   add_foreign_key "matching_pairs", "column_matchings"
   add_foreign_key "paragraph_orderings", "activities"
   add_foreign_key "paragraph_sentences", "paragraph_orderings"
+  add_foreign_key "path_suggestions", "activities"
   add_foreign_key "push_subscriptions", "users"
   add_foreign_key "questions", "activities"
   add_foreign_key "quiz_attempts", "activities"
