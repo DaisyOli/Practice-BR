@@ -7,7 +7,9 @@
   quatro lugares pra corrigir o mesmo `<td>` errado.
 
   Locais: emoji, title, lead, cta, url, note (opcional), activity (opcional),
-  footer (opcional).
+  footer (opcional), items + items_intro (opcional: lista de [rótulo, valor],
+  como as atividades feitas e a nota de cada uma), quote (opcional: { intro,
+  text }, um trecho em destaque — a correção da IA).
 %>
 <table width="100%" cellpadding="0" cellspacing="0" style="background:#F7F5F0; padding:40px 16px; font-family:'Helvetica Neue',Arial,sans-serif;">
   <tr>
@@ -38,6 +40,31 @@
             <p style="font-size:0.92rem; line-height:1.6; color:#5C5853; margin:0 0 20px;">
               <%= lead %>
             </p>
+
+            <% if local_assigns[:items].present? %>
+              <% if local_assigns[:items_intro].present? %>
+                <div style="font-size:0.8rem; font-weight:700; color:#0F3826; margin-bottom:8px;"><%= items_intro %></div>
+              <% end %>
+              <table cellpadding="0" cellspacing="0" width="100%" style="margin-bottom:20px;">
+                <% items.each do |label, value| %>
+                  <tr>
+                    <td style="padding:7px 0; border-bottom:1px solid #EAE7E2; font-size:0.9rem; color:#1C1917;"><%= label %></td>
+                    <td align="right" style="padding:7px 0; border-bottom:1px solid #EAE7E2; font-size:0.9rem; font-weight:700; color:#1A6B4A; white-space:nowrap;"><%= value %></td>
+                  </tr>
+                <% end %>
+              </table>
+            <% end %>
+
+            <% if local_assigns[:quote].present? %>
+              <table cellpadding="0" cellspacing="0" width="100%" style="background:#F7F5F0; border-left:3px solid #1A6B4A; margin-bottom:20px;">
+                <tr>
+                  <td style="padding:14px 16px;">
+                    <div style="font-size:0.75rem; font-weight:700; color:#0F3826; margin-bottom:6px;"><%= quote[:intro] %></div>
+                    <div style="font-size:0.88rem; line-height:1.55; color:#1C1917; font-style:italic;">“<%= quote[:text] %>”</div>
+                  </td>
+                </tr>
+              </table>
+            <% end %>
 
             <%# A atividade concreta. Sem ela o email vira "volte quando puder",
                 e a pessoa fecha sem saber por onde começaria. %>

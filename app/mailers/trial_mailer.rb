@@ -4,7 +4,7 @@ class TrialMailer < ApplicationMailer
   # Boas-vindas fica de fora: é o email que a pessoa pediu ao se cadastrar, e o
   # que guarda o caminho de volta. O notification_email vai para a Daisy.
   marketing :first_nudge_email, :activation_email, :reminder_email, :reopen_email,
-            :ended_email, :winback_email, :recovery_email
+            :ended_email, :next_step_email, :winback_email, :recovery_email
 
   INTERNAL_EMAIL = "contato@practicebr.com".freeze
 
@@ -262,6 +262,10 @@ class TrialMailer < ApplicationMailer
   ENDED = {
     "fr" => {
       subject:      "Votre essai est terminé · e agora?",
+      results_intro: "Vos activités pendant l'essai :",
+      quote_intro:   "Ce que la correction a dit d'un de vos textes :",
+      cta_results:   "Voir mes résultats →",
+      note_results:  "Vos résultats restent sur la plateforme. Pour continuer, l'abonnement est sur la même page — rien ne se perd.",
       title:        "Vous avez fait le tour de l'essai",
       title_unused: "Votre essai s'est terminé",
       lead:         "L'essai s'arrête ici. Ce que vous avez vu était une porte d'entrée : il y a %{total} activités jusqu'à votre niveau, et les niveaux précédents restent ouverts pour réviser.",
@@ -271,6 +275,10 @@ class TrialMailer < ApplicationMailer
     },
     "en" => {
       subject:      "Your trial has ended · e agora?",
+      results_intro: "Your activities during the trial:",
+      quote_intro:   "What the correction said about one of your texts:",
+      cta_results:   "See my results →",
+      note_results:  "Your results stay on the platform. To keep going, the subscription is on the same page — nothing is lost.",
       title:        "You've seen what the trial holds",
       title_unused: "Your trial has ended",
       lead:         "The trial stops here. What you saw was the front door: there are %{total} activities up to your level, and previous levels stay open for review.",
@@ -280,6 +288,10 @@ class TrialMailer < ApplicationMailer
     },
     "pt" => {
       subject:      "Seu teste terminou — e agora?",
+      results_intro: "Suas atividades no teste:",
+      quote_intro:   "O que a correção disse de um dos seus textos:",
+      cta_results:   "Ver meus resultados →",
+      note_results:  "Seus resultados continuam na plataforma. Para continuar, a assinatura está na mesma página — nada se perde.",
       title:        "Você viu o que o teste tinha",
       title_unused: "Seu teste terminou",
       lead:         "O teste para por aqui. O que você viu era a porta de entrada: são %{total} atividades até o seu nível, e os níveis anteriores continuam abertos para revisar.",
@@ -289,16 +301,80 @@ class TrialMailer < ApplicationMailer
     }
   }.freeze
 
+  # Fase B (2026-10-15): para quem praticou, virou um balanço pessoal — as
+  # atividades feitas, com a nota de cada uma, e um trecho do que a correção da
+  # IA disse de um texto dela. É o email que mais vende, porque mostra a pessoa
+  # a si mesma; o botão leva aos resultados (a dashboard, aberta depois do
+  # teste), onde a assinatura está a um clique. Sem desconto.
+  QUOTE_LENGTH = 220
+
   def ended_email(user, total_activities)
     @user   = user
     copy    = ENDED.fetch(user.language, ENDED["fr"])
-    usou    = user.trial_activities_used.to_i.positive?
+    usou    = user.trial_activities_used.to_i.positive? || user.quiz_attempts.exists?
     @title  = usou ? copy[:title] : copy[:title_unused]
     @lead   = (usou ? copy[:lead] : copy[:lead_unused]) % { total: total_activities }
     @copy   = copy
-    @url    = trial_entry_url(user, to: "billing")
+
+    if usou
+      attempts = user.quiz_attempts.where.not(submitted_at: nil).includes(:activity).order(:submitted_at).to_a
+      # A nota só aparece quando é de aprovação; abaixo disso, "✓". Num email
+      # que convida a continuar, "0%" desanima — e o que a pessoa fez conta.
+      @items = attempts.map do |a|
+        [a.activity.title, a.score.to_i >= QuizAttempt::PASSING_SCORE ? "#{a.score.to_i}%" : "✓"]
+      end
+      # O comentário da resposta aberta com a melhor nota — nunca o de uma
+      # questão deixada em branco (a IA também comenta essas: "Não respondida").
+      feedback = attempts.flat_map { |a| a.open_ended_results.values }
+                         .select { |r| r["ai_feedback"].present? && r["ai_score"].to_i.positive? }
+                         .max_by { |r| r["ai_score"].to_i }&.dig("ai_feedback")
+      @quote = feedback && { intro: copy[:quote_intro], text: feedback.to_s.squish.truncate(QUOTE_LENGTH) }
+      @items_intro = copy[:results_intro]
+      @cta  = copy[:cta_results]
+      @note = copy[:note_results]
+      @url  = trial_entry_url(user, to: "dashboard")
+    else
+      @cta  = copy[:cta]
+      @note = copy[:note]
+      @url  = trial_entry_url(user, to: "billing")
+    end
 
     mail(to: user.email, subject: copy[:subject])
+  end
+
+  # Fase B, o do meio (3 dias depois do fim, só para quem praticou): a próxima
+  # atividade do percurso, concreta — título, tema, descrição. "A assinatura
+  # abre mais atividades" é abstrato; "esta é a próxima" não é.
+  NEXT_STEP = {
+    "fr" => {
+      subject: "Votre prochaine activité · sua próxima atividade 🌱",
+      title:   "La suite de votre parcours",
+      lead:    "Après les activités de l'essai, le parcours de votre niveau continue avec celle-ci. Avec l'abonnement, elle vous attend — et après elle, %{total} activités jusqu'à votre niveau.",
+      cta:     "Voir les formules →"
+    },
+    "en" => {
+      subject: "Your next activity · sua próxima atividade 🌱",
+      title:   "What comes next on your path",
+      lead:    "After the trial activities, your level's path continues with this one. With a subscription it's waiting for you — and after it, %{total} activities up to your level.",
+      cta:     "See the plans →"
+    },
+    "pt" => {
+      subject: "Sua próxima atividade está aqui 🌱",
+      title:   "A continuação do seu caminho",
+      lead:    "Depois das atividades do teste, o percurso do seu nível continua com esta. Com a assinatura, ela está esperando — e depois dela, %{total} atividades até o seu nível.",
+      cta:     "Ver os planos →"
+    }
+  }.freeze
+
+  def next_step_email(user, activity)
+    @user     = user
+    @activity = activity
+    @copy     = NEXT_STEP.fetch(user.language, NEXT_STEP["fr"])
+    total     = Activity.published.where(level: user.accessible_levels).count
+    @lead     = @copy[:lead] % { total: total }
+    @url      = trial_entry_url(user, to: "billing")
+
+    mail(to: user.email, subject: @copy[:subject])
   end
 
   # 3. A volta, dias depois. O último email antes do silêncio — e ele diz isso,

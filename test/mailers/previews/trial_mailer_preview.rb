@@ -100,6 +100,15 @@ class TrialMailerPreview < ActionMailer::Preview
     TrialMailer.ended_email(pessoa("pt", nome: "Marina", feitas: 3), 145)
   end
 
+  # Fase B, o do meio: a próxima atividade do percurso.
+  def next_step_fr
+    TrialMailer.next_step_email(pessoa("fr", feitas: 3), atividade)
+  end
+
+  def next_step_pt
+    TrialMailer.next_step_email(pessoa("pt", nome: "Marina", feitas: 3), atividade)
+  end
+
   def winback_fr
     TrialMailer.winback_email(pessoa("fr"), atividade)
   end

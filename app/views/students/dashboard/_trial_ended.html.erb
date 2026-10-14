@@ -1,0 +1,45 @@
+  <%# — Fim do teste, dentro da dashboard —
+        Antes, terminado o teste, a pessoa batia num muro (a tela de fim) e não
+        via mais nada do que tinha feito. Agora a dashboard fica aberta para
+        consulta, e esta faixa faz o papel da tela de fim: mostra o que ela
+        conseguiu e leva à assinatura. Atividade nova continua levando à tela
+        de fim, que é onde se assina. %>
+  <% if current_user.trial? && !current_user.trial_access_active? %>
+    <% tentativas = current_user.quiz_attempts.where.not(submitted_at: nil) %>
+    <% feitas = tentativas.count %>
+    <%# A melhor nota, não a média: numa faixa que convida a continuar, o que
+        conta é a pessoa sentir o que já consegue. %>
+    <% melhor = tentativas.maximum(:score)&.round %>
+    <div style="background:var(--brand-deep); border-radius:16px; padding:22px 24px; margin-bottom:1.5rem;">
+      <div style="font-family:'DM Mono',monospace; font-size:0.67rem; color:var(--paper); opacity:0.75; letter-spacing:0.08em; text-transform:uppercase; margin-bottom:10px;">
+        Seu teste terminou 🌱
+      </div>
+
+      <% if feitas.positive? %>
+        <div style="font-family:'Raleway',sans-serif; font-size:1.15rem; font-weight:800; color:var(--paper); line-height:1.35; margin-bottom:6px;">
+          Você fez <%= feitas %> <%= feitas == 1 ? "atividade" : "atividades" %><%= " — sua melhor nota foi #{melhor}%" if melhor&.positive? %> 🎉
+        </div>
+        <p style="font-family:'Plus Jakarta Sans',sans-serif; font-size:0.9rem; color:var(--paper); opacity:0.9; margin:0 0 16px; line-height:1.5;">
+          Seus resultados continuam aqui embaixo<%= ", e as suas expressões escritas, corrigidas pela IA, também" if @has_written_expressions %>.
+          Para continuar praticando, é só assinar — nada do que você fez se perde.
+        </p>
+      <% else %>
+        <p style="font-family:'Plus Jakarta Sans',sans-serif; font-size:0.92rem; color:var(--paper); opacity:0.9; margin:0 0 16px; line-height:1.5;">
+          O teste passou sem a gente se encontrar — acontece. As atividades do seu nível continuam aqui,
+          e o seu lugar também.
+        </p>
+      <% end %>
+
+      <div style="display:flex; flex-wrap:wrap; gap:10px; align-items:center;">
+        <%= link_to "Continuar com a assinatura →", billing_new_path,
+              style: "display:inline-block; background:var(--paper); color:var(--brand-deep); font-family:'Plus Jakarta Sans',sans-serif; " \
+                     "font-weight:700; font-size:0.95rem; padding:12px 24px; border-radius:10px; text-decoration:none;" %>
+        <% if @has_written_expressions %>
+          <a href="#open-ended-section"
+             style="font-family:'Plus Jakarta Sans',sans-serif; font-size:0.88rem; font-weight:600; color:var(--paper); opacity:0.85; text-decoration:underline;">
+            Ver minhas expressões escritas ↓
+          </a>
+        <% end %>
+      </div>
+    </div>
+  <% end %>
