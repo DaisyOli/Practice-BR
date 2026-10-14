@@ -97,6 +97,17 @@ class AiPrompt < ApplicationRecord
       }
     }
 
+    # O programa de cada nível: contra ele o agente da Sugestão do Dia mede o
+    # que falta no catálogo. Um por nível, pelo mesmo motivo das réguas abaixo.
+    Activity.levels.keys.each do |level|
+      entries["daily_suggestion.syllabus.#{level}"] = {
+        group:   "Sugestão do dia",
+        label:   "Programa do #{level}",
+        hint:    "O que um aluno do #{level} precisa encontrar na plataforma: temas e pontos gramaticais. O agente compara com as atividades publicadas e sugere o que falta. É a sua visão do nível que vale — ajuste à vontade.",
+        default: -> { DailySuggestionAgentService::SYLLABUS[level].to_s }
+      }
+    end
+
     # A régua de cada nível é um texto separado — é onde se mexe com mais
     # frequência, e misturar os cinco num campo só faria você reler tudo para
     # ajustar o A1. A lista sai do enum do Activity, a fonte de verdade: um
