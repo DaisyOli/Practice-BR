@@ -1,0 +1,73 @@
+<% content_for :head do %>
+  <title>Vitrine do teste · Admin · Practice-BR</title>
+<% end %>
+
+<div class="dash-outer" style="max-width:900px; margin:0 auto;">
+
+  <%= link_to admin_root_path,
+        style: "display:inline-flex; align-items:center; gap:6px; font-family:'Plus Jakarta Sans',sans-serif;
+                font-size:0.82rem; font-weight:600; color:var(--ink-soft); text-decoration:none; margin-bottom:1.25rem;" do %>
+    ← Voltar para o painel administrativo
+  <% end %>
+
+  <div style="margin-bottom:1.5rem;">
+    <h1 style="font-family:'Raleway',sans-serif; font-size:1.75rem; font-weight:700; color:var(--ink); margin:0 0 6px;">
+      🪟 Vitrine do teste
+    </h1>
+    <p style="font-family:'Plus Jakarta Sans',sans-serif; font-size:0.95rem; color:var(--ink-soft); margin:0;">
+      As atividades que quem chega pelo teste encontra primeiro, nesta ordem: no "Comece por aqui",
+      nos emails e no cartão de próxima atividade. A pessoa continua livre para fazer outras do nível.
+    </p>
+  </div>
+
+  <div style="background:var(--brand-mist); border:1px solid var(--brand-soft); border-radius:12px; padding:14px 18px; margin-bottom:1.5rem;
+              font-family:'Plus Jakarta Sans',sans-serif; font-size:0.88rem; color:var(--brand-deep); line-height:1.5;">
+    💡 Inclua em cada nível uma atividade com <strong>✍️ questão aberta</strong>: a correção da IA é o que mais
+    impressiona, e assim ela acontece dentro do teste. Para a 1ª posição, prefira uma curta.
+  </div>
+
+  <%= form_with url: admin_showcase_path, method: :patch do %>
+    <% @levels.each do |lvl| %>
+      <div style="background:var(--surface); border:1px solid var(--line); border-radius:16px; padding:22px 24px; margin-bottom:1.25rem;">
+        <div style="display:flex; align-items:baseline; justify-content:space-between; gap:12px; flex-wrap:wrap; margin-bottom:14px;">
+          <h2 style="font-family:'Raleway',sans-serif; font-size:1.1rem; font-weight:800; color:var(--ink); margin:0;">
+            <%= lvl[:level] %>
+          </h2>
+          <span style="font-family:'Plus Jakarta Sans',sans-serif; font-size:0.78rem; color:var(--ink-faint);">
+            <% if lvl[:chosen].empty? && lvl[:fallback] %>
+              sem vitrine — hoje o teste mostra "<%= lvl[:fallback].title %>"
+            <% elsif lvl[:activities].empty? %>
+              nenhuma atividade publicada neste nível
+            <% end %>
+          </span>
+        </div>
+
+        <% (1..Activity::TRIAL_SHOWCASE_SLOTS).each do |pos| %>
+          <% current = lvl[:chosen].find { |a| a.trial_showcase_position == pos } %>
+          <div style="display:flex; align-items:center; gap:12px; margin-bottom:10px;">
+            <span style="flex-shrink:0; width:28px; height:28px; border-radius:50%; background:var(--brand-tint); color:var(--brand-deep);
+                         display:flex; align-items:center; justify-content:center; font-family:'DM Mono',monospace; font-size:0.8rem; font-weight:700;">
+              <%= pos %>
+            </span>
+            <select name="showcase[<%= lvl[:level] %>][<%= pos %>]"
+                    style="flex:1; min-width:0; padding:10px 12px; border:1.5px solid var(--line); border-radius:10px;
+                           font-family:'Plus Jakarta Sans',sans-serif; font-size:0.88rem; color:var(--ink); background:var(--surface);">
+              <option value="">— nenhuma —</option>
+              <% lvl[:activities].each do |a| %>
+                <option value="<%= a.id %>" <%= "selected" if current&.id == a.id %>>
+                  <%= a.title %> — <%= @traits[a.id] %>
+                </option>
+              <% end %>
+            </select>
+          </div>
+        <% end %>
+      </div>
+    <% end %>
+
+    <button type="submit"
+            style="width:100%; background:var(--action); color:var(--surface); border:none; border-radius:12px; padding:14px;
+                   font-family:'Plus Jakarta Sans',sans-serif; font-size:1rem; font-weight:700; cursor:pointer;">
+      Salvar vitrine
+    </button>
+  <% end %>
+</div>
