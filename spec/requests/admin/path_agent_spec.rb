@@ -20,7 +20,17 @@ RSpec.describe "Agente do percurso", type: :request do
 
       get admin_path_path
       expect(response.body).to include("O agente está lendo as atividades do A1")
-      expect(response.body).to include("window.location.reload")
+      expect(response.body).to include(admin_path_status_path)
+    end
+
+    it "o status diz se o agente ainda trabalha — a tela só recarrega quando acaba" do
+      s = PathSuggestion.create!(level: "A1", kind: "full", status: "running")
+      get admin_path_status_path
+      expect(JSON.parse(response.body)).to eq("working" => true)
+
+      s.update!(status: "done", payload: { "path" => [], "themes" => {}, "summary" => "" })
+      get admin_path_status_path
+      expect(JSON.parse(response.body)).to eq("working" => false)
     end
 
     it "mostra a proposta já preenchida, com o motivo de cada posição, sem salvar nada" do

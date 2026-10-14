@@ -64,6 +64,13 @@ module Admin
                   notice: "O agente está lendo as atividades do #{level} ☕ — a página atualiza sozinha."
     end
 
+    # A tela pergunta isto a cada poucos segundos enquanto o agente trabalha, e
+    # recarrega uma vez só quando ele termina. Antes ela recarregava a página
+    # inteira a cada 15s — parecia pane e apagava o que estivesse sendo editado.
+    def status
+      render json: { working: PathSuggestion.where(kind: "full").working.exists? }
+    end
+
     # Aceitar a sugestão de uma atividade nova: entra na posição proposta.
     def accept
       suggestion = PathSuggestion.where(kind: "new_activity").to_review.find(params[:id])

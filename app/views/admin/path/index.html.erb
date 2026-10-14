@@ -96,8 +96,9 @@
             </span>
           </div>
           <% if lvl[:working] %>
-            <span style="font-family:'Plus Jakarta Sans',sans-serif; font-size:0.82rem; color:var(--brand-deep);">
-              ☕ O agente está lendo as atividades do <%= lvl[:level] %>…
+            <span style="font-family:'Plus Jakarta Sans',sans-serif; font-size:0.82rem; color:var(--brand-deep); text-align:right;">
+              <span data-agent-phrase data-level="<%= lvl[:level] %>">☕ O agente está lendo as atividades do <%= lvl[:level] %>…</span><br>
+              <span style="color:var(--ink-faint); font-size:0.74rem;">costuma levar 1 a 2 minutos — a página se atualiza sozinha</span>
             </span>
           <% elsif lvl[:activities].any? %>
             <button type="submit" form="sugerir-<%= lvl[:level] %>"
@@ -190,7 +191,35 @@
   <% end %>
 </div>
 
-<%# Enquanto o agente trabalha, a página se atualiza sozinha. %>
+<%# Enquanto o agente trabalha: pergunta ao servidor a cada 5s se acabou e
+    recarrega UMA vez, quando a proposta estiver pronta. As frases giram para a
+    espera não parecer travada. %>
 <% if @working_any %>
-  <script>setTimeout(function () { window.location.reload(); }, 15000);</script>
+  <script>
+    (function () {
+      var frases = [
+        "☕ O agente está lendo as atividades do %s…",
+        "📚 Comparando textos, questões e notas dos alunos…",
+        "🧭 Desenhando o caminho do mais simples ao mais exigente…",
+        "🏷️ Dando um tema a cada atividade…",
+        "✍️ Escrevendo o motivo de cada posição…"
+      ];
+      var i = 0;
+      setInterval(function () {
+        i = (i + 1) % frases.length;
+        document.querySelectorAll("[data-agent-phrase]").forEach(function (el) {
+          el.textContent = frases[i].replace("%s", el.dataset.level);
+        });
+      }, 6000);
+
+      var poll = setInterval(function () {
+        fetch("<%= admin_path_status_path %>", { headers: { Accept: "application/json" } })
+          .then(function (r) { return r.json(); })
+          .then(function (data) {
+            if (!data.working) { clearInterval(poll); window.location.reload(); }
+          })
+          .catch(function () { /* rede instável: tenta de novo no próximo ciclo */ });
+      }, 5000);
+    })();
+  </script>
 <% end %>
