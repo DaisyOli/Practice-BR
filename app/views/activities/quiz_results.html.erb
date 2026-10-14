@@ -310,7 +310,7 @@
       <% if @next_activity %>
         <% next_url = solve_activity_path(@next_activity) %>
         <a href="<%= next_url %>"
-           <% if current_user&.student? %>onclick="event.preventDefault(); goAfterRating('<%= next_url %>')"<% end %>
+           <% if current_user&.student_like? %>onclick="event.preventDefault(); goAfterRating('<%= next_url %>')"<% end %>
            style="display:flex; align-items:center; justify-content:space-between; gap:12px; text-decoration:none;
                   background:var(--brand-mist); border:1.5px solid var(--brand-soft); border-radius:12px;
                   padding:14px 18px; margin:12px 0;">
@@ -333,7 +333,7 @@
           <i class="bi bi-arrow-left"></i> <%= t('activities.back_to_dashboard') %>
         <% end %>
       <% else %>
-        <% if current_user&.student? %>
+        <% if current_user&.student_like? %>
           <button type="button"
                   onclick="(function(){ var o=document.getElementById('rating-modal-overlay'); if(o){ o.style.display='flex'; } else { window.location.href='<%= student_dashboard_path %>'; } })()"
                   class="btn-quiz-secondary" style="cursor:pointer;">
@@ -350,7 +350,7 @@
 </div>
 
 <%# ── Modal de avaliação ── %>
-<% if current_user&.student? %>
+<% if current_user&.student_like? %>
 <div id="rating-modal-overlay"
      onclick="if(event.target===this) dismissRating()"
      style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.55); z-index:9999;

@@ -61,6 +61,13 @@ RSpec.describe "Primeira experiência no teste", type: :request do
       expect(tentar).to be < proxima
       expect(proxima).to be < painel
     end
+
+    it "pede a avaliação antes de seguir, como para o aluno pagante" do
+      get results_activity_path(primeira)
+
+      expect(response.body).to include("goAfterRating")
+      expect(response.body).to include('id="rating-modal-overlay"')
+    end
   end
 
   describe "próxima atividade para aluno pagante" do
