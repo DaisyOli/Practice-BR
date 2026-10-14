@@ -130,6 +130,9 @@ Rails.application.routes.draw do
   # Entrada do trial: a landing manda a pessoa pra cá com o token que a API
   # acabou de devolver, e ela entra já logada. Sem passar pela caixa de entrada.
   get "comecar", to: "trial_starts#show", as: :trial_start
+
+  # A lista de atividades de um nível para a professora mandar aos alunos.
+  get "lista-de-atividades", to: "activity_lists#show", as: :activity_list
   # Entrada pelos emails do teste: link assinado que loga quem não tem senha e
   # leva direto ao destino do email. Ver TrialEmailLink.
   get "entrar", to: "trial_starts#link", as: :trial_link
