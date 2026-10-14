@@ -1,6 +1,6 @@
 class TeachersController < ApplicationController
   before_action :authenticate_user!, except: []
-  before_action :require_teacher!, only: [:students, :student_profile, :student_activities, :student_written, :student_attestation, :update_student_level, :remove_student, :clear_student_comments, :more_ratings, :organisation, :update_organisation]
+  before_action :require_teacher!, only: [:students, :assign_student, :student_profile, :student_activities, :student_written, :student_attestation, :update_student_level, :remove_student, :clear_student_comments, :more_ratings, :organisation, :update_organisation]
 
   def dashboard
   end
@@ -56,13 +56,18 @@ class TeachersController < ApplicationController
     }
   end
 
+  # A lista conta TODO o trabalho do aluno, em qualquer atividade. Até
+  # 2026-10-14 ela contava só as atividades criadas pela própria professora —
+  # e, pior, o cruzamento escondia da lista o aluno que só tinha feito
+  # atividades de outra professora. Com o percurso, quase todo aluno faz as
+  # atividades da Daisy: a professora atribuída não via o próprio aluno.
+  #
+  # A admin vê todos os alunos da plataforma, com quem é a professora de cada
+  # um, e pode trocar (assign_student). Filtro: ?professora=ID ou =sem.
   def students
-    @students = current_user.students
+    @teachers = User.teachers.order(:name) if current_user.admin?
+    @students = followed_students_for_filter
       .left_joins(:quiz_attempts)
-      .where(
-        "quiz_attempts.id IS NULL OR quiz_attempts.activity_id IN (?)",
-        current_user.activities.select(:id)
-      )
       .select(
         "users.*",
         "MAX(quiz_attempts.submitted_at) AS last_active",
@@ -74,19 +79,18 @@ class TeachersController < ApplicationController
   end
 
   def student_profile
-    @student = current_user.students.find(params[:id])
+    @student = followed_students.find(params[:id])
     scope = QuizAttempt
       .joins(:activity)
-      .where(user_id: @student.id, activities: { teacher_id: current_user.id })
+      .where(user_id: @student.id)
 
     # Aggregate metrics via SQL — no full record load
     @total_activities = scope.count
     @avg_score        = scope.average(:score)&.round || 0
     @best_score       = scope.maximum(:score)&.round || 0
 
-    activity_ids = current_user.activities.pluck(:id)
     @days_active = QuizAttempt
-      .where(user_id: @student.id, activity_id: activity_ids)
+      .where(user_id: @student.id)
       .where("submitted_at >= ?", 30.days.ago)
       .pluck(:submitted_at).map { |t| t.to_date }.uniq.count
 
@@ -107,11 +111,11 @@ class TeachersController < ApplicationController
   end
 
   def student_activities
-    @student = current_user.students.find(params[:id])
+    @student = followed_students.find(params[:id])
     offset   = params[:offset].to_i
     attempts = QuizAttempt
       .joins(:activity)
-      .where(user_id: @student.id, activities: { teacher_id: current_user.id })
+      .where(user_id: @student.id)
       .includes(:activity)
       .order(submitted_at: :desc)
       .offset(offset)
@@ -128,13 +132,13 @@ class TeachersController < ApplicationController
   end
 
   def student_written
-    @student = current_user.students.find(params[:id])
+    @student = followed_students.find(params[:id])
     offset   = params[:offset].to_i
     per_page = 5
 
     all_written = QuizAttempt
       .joins(:activity)
-      .where(user_id: @student.id, activities: { teacher_id: current_user.id })
+      .where(user_id: @student.id)
       .includes(:activity)
       .order(submitted_at: :desc)
       .to_a
@@ -152,11 +156,11 @@ class TeachersController < ApplicationController
   end
 
   def student_attestation
-    @student = current_user.students.find(params[:id])
+    @student = followed_students.find(params[:id])
     @teacher = current_user
     @attempts = QuizAttempt
       .joins(:activity)
-      .where(user_id: @student.id, activities: { teacher_id: current_user.id })
+      .where(user_id: @student.id)
       .where.not(started_at: nil)
       .includes(:activity)
       .order(submitted_at: :asc)
@@ -166,7 +170,7 @@ class TeachersController < ApplicationController
   end
 
   def update_student_level
-    student = current_user.students.find(params[:id])
+    student = followed_students.find(params[:id])
     new_level = params[:level].presence
 
     # Nível em branco não passa mais: todo aluno tem nível. Antes o `nil` era
@@ -184,7 +188,7 @@ class TeachersController < ApplicationController
   end
 
   def remove_student
-    student = current_user.students.find(params[:id])
+    student = followed_students.find(params[:id])
     student.update!(invited_by_id: nil)
     redirect_to teacher_students_path, notice: "#{student.display_name} foi removido da sua lista de alunos."
   rescue ActiveRecord::RecordNotFound
@@ -192,17 +196,57 @@ class TeachersController < ApplicationController
   end
 
   def clear_student_comments
-    student = current_user.students.find(params[:id])
+    student = followed_students.find(params[:id])
     QuizAttempt
       .joins(:activity)
-      .where(user_id: student.id, activities: { teacher_id: current_user.id })
+      .where(user_id: student.id)
       .update_all(teacher_comments: {})
     redirect_to teacher_student_profile_path(student), notice: "Feedbacks apagados."
   rescue ActiveRecord::RecordNotFound
     redirect_to teacher_students_path
   end
 
+  # Admin: atribui o aluno a uma professora (ou a nenhuma). Avisa as duas
+  # pontas por email — a professora, para saber que tem alguém novo, e o aluno,
+  # que fica sabendo assim quem acompanha o trabalho dele.
+  def assign_student
+    return redirect_to(teacher_students_path, alert: "Só a administração atribui alunos.") unless current_user.admin?
+
+    student = User.where(role: %w[student trial]).find(params[:id])
+    teacher = params[:teacher_id].present? ? User.teachers.find(params[:teacher_id]) : nil
+    return redirect_back(fallback_location: teacher_students_path) if student.invited_by_id == teacher&.id
+
+    student.update!(invited_by_id: teacher&.id)
+    if teacher
+      TeacherMailer.student_assigned(teacher, student).deliver_later
+      StudentMailer.teacher_assigned(student, teacher).deliver_later
+    end
+
+    notice = teacher ? "#{student.display_name} agora é aluno(a) de #{teacher.display_name}. Os dois foram avisados por email." \
+                     : "#{student.display_name} ficou sem professora."
+    redirect_back fallback_location: teacher_students_path, notice: notice
+  rescue ActiveRecord::RecordNotFound
+    redirect_to teacher_students_path, alert: "Aluno ou professora não encontrado."
+  end
+
   private
+
+  # Quem esta professora acompanha. A admin acompanha todos — é ela quem
+  # atribui, e precisa ver o trabalho de qualquer aluno.
+  def followed_students
+    current_user.admin? ? User.where(role: %w[student trial]) : current_user.students
+  end
+
+  def followed_students_for_filter
+    scope = followed_students
+    return scope unless current_user.admin?
+
+    case params[:professora]
+    when nil, "" then scope
+    when "sem"   then scope.where(invited_by_id: nil)
+    else              scope.where(invited_by_id: params[:professora])
+    end
+  end
 
   def organisation_params
     params.require(:user).permit(*User::ORGANISME_FIELDS.keys)

@@ -147,6 +147,49 @@ class StudentMailer < ApplicationMailer
     mail(to: student.email, subject: @copy[:subject])
   end
 
+  # A admin atribuiu este aluno a uma professora. É assim que ele fica sabendo
+  # quem acompanha o trabalho dele (decisão da Daisy: não aparece na dashboard).
+  # Transacional — é sobre a conta e sobre quem vê os dados dele —, então sai
+  # mesmo para quem pediu para não receber lembretes.
+  #
+  # O texto usa o nome da professora e evita "professor/professora": em francês
+  # a plataforma escreve no masculino genérico, e aqui é uma pessoa específica.
+  TEACHER_ASSIGNED = {
+    "fr" => {
+      subject: "%{teacher} vous accompagne sur Practice-BR 🌱",
+      title:   "Quelqu'un suit votre progression",
+      lead:    "À partir d'aujourd'hui, %{teacher} vous accompagne sur Practice-BR : vos activités, vos notes, et des commentaires sur vos expressions écrites. Continuez à pratiquer comme d'habitude — les retours arrivent directement dans la plateforme.",
+      cta:     "Continuer à pratiquer →",
+      footer:  "© Practice-BR · Une question ? Répondez simplement à cet email."
+    },
+    "en" => {
+      subject: "%{teacher} is now following your progress on Practice-BR 🌱",
+      title:   "Someone is following your progress",
+      lead:    "From today, %{teacher} is following your work on Practice-BR: your activities, your scores, and comments on your written answers. Keep practising as usual — feedback arrives right in the platform.",
+      cta:     "Keep practising →",
+      footer:  "© Practice-BR · Any questions? Just reply to this email."
+    },
+    "pt" => {
+      subject: "%{teacher} agora acompanha você na Practice-BR 🌱",
+      title:   "Alguém acompanha o seu progresso",
+      lead:    "A partir de hoje, %{teacher} acompanha o seu trabalho na Practice-BR: suas atividades, suas notas e comentários nas suas expressões escritas. Continue praticando como sempre — os comentários chegam direto na plataforma.",
+      cta:     "Continuar praticando →",
+      footer:  "© Practice-BR · Alguma dúvida? É só responder este email."
+    }
+  }.freeze
+
+  def teacher_assigned(student, teacher)
+    @user     = student
+    copy      = TEACHER_ASSIGNED.fetch(student.language.presence || "fr", TEACHER_ASSIGNED["fr"])
+    name      = teacher.display_name
+    @copy     = copy
+    @title    = copy[:title]
+    @lead     = copy[:lead] % { teacher: name }
+    @url      = student_dashboard_url
+
+    mail(to: student.email, subject: copy[:subject] % { teacher: name })
+  end
+
   # Cartão recusado. Este email é o que dá sentido à tolerância: sem ele o aluno
   # não sabe que precisa agir e a tolerância só adia a surpresa.
   def payment_failed(student)
