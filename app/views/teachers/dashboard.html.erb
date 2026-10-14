@@ -392,6 +392,13 @@
                   text-decoration:none; display:inline-flex; align-items:center; gap:8px;" do %>
       ✨ Gerar com IA
     <% end %>
+    <%# A lista pronta para mandar aos alunos: na ordem do percurso, com link. %>
+    <%= link_to activity_list_path,
+          style: "font-family:'Plus Jakarta Sans',sans-serif; font-size:0.9rem; font-weight:700;
+                  background:var(--surface); color:var(--brand-deep); border:1.5px solid var(--brand-soft);
+                  padding:12px 26px; border-radius:12px; text-decoration:none; display:inline-flex; align-items:center; gap:8px;" do %>
+      📋 Lista para os alunos
+    <% end %>
   </div>
 
   <%# Discreto de propósito: quem nunca emite atestação não precisa nem reparar
