@@ -23,7 +23,10 @@
   last_score     = session[:last_quiz_score]
 %>
 
-<div class="dash-outer" style="max-width:1000px; margin:0 auto;" data-user-id="<%= current_user.id %>" id="student-dashboard-root">
+<div class="dash-outer" style="max-width:1000px; margin:0 auto;" data-user-id="<%= current_user.id %>"
+     data-never-practiced="<%= @start_here.present? %>"
+     data-has-written="<%= @has_written_expressions %>"
+     id="student-dashboard-root">
 
   <%= render 'students/dashboard/level_pending_notice' unless current_user.level_assigned? %>
 

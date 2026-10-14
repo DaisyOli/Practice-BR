@@ -10,6 +10,10 @@ const TOUR_TEXTS = {
     start:           'Commencer →',
     next:            'Suivant →',
     finish:          'Terminer ✓',
+    first_visit:     '<strong>Bienvenue sur Practice-BR ! 👋</strong><br><br>Votre essai comprend 3 activités. On commence par celle-ci ? Quelques minutes suffisent.',
+    later:           'Plus tard',
+    written:         '✍️ Vos <strong>expressions écrites</strong>, corrigées par l\'IA, sont ici. Cliquez sur <strong>+</strong> pour les relire.',
+    written_seen:    'Compris ✓',
     welcome:         '<strong>Bienvenue sur Practice-BR ! 👋</strong><br><br>Faisons un rapide tour de la plateforme.',
     metrics:         'Ici vous suivez vos progrès : jours consécutifs 🔥, activités terminées et votre dernière note.',
     continue:        'Votre prochaine activité suggérée apparaît ici. Cliquez pour commencer quand vous êtes prêt(e) !',
@@ -23,6 +27,10 @@ const TOUR_TEXTS = {
     start:           'Start →',
     next:            'Next →',
     finish:          'Finish ✓',
+    first_visit:     '<strong>Welcome to Practice-BR! 👋</strong><br><br>Your trial includes 3 activities. Shall we start with this one? It only takes a few minutes.',
+    later:           'Later',
+    written:         '✍️ Your <strong>written answers</strong>, corrected by AI, are here. Click <strong>+</strong> to read them again.',
+    written_seen:    'Got it ✓',
     welcome:         '<strong>Welcome to Practice-BR! 👋</strong><br><br>Let\'s take a quick tour of the platform.',
     metrics:         'Track your progress here: study streak 🔥, completed activities and your latest score.',
     continue:        'Your next suggested activity appears here. Click to start when you\'re ready!',
@@ -36,7 +44,11 @@ const TOUR_TEXTS = {
     start:           'Começar →',
     next:            'Próximo →',
     finish:          'Concluir ✓',
-    welcome:         '<strong>Seja bem-vinda à Practice-BR! 👋</strong><br><br>Vamos fazer um tour rápido para você conhecer a plataforma.',
+    first_visit:     '<strong>Boas-vindas à Practice-BR! 👋</strong><br><br>Seu teste tem 3 atividades. Vamos começar por esta? Poucos minutos bastam.',
+    later:           'Depois',
+    written:         '✍️ Suas <strong>expressões escritas</strong>, corrigidas pela IA, ficam aqui. Clique no <strong>+</strong> para reler.',
+    written_seen:    'Entendi ✓',
+    welcome:         '<strong>Boas-vindas à Practice-BR! 👋</strong><br><br>Vamos fazer um tour rápido para você conhecer a plataforma.',
     metrics:         'Aqui você acompanha seu progresso: sequência de estudos 🔥, atividades concluídas e sua última nota.',
     continue:        'Sua próxima atividade sugerida aparece aqui. Clique para começar quando estiver pronto(a)!',
     levels:          'Explore atividades organizadas por nível — do A1 ao C1. Clique em qualquer nível para ver o que está disponível.',
@@ -69,10 +81,28 @@ function initOnboardingTour() {
   const userId = root.dataset.userId
   if (!userId) return
 
-  const storageKey = `practicebr_tour_done_${userId}`
-  if (localStorage.getItem(storageKey)) return
-
   const t = TOUR_TEXTS[detectLang()]
+
+  // Primeira visita de quem nunca praticou: um passo só, apontando para a
+  // atividade escolhida. Antes era o tour inteiro (métricas zeradas, níveis,
+  // menu) por cima do "Comece por aqui" — e as 3 pessoas reais de 12–13/10
+  // entraram e saíram sem fazer nada. O tour completo fica para depois da
+  // primeira atividade, quando métricas e expressões escritas já dizem algo.
+  if (root.dataset.neverPracticed === 'true') {
+    showFirstVisitStep(userId, t)
+    return
+  }
+
+  const storageKey = `practicebr_tour_done_${userId}`
+  const writtenKey = `practicebr_written_hint_${userId}`
+  const hasWritten = root.dataset.hasWritten === 'true'
+
+  // Quem já fez o tour e acabou de ganhar a primeira expressão escrita
+  // corrigida: só o passo que mostra onde ela mora.
+  if (safeGet(storageKey)) {
+    if (hasWritten && !safeGet(writtenKey)) showWrittenHint(writtenKey, t)
+    return
+  }
 
   // No navegador do celular a rolagem suave desalinha o recorte iluminado do tour:
   // a barra de endereço encolhe durante a rolagem e muda a altura da tela.
@@ -131,6 +161,15 @@ function initOnboardingTour() {
     })
   }
 
+  if (hasWritten && document.querySelector('#open-ended-section')) {
+    tour.addStep({
+      id: 'written',
+      attachTo: { element: '#open-ended-section', on: 'top' },
+      text: t.written,
+      buttons: [{ text: t.next, action: () => tour.next() }]
+    })
+  }
+
   if (document.querySelector('#tour-avatar')) {
     tour.addStep({
       id: 'avatar',
@@ -140,9 +179,67 @@ function initOnboardingTour() {
     })
   }
 
-  tour.on('complete', () => localStorage.setItem(storageKey, '1'))
-  tour.on('cancel',   () => localStorage.setItem(storageKey, '1'))
+  const done = () => {
+    safeSet(storageKey)
+    if (hasWritten) safeSet(writtenKey)
+  }
+  tour.on('complete', done)
+  tour.on('cancel',   done)
 
+  tour.start()
+}
+
+// localStorage pode lançar exceção (aba anônima do Safari, armazenamento
+// bloqueado). Sem isto, o tour quebraria o resto do JavaScript da dashboard.
+function safeGet(key) {
+  try { return localStorage.getItem(key) } catch (e) { return null }
+}
+
+function safeSet(key) {
+  try { localStorage.setItem(key, '1') } catch (e) { /* sem memória: tudo bem */ }
+}
+
+function newTour() {
+  return new Shepherd.Tour({
+    useModalOverlay: true,
+    defaultStepOptions: { cancelIcon: { enabled: true }, scrollTo: { behavior: 'auto', block: 'center' } }
+  })
+}
+
+// O "Começar" do passo vai direto para a atividade do bloco — a mesma do
+// botão que está iluminado logo atrás.
+function showFirstVisitStep(userId, t) {
+  const key = `practicebr_first_visit_done_${userId}`
+  const block = document.getElementById('tour-start-here')
+  if (!block || safeGet(key)) return
+
+  const link = block.querySelector('a[href]')
+  const tour = newTour()
+  tour.addStep({
+    id: 'first-visit',
+    attachTo: { element: '#tour-start-here', on: 'bottom' },
+    text: t.first_visit,
+    buttons: [
+      { text: t.later, action: () => tour.cancel(), classes: 'shepherd-button-secondary' },
+      { text: t.start, action: () => { safeSet(key); if (link) window.location.href = link.href } }
+    ]
+  })
+  tour.on('cancel', () => safeSet(key))
+  tour.start()
+}
+
+function showWrittenHint(writtenKey, t) {
+  if (!document.querySelector('#open-ended-section')) return
+
+  const tour = newTour()
+  tour.addStep({
+    id: 'written',
+    attachTo: { element: '#open-ended-section', on: 'top' },
+    text: t.written,
+    buttons: [{ text: t.written_seen, action: () => tour.complete() }]
+  })
+  tour.on('complete', () => safeSet(writtenKey))
+  tour.on('cancel',   () => safeSet(writtenKey))
   tour.start()
 }
 

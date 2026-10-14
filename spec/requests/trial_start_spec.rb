@@ -67,9 +67,20 @@ RSpec.describe "Entrada do trial pela landing", type: :request do
       expect(response).to have_http_status(:ok)
     end
 
-    it "dá as boas-vindas no idioma da pessoa" do
+    it "não manda aviso de boas-vindas — ele ficava escondido atrás do tour" do
+      # A boas-vindas agora é o primeiro passo do tour, apontando para a
+      # atividade escolhida (student_dashboard.js).
       get trial_start_path(token: token)
-      expect(flash[:notice]).to include("Bienvenue")
+      expect(flash[:notice]).to be_nil
+    end
+
+    it "marca a dashboard como primeira visita, que liga o passo único do tour" do
+      create(:activity, :B1, draft: false)
+      get trial_start_path(token: token)
+      follow_redirect!
+
+      expect(response.body).to include('data-never-practiced="true"')
+      expect(response.body).to include('id="tour-start-here"')
     end
 
     it "deixa a sessão lembrada, pra fechar o navegador não custar a conta" do

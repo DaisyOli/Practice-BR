@@ -64,9 +64,6 @@ class ActivitiesController < ApplicationController
         @score = @quiz_attempt.score
         @total_correct = @quiz_attempt.results["total_correct"]
         @total_questions = @quiz_attempt.results["total_questions"]
-        # No teste, o fim de uma atividade é o melhor momento para oferecer a
-        # próxima: sem isto os botões eram só "ver detalhes" e "tentar de novo".
-        @trial_next = current_user.suggested_first_activity if current_user.trial_access_active?
       end
     else
       session.delete(:show_score_data) if session[:show_score_data]&.dig("activity_id") == @activity.id
@@ -144,6 +141,7 @@ class ActivitiesController < ApplicationController
     @questions      = @activity.questions.index_by(&:id)
     @quiz_results   = @quiz_attempt.normalized_results(@questions)
     @existing_rating = current_user&.student_like? ? @activity.rating_by_user(current_user) : nil
+    @next_activity   = next_activity_for(current_user)
     render 'quiz_results'
   rescue => e
     Rails.logger.error "Erro ao mostrar resultados: #{e.message}\n#{e.backtrace.join("\n")}"
@@ -410,6 +408,25 @@ class ActivitiesController < ApplicationController
     unless current_user&.teacher?
       redirect_to root_path, alert: "Acesso restrito a professores."
     end
+  end
+
+  # A próxima atividade oferecida no fim da tela de resultados, para o aluno
+  # emendar uma na outra sem voltar ao painel. É a mesma escolha do "Continue
+  # estudando" da dashboard (StudentDashboardPresenter): se cada tela escolhesse
+  # por conta própria, as duas sugeririam atividades diferentes.
+  #
+  # Nada é oferecido quando o clique daria numa porta fechada: teste encerrado
+  # ou limite diário atingido.
+  def next_activity_for(user)
+    return nil unless user&.student_like?
+    return nil if user.trial? && !user.trial_access_active?
+    return nil if user.daily_limit_reached?
+
+    StudentDashboardPresenter.new(
+      user:                user,
+      activities_by_level: Activity.published.group_by(&:level),
+      completed_ids:       user.quiz_attempts.pluck(:activity_id)
+    ).continue_activity
   end
 
   # "Abriu uma atividade" é o degrau do funil entre entrar e terminar: separa

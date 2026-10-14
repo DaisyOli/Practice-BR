@@ -15,6 +15,12 @@ class StudentsController < ApplicationController
     # aparece mais. Não precisa de flag, de "não mostrar de novo", nem de coluna.
     @start_here = current_user.suggested_first_activity if current_user.never_practiced?
 
+    # Liga o passo do tour que mostra onde ficam as expressões escritas
+    # corrigidas pela IA — só depois de existir alguma para ver.
+    @has_written_expressions = current_user.quiz_attempts
+      .where(activity_id: Question.where(question_type: "open_ended").select(:activity_id))
+      .exists?
+
     load_completed_exercises if current_user.student?
 
     if params[:level].present?
