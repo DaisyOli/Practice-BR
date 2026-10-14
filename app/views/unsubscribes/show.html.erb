@@ -1,0 +1,72 @@
+<%# Descadastro. Fala o idioma da conta (não do navegador): o link veio de um
+    email que já saiu nesse idioma. Quatro estados: perguntar, feito, de volta,
+    link inválido. %>
+<%
+  copy = {
+    "fr" => {
+      ask_title:  "Ne plus recevoir nos emails ?",
+      ask_body:   "Vous ne recevrez plus nos rappels ni nos invitations. Les emails liés à votre compte (accès, paiement) continueront d'arriver.",
+      ask_cta:    "Oui, ne plus recevoir",
+      done_title: "C'est noté 🌿",
+      done_body:  "Vous ne recevrez plus nos rappels. Si vous changez d'avis, c'est ici.",
+      done_cta:   "Recevoir à nouveau",
+      back_title: "Content de vous retrouver 🌱",
+      back_body:  "Vous recevrez à nouveau nos rappels.",
+      invalid:    "Ce lien n'est plus valable.",
+      home:       "Aller sur Practice-BR"
+    },
+    "en" => {
+      ask_title:  "Stop receiving our emails?",
+      ask_body:   "You won't get our reminders or invitations anymore. Emails about your account (access, payment) will still arrive.",
+      ask_cta:    "Yes, stop sending",
+      done_title: "Done 🌿",
+      done_body:  "You won't receive our reminders anymore. If you change your mind, it's right here.",
+      done_cta:   "Receive them again",
+      back_title: "Glad to have you back 🌱",
+      back_body:  "You'll receive our reminders again.",
+      invalid:    "This link is no longer valid.",
+      home:       "Go to Practice-BR"
+    },
+    "pt" => {
+      ask_title:  "Não receber mais nossos emails?",
+      ask_body:   "Você deixa de receber nossos lembretes e convites. Os emails da sua conta (acesso, pagamento) continuam chegando.",
+      ask_cta:    "Sim, não quero mais receber",
+      done_title: "Anotado 🌿",
+      done_body:  "Você não vai mais receber nossos lembretes. Se mudar de ideia, é aqui.",
+      done_cta:   "Voltar a receber",
+      back_title: "Que bom te ver de volta 🌱",
+      back_body:  "Você volta a receber nossos lembretes.",
+      invalid:    "Este link não vale mais.",
+      home:       "Ir para a Practice-BR"
+    }
+  }.fetch(@lang)
+%>
+<div class="min-h-screen flex items-center justify-center bg-base-200 px-4 py-16">
+  <div class="max-w-md w-full text-center">
+
+    <% case @state %>
+    <% when :ask %>
+      <div class="text-6xl mb-6">✉️</div>
+      <h1 class="text-2xl font-bold text-base-content mb-3"><%= copy[:ask_title] %></h1>
+      <p class="text-base-content/70 mb-8 leading-relaxed"><%= copy[:ask_body] %></p>
+      <%= button_to copy[:ask_cta], unsubscribe_path(token: @token), method: :post,
+            class: "btn btn-lg w-full mb-4",
+            style: "background:var(--brand); color:var(--surface); border-color:var(--brand); font-weight:700;" %>
+    <% when :done %>
+      <div class="text-6xl mb-6">🍃</div>
+      <h1 class="text-2xl font-bold text-base-content mb-3"><%= copy[:done_title] %></h1>
+      <p class="text-base-content/70 mb-8 leading-relaxed"><%= copy[:done_body] %></p>
+      <%= button_to copy[:done_cta], resubscribe_path(token: @token), method: :post,
+            class: "btn btn-ghost w-full mb-4", style: "color:var(--brand); font-weight:700;" %>
+    <% when :back %>
+      <div class="text-6xl mb-6">🌱</div>
+      <h1 class="text-2xl font-bold text-base-content mb-3"><%= copy[:back_title] %></h1>
+      <p class="text-base-content/70 mb-8 leading-relaxed"><%= copy[:back_body] %></p>
+    <% else %>
+      <div class="text-6xl mb-6">🔗</div>
+      <h1 class="text-2xl font-bold text-base-content mb-8"><%= copy[:invalid] %></h1>
+    <% end %>
+
+    <%= link_to copy[:home], root_path, class: "btn btn-ghost btn-sm text-base-content/50" %>
+  </div>
+</div>

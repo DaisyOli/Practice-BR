@@ -1,4 +1,9 @@
 class StudentMailer < ApplicationMailer
+  include MarketingEmail
+
+  # De fora: subscription_welcome e payment_failed, que são sobre o contrato.
+  marketing :new_activity, :weekly_reminder, :inactivity_nudge
+
   CEFR_LEVELS = User::CEFR_LEVELS
 
   def new_activity(student, activity)

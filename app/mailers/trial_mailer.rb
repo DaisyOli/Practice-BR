@@ -1,4 +1,11 @@
 class TrialMailer < ApplicationMailer
+  include MarketingEmail
+
+  # Boas-vindas fica de fora: é o email que a pessoa pediu ao se cadastrar, e o
+  # que guarda o caminho de volta. O notification_email vai para a Daisy.
+  marketing :first_nudge_email, :activation_email, :reminder_email, :reopen_email,
+            :ended_email, :winback_email, :recovery_email
+
   INTERNAL_EMAIL = "contato@practicebr.com".freeze
 
   # O papel deste email mudou duas vezes.
@@ -332,34 +339,60 @@ class TrialMailer < ApplicationMailer
   # ---- Recuperação manual (TrialRecovery) ------------------------------------
   #
   # Não faz parte da sequência automática: sai uma vez, por decisão da Daisy,
-  # para quem se cadastrou numa janela específica e não fez nenhuma atividade.
-  # O texto admite o que pode ter dado errado ("se pediram uma senha"), porque
-  # até 2026-10-14 os emails levavam a uma tela de login para quem não tinha
-  # senha — e é justamente isso que este email corrige.
+  # para quem se cadastrou antes de 2026-10-14 — quando os emails ainda
+  # levavam a uma tela de login ou a "Criar nova senha" para quem não tinha
+  # senha. O texto admite isso, porque é justamente o que ele corrige.
+  #
+  # Ele é montado em pedaços porque a mesma campanha fala com gente em
+  # situações diferentes:
+  #   - cadastro recente ou antigo ("há alguns dias" seria falso para julho);
+  #   - quem recebeu o winback, que prometia ser o último email — quebrar a
+  #     promessa em silêncio é pior que dizer por quê;
+  #   - quem nunca começou ou quem fez 1–2 atividades.
+  RECOVERY_RECENT = 14.days
+
   RECOVERY = {
     "fr" => {
-      subject:  "Votre essai Practice-BR vous attend · seu teste 🌱",
-      title:    "Revenir est plus simple maintenant",
-      lead:     "Vous avez ouvert un essai sur Practice-BR il y a quelques jours. Si on vous a demandé un mot de passe pour revenir, c'était à nous de faire mieux : ce bouton vous fait entrer directement, sur n'importe quel appareil, et vous emmène à une activité choisie pour votre niveau.",
-      cta:      "Commencer mon premier exercice →",
-      note:     "Votre essai est ouvert jusqu'au %{ate}.",
-      extended: "On vous a ajouté 48 heures : votre essai est ouvert jusqu'au %{ate}."
+      subject:      "Votre essai Practice-BR vous attend · seu teste 🌱",
+      title:        "Revenir est plus simple maintenant",
+      opening:      "Vous avez ouvert un essai sur Practice-BR il y a quelques jours.",
+      opening_old:  "Vous avez ouvert un essai sur Practice-BR il y a quelque temps.",
+      promise:      "On vous avait dit que notre dernier email serait le dernier ; on revient quand même, parce qu'on vous doit une correction.",
+      fix:          "Si on vous a demandé un mot de passe pour revenir, c'était à nous de faire mieux : ce bouton vous fait entrer directement, sur n'importe quel appareil",
+      fix_new:      ", et vous emmène à une activité choisie pour votre niveau.",
+      fix_started:  ". Vous avez fait %{feitas} des 3 activités — la suivante vous attend.",
+      cta:          "Commencer mon premier exercice →",
+      cta_started:  "Continuer →",
+      note:         "Votre essai est ouvert jusqu'au %{ate}.",
+      extended:     "On vous a rouvert l'essai : il est ouvert jusqu'au %{ate}."
     },
     "en" => {
-      subject:  "Your Practice-BR trial is waiting · seu teste 🌱",
-      title:    "Coming back is simpler now",
-      lead:     "You opened a trial on Practice-BR a few days ago. If you were asked for a password to come back, that was on us: this button takes you straight in, on any device, to an activity picked for your level.",
-      cta:      "Start my first exercise →",
-      note:     "Your trial is open until %{ate}.",
-      extended: "We've added 48 hours: your trial is open until %{ate}."
+      subject:      "Your Practice-BR trial is waiting · seu teste 🌱",
+      title:        "Coming back is simpler now",
+      opening:      "You opened a trial on Practice-BR a few days ago.",
+      opening_old:  "You opened a trial on Practice-BR a while ago.",
+      promise:      "We told you our last email would be the last one; we're writing anyway, because we owe you a fix.",
+      fix:          "If you were asked for a password to come back, that was on us: this button takes you straight in, on any device",
+      fix_new:      ", to an activity picked for your level.",
+      fix_started:  ". You've done %{feitas} of the 3 activities — the next one is waiting.",
+      cta:          "Start my first exercise →",
+      cta_started:  "Keep going →",
+      note:         "Your trial is open until %{ate}.",
+      extended:     "We've reopened your trial: it's open until %{ate}."
     },
     "pt" => {
-      subject:  "Seu teste na Practice-BR está esperando 🌱",
-      title:    "Voltar ficou mais simples",
-      lead:     "Você abriu um teste na Practice-BR há alguns dias. Se pediram uma senha para você voltar, a falha foi nossa: este botão te leva direto pra dentro, de qualquer aparelho, numa atividade escolhida para o seu nível.",
-      cta:      "Começar meu primeiro exercício →",
-      note:     "Seu teste está aberto até %{ate}.",
-      extended: "Acrescentamos 48 horas: seu teste está aberto até %{ate}."
+      subject:      "Seu teste na Practice-BR está esperando 🌱",
+      title:        "Voltar ficou mais simples",
+      opening:      "Você abriu um teste na Practice-BR há alguns dias.",
+      opening_old:  "Você abriu um teste na Practice-BR há algum tempo.",
+      promise:      "A gente disse que o último email seria o último; voltamos mesmo assim, porque te devemos uma correção.",
+      fix:          "Se pediram uma senha para você voltar, a falha foi nossa: este botão te leva direto pra dentro, de qualquer aparelho",
+      fix_new:      ", numa atividade escolhida para o seu nível.",
+      fix_started:  ". Você fez %{feitas} das 3 atividades — a próxima está esperando.",
+      cta:          "Começar meu primeiro exercício →",
+      cta_started:  "Continuar →",
+      note:         "Seu teste está aberto até %{ate}.",
+      extended:     "Reabrimos seu teste: ele está aberto até %{ate}."
     }
   }.freeze
 
@@ -368,12 +401,22 @@ class TrialMailer < ApplicationMailer
   def recovery_email(user, activity, extended: false)
     @user     = user
     @activity = activity
-    @copy     = RECOVERY.fetch(user.language, RECOVERY["fr"])
-    @note     = @copy[extended ? :extended : :note] %
-                { ate: format_date(user.trial_expires_at.to_date, user.language) }
-    @url      = trial_entry_url(user, to: "activity", activity: activity)
+    copy      = RECOVERY.fetch(user.language, RECOVERY["fr"])
+    feitas    = user.quiz_attempts.count
+    recent    = (user.created_at || Time.current) > RECOVERY_RECENT.ago
 
-    mail(to: user.email, subject: @copy[:subject])
+    @copy = copy
+    @lead = [
+      recent ? copy[:opening] : copy[:opening_old],
+      (copy[:promise] if user.trial_winback_sent_at.present?),
+      copy[:fix] + (feitas.positive? ? copy[:fix_started] % { feitas: feitas } : copy[:fix_new])
+    ].compact.join(" ")
+    @cta  = feitas.positive? ? copy[:cta_started] : copy[:cta]
+    @note = copy[extended ? :extended : :note] %
+            { ate: format_date(user.trial_expires_at.to_date, user.language) }
+    @url  = trial_entry_url(user, to: "activity", activity: activity)
+
+    mail(to: user.email, subject: copy[:subject])
   end
 
   private
