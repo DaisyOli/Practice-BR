@@ -18,6 +18,7 @@ Rails.application.routes.draw do
   get    'teachers/students/:id/attestation',         to: 'teachers#student_attestation',   as: 'teacher_student_attestation'
   get    'teachers/students/:id',                    to: 'teachers#student_profile',       as: 'teacher_student_profile'
   patch  'teachers/students/:id/level',              to: 'teachers#update_student_level',  as: 'teacher_student_level'
+  patch  'teachers/students/:id/teacher',            to: 'teachers#assign_student',        as: 'teacher_student_assign'
   delete 'teachers/students/:id',                    to: 'teachers#remove_student',        as: 'teacher_student_remove'
   patch  'teachers/students/:id/clear_comments',     to: 'teachers#clear_student_comments', as: 'teacher_student_clear_comments'
   patch  'quiz_attempts/:id/teacher_comment',        to: 'teacher_comments#update',        as: 'quiz_attempt_teacher_comment'

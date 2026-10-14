@@ -24,7 +24,7 @@
   <div style="display:flex; align-items:flex-start; justify-content:space-between; gap:16px; flex-wrap:wrap; margin-bottom:1.75rem;">
     <div>
       <h1 style="font-family:'Raleway',sans-serif; font-size:1.75rem; font-weight:800; color:var(--ink); margin:0 0 10px 0;">
-        Meus Alunos
+        <%= current_user.admin? ? "Todos os alunos" : "Meus Alunos" %>
       </h1>
       <div style="display:flex; gap:8px; flex-wrap:wrap; align-items:center;">
         <span style="font-family:'DM Mono',monospace; font-size:0.72rem; font-weight:700;
@@ -64,6 +64,20 @@
     <% end %>
   </div>
 
+  <%# Admin: filtrar por professora. Quem fica "sem professora" é quem uma
+      professora removeu da lista — antes sumia de todas as telas. %>
+  <% if current_user.admin? %>
+    <% filtro = params[:professora].to_s %>
+    <% chip = ->(ativo) { "font-family:'Plus Jakarta Sans',sans-serif; font-size:0.8rem; font-weight:700; padding:6px 14px; border-radius:20px; text-decoration:none; " + (ativo ? "background:var(--brand); color:var(--surface);" : "background:var(--brand-tint); color:var(--brand-deep);") } %>
+    <div style="display:flex; flex-wrap:wrap; gap:8px; margin-bottom:1.25rem;">
+      <%= link_to "Todos", teacher_students_path, style: chip.(filtro.blank?) %>
+      <%= link_to "Sem professora", teacher_students_path(professora: "sem"), style: chip.(filtro == "sem") %>
+      <% @teachers.each do |t| %>
+        <%= link_to t.display_name, teacher_students_path(professora: t.id), style: chip.(filtro == t.id.to_s) %>
+      <% end %>
+    </div>
+  <% end %>
+
   <% if students.empty? %>
     <div style="background:var(--surface); border:1px solid var(--line); border-radius:16px; padding:60px 20px; text-align:center;">
       <div style="font-size:2.5rem; margin-bottom:14px;">🎓</div>
@@ -84,6 +98,7 @@
   <% else %>
     <div style="display:grid; grid-template-columns:repeat(auto-fill, minmax(300px, 1fr)); gap:14px;">
       <% students.each do |student| %>
+        <div>
         <% sc  = student.avg_score.to_i %>
         <% bar_color = sc >= 70 ? 'var(--brand)' : sc >= 40 ? 'var(--action)' : (student.avg_score.present? ? 'var(--error)' : 'var(--line)') %>
 
@@ -174,6 +189,23 @@
             </div>
           </div>
         <% end %>
+
+        <%# Admin: de quem é este aluno. Trocar avisa a professora e o aluno. %>
+        <% if current_user.admin? %>
+          <%= form_with url: teacher_student_assign_path(student), method: :patch,
+                style: "display:flex; align-items:center; gap:8px; margin-top:6px; padding:0 4px;" do %>
+            <span style="font-family:'Plus Jakarta Sans',sans-serif; font-size:0.76rem; color:var(--ink-faint); flex-shrink:0;">Professora</span>
+            <select name="teacher_id" onchange="this.form.requestSubmit()"
+                    style="flex:1; min-width:0; padding:6px 10px; border:1.5px solid var(--line); border-radius:8px;
+                           font-family:'Plus Jakarta Sans',sans-serif; font-size:0.8rem; color:var(--ink); background:var(--surface);">
+              <option value="" <%= "selected" if student.invited_by_id.nil? %>>— sem professora —</option>
+              <% @teachers.each do |t| %>
+                <option value="<%= t.id %>" <%= "selected" if student.invited_by_id == t.id %>><%= t.display_name %></option>
+              <% end %>
+            </select>
+          <% end %>
+        <% end %>
+        </div>
       <% end %>
     </div>
   <% end %>

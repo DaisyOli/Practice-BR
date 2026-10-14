@@ -22,22 +22,20 @@
     .includes(:user, :activity)
     .limit(3)
 
-  # Meus Alunos — os 3 mais recentemente ativos
+  # Meus Alunos — os 3 mais recentemente ativos, contando todo o trabalho deles
+  # (não só nas atividades desta professora: com o percurso, quase todo aluno
+  # faz atividades da Daisy, e o filtro antigo escondia o aluno da lista).
   recent_students = current_user.students
     .left_joins(:quiz_attempts)
-    .where(
-      "quiz_attempts.id IS NULL OR quiz_attempts.activity_id IN (?)",
-      user_activities.select(:id)
-    )
     .select("users.*, MAX(quiz_attempts.submitted_at) AS last_active, ROUND(AVG(quiz_attempts.score)::numeric,0) AS avg_score")
     .group("users.id")
     .order(Arel.sql("MAX(quiz_attempts.submitted_at) DESC NULLS LAST"))
     .limit(3)
 
-  # Aguardando revisão — tentativas com questão aberta e teacher_comments vazio, apenas de alunos vinculados
+  # Aguardando revisão — expressões escritas dos alunos desta professora ainda
+  # sem comentário, em qualquer atividade: quem acompanha o aluno comenta tudo.
   pending_review = QuizAttempt
     .joins(activity: :questions)
-    .where(activities: { teacher_id: current_user.id })
     .where(user_id: current_user.students.select(:id))
     .where(questions: { question_type: 'open_ended' })
     .where("quiz_attempts.teacher_comments = '{}' OR quiz_attempts.teacher_comments IS NULL")
