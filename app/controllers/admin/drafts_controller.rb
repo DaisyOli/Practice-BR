@@ -41,8 +41,15 @@ class Admin::DraftsController < Admin::BaseController
     redirect_to admin_drafts_path, alert: "Meta inválida: #{e.record.errors.full_messages.to_sentence}"
   end
 
+  # O endereço traz o slug, não o número: o Activity#to_param devolve o slug.
+  # Até 2026-10-14 isto buscava por número (`Activity.find`), não achava nada e
+  # respondia 404 — o "Descartar" parecia não fazer nada.
+  #
+  # Só rascunho: este botão nunca pode apagar uma atividade publicada.
   def destroy
-    activity = Activity.find(params[:id])
+    activity = Activity.where(draft: true).find_by(slug: params[:id])
+    return redirect_to(admin_drafts_path, alert: "Rascunho não encontrado — talvez já tenha sido publicado ou descartado.") unless activity
+
     title = activity.title
     activity.destroy
     redirect_to admin_drafts_path, notice: "Rascunho '#{title}' descartado."
