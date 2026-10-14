@@ -43,10 +43,61 @@ RSpec.describe "Primeira experiência no teste", type: :request do
       follow_redirect!
     end
 
-    it "comemora e oferece a próxima atividade do teste" do
+    it "comemora e manda ver o resultado — a próxima fica no fim dele" do
       expect(response.body).to include("Primeira atividade feita!")
-      expect(response.body).to include("Na farmácia")
-      expect(response.body).to include(solve_activity_path(segunda))
+      expect(response.body).to include("a próxima atividade está esperando")
+      expect(response.body).not_to include(solve_activity_path(segunda))
+    end
+
+    it "o resultado detalhado oferece a próxima atividade, entre tentar de novo e voltar ao painel" do
+      get results_activity_path(primeira)
+
+      corpo = response.body
+      expect(corpo).to include("Próxima atividade")
+      expect(corpo).to include("Na farmácia")
+      tentar = corpo.index(I18n.t("quiz.try_again"))
+      proxima = corpo.index("Próxima atividade 🌱")
+      painel = corpo.index("Voltar ao Meu Painel")
+      expect(tentar).to be < proxima
+      expect(proxima).to be < painel
+    end
+  end
+
+  describe "próxima atividade para aluno pagante" do
+    let(:aluno) { create(:user, :student, level: "B1") }
+
+    before do
+      sign_in aluno
+      create(:question, :multiple_choice, activity: primeira)
+      post submit_activity_path(primeira), params: { answers: { primeira.questions.first.id.to_s => "Brasília" } }
+    end
+
+    it "aparece também fora do teste, passando pela avaliação" do
+      get results_activity_path(primeira)
+
+      expect(response.body).to include("Próxima atividade")
+      expect(response.body).to include("goAfterRating")
+    end
+
+    it "some quando o limite diário foi atingido — o clique daria numa porta fechada" do
+      allow_any_instance_of(User).to receive(:daily_limit_reached?).and_return(true)
+      get results_activity_path(primeira)
+
+      expect(response.body).not_to include("Próxima atividade")
+    end
+  end
+
+  describe "expressões escritas" do
+    it "liga o passo do tour só quando já existe uma corrigida" do
+      get student_dashboard_path
+      expect(response.body).to include('data-has-written="false"')
+
+      aberta = create(:activity, :B1, draft: false)
+      create(:question, :open_ended, activity: aberta)
+      create(:quiz_attempt, user: trial, activity: aberta)
+
+      get student_dashboard_path
+      expect(response.body).to include('data-has-written="true"')
     end
   end
 
@@ -67,6 +118,13 @@ RSpec.describe "Primeira experiência no teste", type: :request do
       expect(response.body).to include("Você fez as 3 atividades do teste!")
       expect(response.body).to include(trial_expired_path)
       expect(response.body).not_to include("Primeira atividade feita!")
+    end
+
+    it "o resultado detalhado não oferece tentar de novo nem próxima — leva ao que vem depois" do
+      get results_activity_path(terceira)
+
+      expect(response.body).to include("Continuar praticando")
+      expect(response.body).not_to include("Próxima atividade 🌱")
     end
 
     it "deixa abrir o resultado detalhado" do

@@ -15,13 +15,9 @@ class TrialStartsController < ApplicationController
   skip_before_action :check_trial_restrictions!
   skip_before_action :check_payment_status!
 
-  # Idioma da pessoa: quem chega aqui é sobretudo francófono, e uma boas-vindas
-  # que ela não entende é pior que nenhuma. Mesmo padrão do RetentionMailer.
-  WELCOME = {
-    "fr" => "Bienvenue ! Vous avez 3 activités pour essayer — commençons.",
-    "en" => "Welcome! You have 3 activities to try — let's start.",
-    "pt" => "Boas-vindas! Você tem 3 atividades para experimentar — vamos lá."
-  }.freeze
+  # Até 2026-10-14 havia aqui um aviso de boas-vindas (flash) — mas ele saía
+  # escondido atrás do tour da dashboard. Agora a boas-vindas é o primeiro passo
+  # do próprio tour, apontando para a atividade escolhida (student_dashboard.js).
 
   EXPIRED = "Este link de acesso já foi usado ou expirou. " \
             "Enviamos um por email quando você se cadastrou — use aquele para entrar.".freeze
@@ -38,7 +34,7 @@ class TrialStartsController < ApplicationController
       # que grava o cookie. Não existe um `remember_me` de controller aqui.
       user.remember_me = true
       sign_in(user)
-      redirect_to student_dashboard_path, notice: WELCOME.fetch(user.language, WELCOME["fr"])
+      redirect_to student_dashboard_path
     elsif user_signed_in?
       # Link clicado duas vezes, aba recarregada, prefetch do navegador: a pessoa
       # já está dentro, então não tem por que mostrar erro pra ela.

@@ -92,24 +92,18 @@
             </div>
           </div>
 
-          <%# Teste em andamento: comemora a primeira e oferece a próxima — uma só,
-              a mesma que o "Comece por aqui" ofereceria. %>
+          <%# Teste em andamento: comemora a primeira. A próxima atividade não
+              é oferecida aqui, e sim no fim do resultado detalhado — primeiro a
+              pessoa vê o que acertou, depois emenda a próxima. %>
           <% if current_user&.trial_access_active? %>
             <% feitas = current_user.trial_activities_used.to_i %>
             <div style="background:var(--brand-mist); border:1px solid var(--brand-soft); border-radius:12px; padding:16px 18px; margin-bottom:20px; text-align:left;">
               <div style="font-family:'Plus Jakarta Sans',sans-serif; font-size:0.88rem; font-weight:700; color:var(--brand-deep); margin-bottom:4px;">
                 <%= feitas == 1 ? "Primeira atividade feita! 🎉" : "#{feitas} de 3 atividades do teste 🌱" %>
               </div>
-              <% if @trial_next %>
-                <div style="font-family:'Plus Jakarta Sans',sans-serif; font-size:0.82rem; color:var(--ink-soft); margin-bottom:10px;">
-                  Ainda tem <%= 3 - feitas %> no seu teste. A próxima é esta:
-                </div>
-                <%= link_to solve_activity_path(@trial_next),
-                      style: "display:block; background:var(--surface); border:1px solid var(--line); border-radius:10px; padding:12px 14px; text-decoration:none;" do %>
-                  <span style="font-family:'Raleway',sans-serif; font-size:0.95rem; font-weight:800; color:var(--ink);"><%= @trial_next.title %></span>
-                  <span style="font-family:'Plus Jakarta Sans',sans-serif; font-size:0.85rem; font-weight:700; color:var(--brand); white-space:nowrap;"> Fazer agora →</span>
-                <% end %>
-              <% end %>
+              <div style="font-family:'Plus Jakarta Sans',sans-serif; font-size:0.82rem; color:var(--ink-soft);">
+                Veja o resultado detalhado — a próxima atividade está esperando no fim dele.
+              </div>
             </div>
           <% end %>
 
