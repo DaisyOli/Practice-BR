@@ -118,6 +118,7 @@
     <div style="margin-bottom:12px;">
       <%= link_to admin_path_path, class: "admin-tool admin-tool--green" do %>
         <% montados = Activity.published.in_path.distinct.count(:level) %>
+        <% novas = PathSuggestion.where(kind: "new_activity").to_review.select(&:proposes_change?).size %>
         <span class="admin-tool__emoji">🧭</span>
         <div>
           <div class="admin-tool__title">Percurso por nível</div>
@@ -125,6 +126,9 @@
             <%= montados.zero? ? "nenhum montado — a sugestão é automática" : "#{montados} de 5 níveis com percurso · as 3 primeiras são o teste" %>
           </div>
         </div>
+        <% if novas.positive? %>
+          <span class="admin-tool__badge"><%= novas %> sugest<%= novas == 1 ? 'ão' : 'ões' %></span>
+        <% end %>
       <% end %>
     </div>
 

@@ -92,6 +92,9 @@ Rails.application.routes.draw do
     resources :activities, only: [:index]
     get   "percurso", to: "path#index", as: :path
     patch "percurso", to: "path#update"
+    post  "percurso/sugerir",                 to: "path#suggest", as: :suggest_path
+    post  "percurso/sugestoes/:id/aceitar",   to: "path#accept",  as: :accept_path_suggestion
+    post  "percurso/sugestoes/:id/descartar", to: "path#dismiss", as: :dismiss_path_suggestion
     # O endereço antigo, de quando era só a vitrine do teste.
     get   "vitrine",  to: redirect("/admin/percurso")
 

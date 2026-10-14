@@ -157,6 +157,11 @@ Rails.application.configure do
   }
   config.active_job.queue_name_prefix = "practicebr_production"
 
+  # Atividade publicada → o agente do percurso avalia se ela entra no caminho
+  # do nível (PathSuggestion.request_for_new!). Só aqui: em desenvolvimento,
+  # cada atividade semeada viraria uma chamada paga à IA.
+  config.x.level_path_on_publish = true
+
   config.action_mailer.perform_caching = false
 
   # Ignore bad email addresses and do not raise email delivery errors.

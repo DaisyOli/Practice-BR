@@ -16,38 +16,97 @@ module Admin
           level:      level,
           activities: activities,
           chosen:     Activity.published.where(level: level).in_path.to_a,
-          fallback:   Activity.published.where(level: level).order(created_at: :desc).first
+          fallback:   Activity.published.where(level: level).order(created_at: :desc).first,
+          working:    PathSuggestion.where(level: level, kind: "full").working.exists?,
+          # A última proposta completa ainda sem decisão: pré-preenche a tela.
+          proposal:   PathSuggestion.where(level: level, kind: "full").to_review.order(:created_at).last,
+          failed:     PathSuggestion.where(level: level, kind: "full").unresolved
+                                    .where(status: "failed").order(:created_at).last
         }
       end
       @traits = traits_for(@levels.flat_map { |l| l[:activities] })
+      @new_activity_suggestions = PathSuggestion.where(kind: "new_activity").to_review
+                                                .includes(:activity).order(:created_at)
+                                                .select(&:proposes_change?)
+      @working_any = @levels.any? { |l| l[:working] }
     end
 
-    # Recebe path[NÍVEL][POSIÇÃO] = id. Refaz o nível inteiro numa
-    # transação: limpa e grava de novo, para nunca esbarrar no índice único no
-    # meio de uma troca de posições.
+    # Recebe path[NÍVEL][POSIÇÃO] = id e themes[ID] = tema. Salvar é a
+    # aprovação: as propostas completas que estavam na tela ficam resolvidas.
     def update
       choices = params.fetch(:path, {}).permit!.to_h
 
       Activity.transaction do
         User::CEFR_LEVELS.each do |level|
-          Activity.where(level: level).where.not(path_position: nil)
-                  .update_all(path_position: nil)
-
-          ids = (1..Activity::PATH_SLOTS)
-                  .map { |pos| choices.dig(level, pos.to_s).presence&.to_i }
-                  .compact.uniq
-
-          ids.each.with_index(1) do |id, position|
-            Activity.published.where(level: level, id: id)
-                    .update_all(path_position: position)
-          end
+          ids = (1..Activity::PATH_SLOTS).map { |pos| choices.dig(level, pos.to_s).presence }.compact
+          Activity.set_path!(level, ids)
         end
+        save_themes(params.fetch(:themes, {}).permit!.to_h)
+        PathSuggestion.where(kind: "full").to_review.find_each { |s| s.resolve!("saved") }
       end
 
       redirect_to admin_path_path, notice: "Percurso salvo 🌱"
     end
 
+    # "✨ Sugerir com o agente" de um nível. Não pede de novo enquanto o agente
+    # ainda está trabalhando nesse nível.
+    def suggest
+      level = params[:level].to_s
+      return redirect_to(admin_path_path, alert: "Nível desconhecido.") unless level.in?(User::CEFR_LEVELS)
+
+      unless PathSuggestion.where(level: level, kind: "full").working.exists?
+        PathSuggestion.where(level: level, kind: "full").unresolved.find_each { |s| s.resolve!("replaced") }
+        suggestion = PathSuggestion.create!(level: level, kind: "full")
+        LevelPathJob.perform_later(suggestion.id)
+      end
+
+      redirect_to admin_path_path(anchor: "nivel-#{level}"),
+                  notice: "O agente está lendo as atividades do #{level} ☕ — a página atualiza sozinha."
+    end
+
+    # Aceitar a sugestão de uma atividade nova: entra na posição proposta.
+    def accept
+      suggestion = PathSuggestion.where(kind: "new_activity").to_review.find(params[:id])
+      activity   = suggestion.activity
+      return ignore_with(suggestion, "A atividade não está mais publicada.") unless activity && !activity.draft?
+
+      ids = Activity.published.where(level: suggestion.level).in_path.pluck(:id) - [activity.id]
+      position = suggestion.payload["position"].to_i
+      if suggestion.payload["decision"] == "replace"
+        ids[position - 1] = activity.id
+      else
+        ids.insert(position - 1, activity.id)
+      end
+
+      Activity.transaction do
+        Activity.set_path!(suggestion.level, ids.compact)
+        suggestion.resolve!("accepted")
+      end
+      redirect_to admin_path_path(anchor: "nivel-#{suggestion.level}"),
+                  notice: "\"#{activity.title}\" entrou no percurso do #{suggestion.level} 🌱"
+    end
+
+    # Ignorar (atividade nova) ou descartar (proposta completa).
+    def dismiss
+      suggestion = PathSuggestion.unresolved.find(params[:id])
+      suggestion.resolve!("ignored")
+      redirect_to admin_path_path(anchor: "nivel-#{suggestion.level}")
+    end
+
     private
+
+    def ignore_with(suggestion, message)
+      suggestion.resolve!("ignored")
+      redirect_to admin_path_path, alert: message
+    end
+
+    # Só grava o que mudou; tema em branco apaga.
+    def save_themes(themes)
+      Activity.where(id: themes.keys).find_each do |activity|
+        theme = themes[activity.id.to_s].to_s.strip.first(40).presence
+        activity.update_column(:theme, theme) if theme != activity.theme
+      end
+    end
 
     # O que ajuda a escolher, ao lado de cada título: tem questão aberta (a
     # correção da IA é o que mais impressiona no teste), tem mídia, quantas
