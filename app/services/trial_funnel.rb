@@ -1,14 +1,23 @@
 # O funil do teste, contado a partir do que o banco já guarda — sem tabela de
-# eventos nem ferramenta de analytics. Cada degrau é uma coluna ou um fato:
+# eventos nem ferramenta de analytics.
 #
-#   pediu o teste        → conta criada pela API da landing (trial_expires_at,
-#                          sem convite de professora)
-#   entrou na plataforma → first_access_at (ou trial_start_used_at / senha, para
-#                          contas anteriores a 2026-10-14)
-#   abriu uma atividade  → first_activity_opened_at (só existe a partir de
-#                          2026-10-14 — antes disso o degrau fica subcontado)
-#   concluiu a primeira  → primeira QuizAttempt
-#   venceu sem nada      → prazo passado, nenhuma tentativa, nunca pagou
+#   pediu o teste       → conta criada pela API da landing (trial_expires_at, sem
+#                         convite de professora)
+#   usou o link         → trial_start_used_at. Mostra que o link foi consumido,
+#                         não que a pessoa viu a dashboard.
+#   interagiu no app    → first_human_at: toque, tecla ou rolagem
+#   interagiu na atividade → first_activity_human_at
+#   começou a responder → first_answer_at
+#   concluiu a primeira → primeira QuizAttempt
+#   venceu sem nada     → prazo passado, nenhuma tentativa, nunca pagou
+#
+# Por que não usar first_access_at e first_activity_opened_at: eles são gravados
+# quando a página é pedida ao servidor, e o antivírus de email que segue o link
+# do botão também pede a página. E, nas contas anteriores a 14/10/2026, o
+# first_access_at foi copiado do uso do link.
+#
+# Os três sinais de pessoa só existem nas contas criadas desde `measured_since`,
+# então esses degraus contam só essas contas (`measured`).
 #
 # "Ativou depois de um lembrete" quer dizer só isso: a primeira atividade veio
 # depois de um email. Não prova que o email causou nada — a pessoa podia voltar
@@ -21,6 +30,11 @@ class TrialFunnel
     "D+1"            => :activation_nudge_sent_at,
     "reabertura"     => :trial_reopened_at
   }.freeze
+
+  # O dia em que os sinais de pessoa entraram em produção.
+  def self.measured_since
+    Time.zone.local(2026, 11, 3)
+  end
 
   def initialize(from:, to: Time.current, exclude_ids: [])
     @from        = from
@@ -42,11 +56,16 @@ class TrialFunnel
                                .pluck(:user_id, :created_at).to_h
 
     activated = users.select { |u| first_attempts[u.id] }
+    measured  = users.select { |u| u.created_at >= self.class.measured_since }
 
     {
       requested:          users.size,
-      accessed:           users.count { |u| accessed?(u) },
-      opened_activity:    users.count { |u| u.first_activity_opened_at || first_attempts[u.id] },
+      link_used:          users.count { |u| u.trial_start_used_at },
+      measured:           measured.size,
+      entered:            measured.count { |u| u.first_human_at || first_attempts[u.id] },
+      opened_activity:    measured.count { |u| u.first_activity_human_at || first_attempts[u.id] },
+      answered:           measured.count { |u| u.first_answer_at || first_attempts[u.id] },
+      by_source:          measured.filter_map(&:first_entry_source).tally,
       completed_first:    activated.size,
       expired_untouched:  users.count { |u| expired_untouched?(u, first_attempts) },
       converted:          users.count { |u| u.stripe_customer_id.present? },
@@ -57,10 +76,6 @@ class TrialFunnel
   end
 
   private
-
-  def accessed?(user)
-    user.first_access_at || user.trial_start_used_at || user.password_set_at
-  end
 
   def expired_untouched?(user, first_attempts)
     user.trial? && user.stripe_customer_id.blank? && first_attempts[user.id].nil? &&

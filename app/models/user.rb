@@ -268,8 +268,25 @@ class User < ApplicationRecord
     marketing_emails_opted_out_at.present?
   end
 
+  # O lembrete "Você começou — e ainda tem atividades" só faz sentido para quem
+  # começou e ainda pode continuar. O botão do admin mandou esse texto em
+  # 19/10/2026 para contas com zero atividades ("Você fez 0 das 3"), e o cron
+  # (TrialReminderJob) já tinha essa regra.
+  def trial_reminder_allowed?
+    trial_access_active? && trial_activities_used.to_i.positive?
+  end
+
   def trial_access_active?
     trial? && !trial_expired? && !trial_exhausted?
+  end
+
+  # Primeira entrada da conta no teste: pelo link da landing ou pelo do email.
+  # Só vale para quem nunca entrou — uma conta antiga que volta não "entra pela
+  # primeira vez", e o funil mentiria sobre por onde ela chegou.
+  def note_trial_entry!(source)
+    return if first_access_at.present?
+
+    self.class.where(id: id, first_entry_source: nil).update_all(first_entry_source: source)
   end
 
   def daily_limit_reached?
