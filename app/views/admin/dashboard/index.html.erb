@@ -301,11 +301,26 @@
       </div>
       <div style="font-family:'Plus Jakarta Sans',sans-serif; font-size:0.88rem; color:var(--ink); line-height:1.7;">
         <strong><%= f[:requested] %></strong> pediram →
-        <strong><%= f[:accessed] %></strong> entraram →
-        <strong><%= f[:opened_activity] %></strong> abriram uma atividade →
+        <strong><%= f[:link_used] %></strong> usaram o link →
         <strong><%= f[:completed_first] %></strong> concluíram a primeira
         <span style="color:var(--brand); font-weight:700;">(<%= f[:activation_rate] %>%)</span>
         · <%= f[:expired_untouched] %> venceram sem nada
+      </div>
+      <%# Só as contas criadas depois que a medição começou: nas antigas estes
+          sinais não existem, e misturar faria parecer que ninguém interagiu. %>
+      <div style="font-family:'Plus Jakarta Sans',sans-serif; font-size:0.82rem; color:var(--ink-soft); margin-top:6px; line-height:1.6;">
+        <% if f[:measured].positive? %>
+          Medido de verdade, desde <%= l(TrialFunnel.measured_since.to_date, format: "%d/%m") %>:
+          <strong><%= f[:measured] %></strong> contas →
+          <strong><%= f[:entered] %></strong> interagiram no app →
+          <strong><%= f[:opened_activity] %></strong> interagiram com uma atividade →
+          <strong><%= f[:answered] %></strong> começaram a responder
+          <% if f[:by_source].any? %>
+            · entrada: <%= f[:by_source].map { |fonte, n| "#{fonte} (#{n})" }.join(", ") %>
+          <% end %>
+        <% else %>
+          A medição de quem realmente usa o app começa com os próximos cadastros 🌱
+        <% end %>
       </div>
       <% if f[:activated_after].any? %>
         <div style="font-family:'Plus Jakarta Sans',sans-serif; font-size:0.78rem; color:var(--ink-soft); margin-top:4px;">
@@ -394,11 +409,17 @@
                   Enviado <%= l(trial.trial_reminder_sent_at, format: :short) %>
                 </span>
               <% end %>
-              <%= button_to "Enviar", admin_send_trial_reminder_path(trial),
-                    method: :post,
-                    style: "font-family:'DM Mono',monospace; font-size:0.68rem; font-weight:700;
-                            background:var(--brand-tint); color:var(--brand); border:1px solid var(--brand-soft);
-                            padding:4px 10px; border-radius:20px; cursor:pointer; margin-top:2px;" %>
+              <%# Só para quem começou e ainda está no teste: o texto do lembrete é
+                  "Você começou — e ainda tem atividades". %>
+              <% if trial.trial_reminder_allowed? %>
+                <%= button_to "Enviar", admin_send_trial_reminder_path(trial),
+                      method: :post,
+                      style: "font-family:'DM Mono',monospace; font-size:0.68rem; font-weight:700;
+                              background:var(--brand-tint); color:var(--brand); border:1px solid var(--brand-soft);
+                              padding:4px 10px; border-radius:20px; cursor:pointer; margin-top:2px;" %>
+              <% elsif trial.trial_reminder_sent_at.blank? %>
+                <span style="color:var(--line);">—</span>
+              <% end %>
             </div>
 
           </div>

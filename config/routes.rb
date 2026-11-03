@@ -137,6 +137,8 @@ Rails.application.routes.draw do
   # Entrada pelos emails do teste: link assinado que loga quem não tem senha e
   # leva direto ao destino do email. Ver TrialEmailLink.
   get "entrar", to: "trial_starts#link", as: :trial_link
+  # Sinais do navegador de que há uma pessoa usando o teste (TrialFunnel).
+  post "sinal-do-teste", to: "trial_signals#create", as: :trial_signal
 
   # Descadastro dos emails não transacionais. O GET só mostra a pergunta — quem
   # descadastra é o POST, para o robô de antivírus que abre links não

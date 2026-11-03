@@ -187,6 +187,18 @@
 
     <%= yield %>
 
+    <%# Teste: avisa quando há uma pessoa de verdade usando (TrialFunnel). Some
+        sozinho quando os três sinais já foram registrados. %>
+    <% if current_user&.trial? %>
+      <% sinais = { "app" => current_user.first_human_at, "activity" => current_user.first_activity_human_at,
+                    "answer" => current_user.first_answer_at }.select { |_, data| data.nil? }.keys %>
+      <% if sinais.any? %>
+        <div hidden data-controller="trial-signal"
+             data-trial-signal-url-value="<%= trial_signal_path %>"
+             data-trial-signal-pending-value="<%= sinais.to_json %>"></div>
+      <% end %>
+    <% end %>
+
     <%# A atestação é um documento pra impressão — rodapé ali só atrapalha. %>
     <% unless content_for?(:hide_navbar) %>
       <%= render 'shared/footer' %>

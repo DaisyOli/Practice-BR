@@ -130,6 +130,11 @@ progression dans le temps.
 - Commentaires écrits par le professeur sur une tentative
 - Évaluations données par l'élève à une activité (étoiles et commentaire)
 - Compteur d'activités réalisées dans la journée, servant à la limite quotidienne
+- Pendant l'essai : dates de la première interaction sur la plateforme, de la
+  première interaction dans une activité et de la première réponse commencée, et
+  canal de la première entrée (lien du site ou lien de l'email). Ces dates servent
+  à comprendre où l'essai s'interrompt ; le contenu de ce que l'élève saisit n'est
+  pas transmis par ce mécanisme
 - Côté professeur : activités créées, brouillons, demandes de génération d'activité
   par IA et suggestions de thèmes
 

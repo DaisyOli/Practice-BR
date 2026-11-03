@@ -33,6 +33,7 @@ class TrialStartsController < ApplicationController
       # Marcar no objeto **antes** do sign_in é o que dispara o hook do Devise
       # que grava o cookie. Não existe um `remember_me` de controller aqui.
       user.remember_me = true
+      user.note_trial_entry!("landing")
       sign_in(user)
       redirect_to student_dashboard_path
     elsif user_signed_in?
@@ -59,6 +60,7 @@ class TrialStartsController < ApplicationController
     end
 
     user = result.user
+    user.note_trial_entry!("email")
     unless current_user == user
       user.remember_me = true
       sign_in(user)
