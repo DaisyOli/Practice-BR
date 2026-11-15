@@ -55,10 +55,15 @@ RSpec.describe User, "#current_streak" do
       expect(student.current_streak).to eq(3)
     end
 
+    # Data fixa numa quinta: as duas faltas (terça e quarta) caem na mesma semana
+    # ISO. Sem isso, rodando na segunda ou na terça, as faltas ficavam em semanas
+    # diferentes, cada uma com o seu escudo, e o teste falhava conforme o dia.
     it "quebra na segunda falta da mesma semana" do
-      # duas faltas seguidas gastam o escudo e derrubam
-      praticou_em(0, 3)
-      expect(student.current_streak).to eq(1)
+      travel_to Time.zone.local(2026, 8, 6, 12, 0) do # quinta-feira
+        # duas faltas seguidas gastam o escudo e derrubam
+        praticou_em(0, 3)
+        expect(student.current_streak).to eq(1)
+      end
     end
 
     # A data fica travada num domingo (fim da semana ISO) porque o resultado

@@ -7,7 +7,10 @@ on:
 
 jobs:
   test:
-    runs-on: ubuntu-latest
+    # Fixo em 24.04: em 19/10/2026 o "ubuntu-latest" passou a ser o 26.04, que
+    # não tem o Ruby 3.3.5 pronto — o CI quebrava antes de rodar um teste sequer.
+    # Trocar para o 26.04 é trocar a versão do Ruby, inclusive no Heroku.
+    runs-on: ubuntu-24.04
 
     services:
       postgres:

@@ -39,8 +39,10 @@
                       <div style="font-size:0.78rem; color:#9C9892; margin-top:2px;">
                         #<%= student.id %> ·
                         nível <%= student.level.presence || "—" %> ·
+                        <%# in_time_zone: o máximo vem do banco em UTC, e entre meia-noite e
+                            1h em Paris a data saía com um dia a menos. %>
                         <% last = @last_practice[student.id] %>
-                        última atividade em <%= last ? l(last.to_date, format: :long) : "nunca" %>
+                        última atividade em <%= last ? l(last.in_time_zone.to_date, format: :long) : "nunca" %>
                       </div>
                     </td>
                   </tr>
