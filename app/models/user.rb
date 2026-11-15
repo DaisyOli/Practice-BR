@@ -81,6 +81,9 @@ class User < ApplicationRecord
     role == 'student'
   end
 
+  # Endereço novo não tem histórico: a marca de devolução era do antigo.
+  before_save -> { self.email_bounced_at = nil }, if: :will_save_change_to_email?
+
   def trial?
     role == 'trial'
   end
@@ -273,7 +276,12 @@ class User < ApplicationRecord
   # 19/10/2026 para contas com zero atividades ("Você fez 0 das 3"), e o cron
   # (TrialReminderJob) já tinha essa regra.
   def trial_reminder_allowed?
-    trial_access_active? && trial_activities_used.to_i.positive?
+    trial_access_active? && trial_activities_used.to_i.positive? && !email_bounced?
+  end
+
+  # O servidor da pessoa recusou o email de forma definitiva (webhook do Resend).
+  def email_bounced?
+    email_bounced_at.present?
   end
 
   def trial_access_active?

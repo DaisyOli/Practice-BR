@@ -249,7 +249,9 @@ notifications, révocable à tout moment dans les préférences du compte.
 **Catégories de données.** Adresse email ; préférence de rappel hebdomadaire ;
 adresse technique d'abonnement aux notifications du navigateur et ses clés de
 chiffrement ; dates du dernier rappel de fin d'essai et de la dernière relance
-d'inactivité, qui servent à ne pas répéter un envoi.
+d'inactivité, qui servent à ne pas répéter un envoi ; date de rejet définitif de
+l'adresse par le serveur de messagerie et signalement d'un email comme indésirable,
+transmis par Resend, qui servent à cesser les rappels vers cette adresse.
 
 **Sous-traitant.** Resend, pour l'acheminement des emails.
 

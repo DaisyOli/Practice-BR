@@ -158,6 +158,7 @@ Rails.application.routes.draw do
   get  "assinar/pagamento",    to: "billing#payment_problem",  as: :billing_payment_problem
   get  "assinar/atualizar",    to: "billing#update_payment",   as: :billing_update_payment
   post "webhooks/stripe",      to: "webhooks#stripe"
+  post "webhooks/resend",      to: "webhooks#resend"
   resources :push_subscriptions, only: [:create, :destroy]
 
   # Página de acesso trial encerrado

@@ -83,6 +83,7 @@ class TrialRecovery
     return "convite de professora, não veio da landing"   if user.invitation_created_at.present?
     return "admin"                                        if user.admin?
     return "pediu para não receber emails"                if user.marketing_emails_opted_out?
+    return "o endereço de email devolve"                  if user.email_bounced?
     # Quem fez 1 ou 2 entra (com texto próprio). Quem fez as 3 terminou o teste
     # pelo número de atividades — mais prazo não muda nada; a conversa com essa
     # pessoa é sobre assinar.
