@@ -509,6 +509,7 @@ DEPENDENCIES
   simple_form
   simplecov
   sprockets-rails
+  standardwebhooks
   stimulus-rails
   stripe (~> 13.0)
   tailwindcss-rails (~> 3.3.1)

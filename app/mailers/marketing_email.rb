@@ -5,7 +5,8 @@
 # Duas regras, aplicadas aqui e não em cada job, para nenhum caminho escapar
 # (cron, botão do admin, rake de campanha):
 #
-#   1. Quem pediu para não receber não recebe: a mensagem é montada e não sai.
+#   1. Quem pediu para não receber não recebe, nem quem tem o endereço recusado
+#      de forma definitiva: a mensagem é montada e não sai.
 #   2. Quem recebe ganha o cabeçalho List-Unsubscribe com clique único
 #      (RFC 8058) — o "Cancelar inscrição" que o Gmail mostra no topo.
 #
@@ -32,7 +33,8 @@ module MarketingEmail
     recipient = @user || @student
     return if recipient.nil?
 
-    if recipient.marketing_emails_opted_out?
+    # Quem pediu para sair, ou cujo servidor recusa o email de forma definitiva.
+    if recipient.marketing_emails_opted_out? || recipient.email_bounced?
       message.perform_deliveries = false
       return
     end

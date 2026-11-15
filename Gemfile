@@ -130,6 +130,8 @@ gem "kaminari", "~> 1.2"
 
 # IA
 gem "anthropic"
+# Verifica a assinatura dos webhooks do Resend (já vinha junto com a gem anthropic).
+gem "standardwebhooks"
 
 # Fila de background jobs no Postgres (correção por IA fora do ciclo da requisição)
 gem "good_job", "~> 4.0"

@@ -32,7 +32,48 @@ class WebhooksController < ApplicationController
     head :ok
   end
 
+  # Devoluções e marcações de spam, avisadas pelo Resend. A assinatura é
+  # obrigatória: sem o segredo configurado, recusa em vez de aceitar qualquer um,
+  # porque este endereço decide para quem a plataforma para de escrever.
+  #
+  # O corpo do aviso traz email e assunto, por isso nada dele vai para o log.
+  def resend
+    secret = ENV["RESEND_WEBHOOK_SECRET"]
+    return head :service_unavailable if secret.blank?
+
+    begin
+      event = StandardWebhooks::Webhook.new(secret).verify(
+        request.raw_post,
+        "webhook-id"        => request.headers["svix-id"],
+        "webhook-timestamp" => request.headers["svix-timestamp"],
+        "webhook-signature" => request.headers["svix-signature"]
+      )
+    rescue StandardWebhooks::WebhookVerificationError, StandardWebhooks::WebhookSigningError, JSON::ParserError
+      Rails.logger.error "[Webhook Resend] assinatura inválida"
+      return head :bad_request
+    end
+
+    data = event["data"].is_a?(Hash) ? event["data"] : {}
+    case event["type"]
+    when "email.bounced"
+      # Só a recusa definitiva: caixa cheia ou servidor fora do ar passam sozinhos.
+      mark_recipients(data, :email_bounced_at) if data.dig("bounce", "type") == "Permanent"
+    when "email.complained"
+      # Marcou como spam: vale como pedido para não receber mais lembretes.
+      mark_recipients(data, :marketing_emails_opted_out_at)
+    end
+
+    head :ok
+  end
+
   private
+
+  # Condicional no banco: o aviso pode chegar mais de uma vez, e a data que
+  # importa é a primeira.
+  def mark_recipients(data, column)
+    emails = Array(data["to"]).map { |address| address.to_s.strip.downcase }
+    User.where(email: emails, column => nil).update_all(column => Time.current)
+  end
 
   # Fim do período de cobrança, aceitando os DOIS formatos do Stripe.
   #

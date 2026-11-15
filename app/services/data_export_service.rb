@@ -56,6 +56,7 @@ class DataExportService
       primeira_interacao_em_atividade: @user.first_activity_human_at&.iso8601,
       primeira_resposta_no_teste:     @user.first_answer_at&.iso8601,
       primeira_entrada_por:           @user.first_entry_source,
+      email_recusado_em:              @user.email_bounced_at&.iso8601,
       emails_de_lembrete_cancelados_em: @user.marketing_emails_opted_out_at&.iso8601
     }.compact
   end
