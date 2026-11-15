@@ -9,7 +9,10 @@ Rails.application.config.filter_parameters += [
   # Webhook do Resend: traz destinatário e assunto, e o assunto interno de "Novo
   # trial" contém o email da pessoa. Regex exata porque, como símbolo, `to` também
   # esconderia `total`, `token` e tudo o mais que contenha essas letras.
-  /\A(to|from|subject)\z/,
+  # `headers` leva o link de descadastro, com o token da pessoa, e
+  # `diagnosticCode` é a resposta do servidor dela, que às vezes repete o
+  # endereço. O aviso inteiro continua no painel do Resend.
+  /\A(to|from|subject|headers|diagnosticCode)\z/,
 
   # Dado pessoal de aluno. Mesmo com log_level "info" o Rails escreve a linha
   # "Parameters: {...}" de todo POST — sem isto, o texto das respostas abertas e

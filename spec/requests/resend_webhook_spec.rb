@@ -59,9 +59,13 @@ RSpec.describe "Webhook do Resend", type: :request do
   end
 
   describe "os avisos" do
-    it "falha temporária não marca: caixa cheia passa sozinha" do
-      aviso(bounce_type: "Temporary")
-      expect(pessoa.reload.email_bounced?).to be false
+    # Foi assim que veio o aviso real de 03/11/2026: tipo "Transient", com a
+    # resposta "550 5.7.1 ... não tem permissão para ... mensagens externas".
+    # Este teste dizia o contrário (com "Temporary", o exemplo da documentação),
+    # e a regra deixava passar o único caso de verdade.
+    it "devolução \"Transient\" também marca" do
+      aviso(bounce_type: "Transient")
+      expect(pessoa.reload.email_bounced?).to be true
     end
 
     it "marcar como spam vale como pedido para sair" do
@@ -132,5 +136,19 @@ RSpec.describe "Webhook do Resend", type: :request do
     expect(limpo["to"]).to eq("[FILTERED]")
     expect(limpo["subject"]).to eq("[FILTERED]")
     expect(limpo["total_questions"]).to eq(5)
+  end
+
+  # O aviso real de 03/11 mostrou o que mais ia para o log: o link de
+  # descadastro e a resposta do servidor da pessoa.
+  it "link de descadastro e resposta do servidor também não aparecem nos logs" do
+    filtro = ActiveSupport::ParameterFilter.new(Rails.application.config.filter_parameters)
+    limpo  = filtro.filter("data" => {
+      "headers" => [{ "name" => "List-Unsubscribe", "value" => "<https://app.practicebr.com/descadastrar?token=abc>" }],
+      "bounce"  => { "type" => "Transient", "diagnosticCode" => ["smtp; 550 5.1.1 <a@b.com>: Recipient address rejected"] }
+    })
+
+    expect(limpo["data"]["headers"]).to eq("[FILTERED]")
+    expect(limpo["data"]["bounce"]["diagnosticCode"]).to eq("[FILTERED]")
+    expect(limpo["data"]["bounce"]["type"]).to eq("Transient")
   end
 end

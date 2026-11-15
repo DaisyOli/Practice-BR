@@ -56,8 +56,13 @@ class WebhooksController < ApplicationController
     data = event["data"].is_a?(Hash) ? event["data"] : {}
     case event["type"]
     when "email.bounced"
-      # Só a recusa definitiva: caixa cheia ou servidor fora do ar passam sozinhos.
-      mark_recipients(data, :email_bounced_at) if data.dig("bounce", "type") == "Permanent"
+      # Qualquer devolução marca. Para o Resend, este aviso já quer dizer que o
+      # servidor da pessoa recusou o email; atraso é outro evento, que não
+      # assinamos. O "tipo" de dentro do aviso não serve de régua: a única
+      # devolução real que tivemos (03/11/2026) veio como "Transient", e era um
+      # endereço de escola ou empresa que só recebe email de dentro. Aquilo ia
+      # devolver para sempre.
+      mark_recipients(data, :email_bounced_at)
     when "email.complained"
       # Marcou como spam: vale como pedido para não receber mais lembretes.
       mark_recipients(data, :marketing_emails_opted_out_at)
