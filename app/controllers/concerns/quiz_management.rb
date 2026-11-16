@@ -30,8 +30,9 @@ module QuizManagement
   end
 
   # As perguntas que o aluno responde no quiz. Na pílula, o desafio de escrita
-  # fica de fora: ele é oferecido depois do resultado. A página da atividade e a
-  # revisão de rascunho continuam usando load_questions, com a pergunta inteira.
+  # fica fora desta lista: ele entra à parte, como último passo opcional
+  # (_writing_challenge_step). A página da atividade e a revisão de rascunho
+  # continuam usando load_questions, com a pergunta inteira.
   def quiz_questions
     challenge_id = @activity.writing_challenge&.id
     questions    = load_questions

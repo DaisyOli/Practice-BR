@@ -103,8 +103,8 @@ class Activity < ApplicationRecord
     activity_ratings.to_a.find { |r| r.user_id == user.id }
   end
 
-  # O desafio de escrita da pílula: a pergunta aberta que não entra no quiz e é
-  # oferecida depois do resultado, fora da nota. A IA põe exatamente uma, no
+  # O desafio de escrita da pílula: a pergunta aberta que vira o último passo do
+  # quiz, opcional e fora da nota. A IA põe exatamente uma, no
   # fim; se vier mais de uma, só a última vira desafio e as outras continuam no
   # quiz como sempre. nil fora das pílulas.
   def writing_challenge

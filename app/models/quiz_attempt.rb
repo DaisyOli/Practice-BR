@@ -17,6 +17,10 @@ class QuizAttempt < ApplicationRecord
 
   PASSING_SCORE = 60
 
+  # Teto do texto do desafio de escrita da pílula: 2 a 5 frases cabem com
+  # folga, e o teto protege a correção por IA de um texto colado sem fim.
+  CHALLENGE_MAX_CHARS = 3000
+
   before_create :set_submitted_at
   after_create  :increment_trial_counter
   after_create  :increment_daily_counter
