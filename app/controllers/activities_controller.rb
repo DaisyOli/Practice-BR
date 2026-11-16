@@ -10,7 +10,7 @@ class ActivitiesController < ApplicationController
   # qualquer request de :resolve_quiz, com ou sem crawler). Por isso as duas
   # condições vão dentro de uma única lambda.
   skip_before_action :authenticate_user!, if: -> { action_name == "resolve_quiz" && crawler_request? }
-  before_action :set_activity, only: [:show, :edit, :update, :destroy, :resolve_quiz, :submit_quiz, :submit_challenge, :quiz_results, :grading_status, :transcribe_audio, :clear_content, :clear_attempt_history, :review_draft, :publish_draft]
+  before_action :set_activity, only: [:show, :edit, :update, :destroy, :resolve_quiz, :submit_quiz, :quiz_results, :grading_status, :transcribe_audio, :clear_content, :clear_attempt_history, :review_draft, :publish_draft]
   before_action :preload_exercise_associations, only: [:show]
   before_action :authorize_teacher, only: [:new, :create, :edit, :update, :destroy, :generate_with_ai, :generate_from_video, :generation_wait, :generation_status, :review_draft, :publish_draft]
   before_action :check_trial_level_restriction!, only: [:show, :resolve_quiz, :submit_quiz]
@@ -55,6 +55,10 @@ class ActivitiesController < ApplicationController
       redirect_to student_dashboard_path, flash: { daily_limit: true } and return
     end
     @questions = quiz_questions
+    # Pílula: o desafio de escrita é o último passo, opcional. Quem refaz a
+    # pílula e já tinha escrito fica sabendo o que acontece com o texto antigo.
+    @writing_challenge  = @activity.writing_challenge
+    @previous_challenge = current_user.quiz_attempts.find_by(activity_id: @activity.id)&.challenge_entry if @writing_challenge
     record_trial_first_activity_opened
 
     if params[:show_score] == 'true' && session[:quiz_attempt_id].present?
@@ -142,51 +146,10 @@ class ActivitiesController < ApplicationController
     @quiz_results   = @quiz_attempt.normalized_results(@questions)
     @existing_rating = current_user&.student_like? ? @activity.rating_by_user(current_user) : nil
     @next_activity   = next_activity_for(current_user)
-    @writing_challenge = @activity.writing_challenge
     render 'quiz_results'
   rescue => e
     Rails.logger.error "Erro ao mostrar resultados: #{e.message}\n#{e.backtrace.join("\n")}"
     redirect_to activities_path, alert: "Ocorreu um erro ao exibir os resultados. Tente novamente."
-  end
-
-  # O tamanho máximo do texto do desafio: 2 a 5 frases cabem com folga, e o
-  # teto protege a correção por IA de um texto colado sem fim.
-  CHALLENGE_MAX_CHARS = 3000
-
-  # O desafio de escrita da pílula, enviado da tela de resultado. Vira uma
-  # resposta aberta da tentativa, marcada como desafio (fora da nota), e a IA
-  # corrige em background, como as abertas do quiz.
-  def submit_challenge
-    attempt   = current_user.quiz_attempts.find_by(activity_id: @activity.id)
-    challenge = @activity.writing_challenge
-    text      = params[:challenge_answer].to_s.strip
-    back      = results_activity_path(@activity, anchor: "desafio")
-
-    unless attempt && challenge && attempt.results.is_a?(Hash) && attempt.results["results"].is_a?(Hash)
-      return redirect_to results_activity_path(@activity), status: :see_other
-    end
-    if text.blank?
-      return redirect_to back, alert: "Escreva alguma coisa antes de enviar 🙂", status: :see_other
-    end
-
-    enqueued = attempt.with_lock do
-      # Duplo clique ou aba antiga: vale o primeiro envio.
-      next false if attempt.results["results"].key?(challenge.id.to_s)
-
-      attempt.results_will_change!
-      attempt.results["results"][challenge.id.to_s] = {
-        "challenge"     => true,
-        "question_text" => challenge.content,
-        "question_type" => "open_ended",
-        "given_answer"  => text.first(CHALLENGE_MAX_CHARS),
-        "answered_at"   => Time.current.iso8601,
-        "ai_pending"    => true
-      }
-      attempt.save!
-    end
-
-    AiGradingJob.perform_later(attempt.id) if enqueued
-    redirect_to back, status: :see_other
   end
 
   # Consultado pela tela de resultados enquanto a correção por IA roda em background

@@ -107,8 +107,11 @@ export default class extends Controller {
   // Campos --------------------------------------------------------------
 
   fields() {
+    // "challenge_answer" é o desafio de escrita da pílula: texto livre, o que
+    // mais dói perder se o envio falhar.
     return Array.from(this.element.querySelectorAll("input, textarea")).filter(
-      (field) => field.name.startsWith("answers[") && field.type !== "hidden"
+      (field) => (field.name.startsWith("answers[") || field.name === "challenge_answer") &&
+                 field.type !== "hidden"
     )
   }
 

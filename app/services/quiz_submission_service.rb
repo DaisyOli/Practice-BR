@@ -20,10 +20,11 @@ class QuizSubmissionService
   private
 
   def process_quiz_submission
-    # Na pílula, o desafio de escrita não faz parte do quiz: nem entra na nota,
-    # nem conta como "não respondida" (ver Activity#writing_challenge).
-    challenge  = @activity.writing_challenge
-    @questions = challenge ? @activity.questions.where.not(id: challenge.id) : @activity.questions
+    # Na pílula, o desafio de escrita é o último passo do quiz, opcional e fora
+    # da nota (ver Activity#writing_challenge): fica de fora do cálculo abaixo,
+    # e o texto, se houver, é tratado em record_challenge.
+    @challenge = @activity.writing_challenge
+    @questions = @challenge ? @activity.questions.where.not(id: @challenge.id) : @activity.questions
     @sentence_orderings = @activity.sentence_orderings.any? \
       ? @activity.sentence_orderings.includes(:sentence_words).to_a \
       : []
@@ -240,7 +241,32 @@ class QuizSubmissionService
       "submitted_at"   => Time.current
     }
 
+    record_challenge(quiz_results_data) if @challenge
     save_quiz_attempt(quiz_results_data, score)
+  end
+
+  # O desafio de escrita da pílula: grava o texto como resposta aberta marcada
+  # "challenge" (a IA corrige à parte, fora da nota) e registra se a pessoa
+  # escreveu ou pulou, para sabermos se o desafio funciona.
+  def record_challenge(quiz_results_data)
+    text = @params[:challenge_answer].to_s.strip
+    @challenge_entry =
+      if @params[:skip_challenge].blank? && text.present?
+        {
+          "challenge"     => true,
+          "question_text" => @challenge.content,
+          "question_type" => "open_ended",
+          "given_answer"  => text.first(QuizAttempt::CHALLENGE_MAX_CHARS),
+          "answered_at"   => Time.current.iso8601,
+          "ai_pending"    => true
+        }
+      end
+
+    quiz_results_data["challenge"] = @challenge_entry ? "written" : "skipped"
+    return unless @challenge_entry
+
+    quiz_results_data["results"][@challenge.id.to_s] = @challenge_entry
+    @has_pending_ai_grading = true
   end
 
   def save_quiz_attempt(quiz_results_data, score)
@@ -263,9 +289,10 @@ class QuizSubmissionService
       end
     end
 
-    # Refazer a pílula não apaga o desafio de escrita já enviado, nem o
-    # comentário da professora sobre ele: o texto do aluno não é do quiz.
-    kept_challenge = @quiz_attempt.persisted? ? @quiz_attempt.challenge_results : {}
+    # Refazer a pílula e pular o desafio não apaga o texto já enviado, nem o
+    # comentário da professora sobre ele. Um texto novo substitui o anterior, e
+    # o comentário, que falava do texto antigo, sai junto.
+    kept_challenge = @quiz_attempt.persisted? && @challenge_entry.nil? ? @quiz_attempt.challenge_results : {}
     quiz_results_data["results"].merge!(kept_challenge) if kept_challenge.any?
 
     @quiz_attempt.score            = score

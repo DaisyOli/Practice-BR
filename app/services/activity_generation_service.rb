@@ -229,7 +229,7 @@ class ActivityGenerationService
     - "content" é o enunciado da proposta de escrita — seja claro sobre extensão esperada e contexto
     - NÃO inclua "options", "correct_answer" nem "correct_answers"
     - Inclua SEMPRE exatamente 1, e ele é SEMPRE o ÚLTIMO exercício da lista
-    - É o DESAFIO DE ESCRITA: aparece depois do resultado, como convite opcional — o aluno pode pular. Por isso a proposta precisa ser curta e dar vontade: A1 e A2 pedem 2 a 3 frases; B1 em diante, 3 a 5 frases
+    - É o DESAFIO DE ESCRITA: o último passo da atividade, marcado como opcional e fora da nota — o aluno pode pular. Por isso a proposta precisa ser curta e dar vontade: A1 e A2 pedem 2 a 3 frases; B1 em diante, 3 a 5 frases
     - Ligue a proposta à situação da pílula, para o aluno escrever com o que acabou de praticar
     - Exemplos de propostas adequadas:
         "Descreva em 3 a 4 frases o que você fez no último final de semana. Use o pretérito perfeito."

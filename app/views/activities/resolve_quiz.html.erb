@@ -17,7 +17,8 @@
   total_exercises = @questions.size +
                     @activity.sentence_orderings.size +
                     @activity.paragraph_orderings.size +
-                    @activity.column_matchings.size
+                    @activity.column_matchings.size +
+                    (@writing_challenge ? 1 : 0) # pílula: o desafio é o último passo
 
   has_material = @activity.statement.present? ||
                  @activity.media_url.present? ||
@@ -120,13 +121,6 @@
                 Veja com calma o que acertou e onde dá para melhorar. Quando quiser, conheça o que vem depois.
               </div>
             </div>
-          <% end %>
-
-          <%# Pílula: o desafio de escrita espera no resultado detalhado %>
-          <% if @quiz_attempt && @activity.writing_challenge && @quiz_attempt.challenge_entry.nil? %>
-            <p style="font-family:'Plus Jakarta Sans',sans-serif; font-size:0.86rem; font-weight:600; color:var(--brand-deep); margin:0 0 14px; line-height:1.45;">
-              ✍️ No resultado tem um desafio de escrita, se você quiser.
-            </p>
           <% end %>
 
           <%= link_to results_activity_path(@activity), class: "btn-quiz-primary btn-completion-gold", style: "background:var(--brand-bright);" do %>
@@ -407,6 +401,14 @@
               </div>
             </div>
           </div>
+          <% exercise_index += 1 %>
+        <% end %>
+
+        <%# Pílula: o desafio de escrita, opcional, como último passo %>
+        <% if @writing_challenge %>
+          <%= render "activities/writing_challenge_step",
+                     challenge: @writing_challenge, activity: @activity,
+                     previous: @previous_challenge, first: exercise_index == 0 %>
           <% exercise_index += 1 %>
         <% end %>
 

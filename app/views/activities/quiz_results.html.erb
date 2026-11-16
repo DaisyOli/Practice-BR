@@ -55,10 +55,9 @@
       <% end %>
     </div>
 
-    <%# Pílula: o desafio de escrita, opcional, logo depois da nota %>
-    <% if @writing_challenge && @quiz_attempt %>
-      <%= render "activities/writing_challenge",
-                 activity: @activity, attempt: @quiz_attempt, challenge: @writing_challenge %>
+    <%# Pílula: o retorno do desafio de escrita, se a pessoa escreveu %>
+    <% if (challenge_entry = @quiz_attempt&.challenge_entry) %>
+      <%= render "activities/writing_challenge", entry: challenge_entry %>
     <% end %>
 
     <%# Detailed results per exercise %>

@@ -50,7 +50,7 @@ RSpec.describe "Formato pílula nos prompts de geração" do
   end
 
   # Ponto 1.2: o que a IA gera nasce pílula, e a aberta vira o desafio de
-  # escrita oferecido depois do resultado.
+  # escrita, último passo opcional do quiz.
   it "a atividade gerada pela IA nasce pílula, com a aberta como desafio" do
     allow(Anthropic::Client).to receive(:new).and_return(instance_double(Anthropic::Client))
     dados = {

@@ -1,119 +1,72 @@
-<%# Desafio de escrita da pílula (ponto 1.2 da reformulação, 16/11/2026).
-    A pergunta aberta sai do quiz e vira convite aqui, depois do resultado:
-    opcional, fora da nota, corrigido pela IA e guardado em "Minhas expressões
-    escritas". Três estados: convite, IA lendo, corrigido.
-
-    <details> aberto por padrão: o "Agora não" só recolhe, e o aluno pode
-    reabrir pela faixa do título. %>
-<% entry = attempt.challenge_entry %>
-<style>
-  .challenge-card > summary { list-style:none; }
-  .challenge-card > summary::-webkit-details-marker { display:none; }
-  .challenge-card[open] .challenge-chevron { transform:rotate(180deg); }
-  .challenge-send:hover { background:var(--action-hover) !important; }
-</style>
-
-<details id="desafio" class="challenge-card" open
-         style="margin:22px 0 4px; border-radius:16px; overflow:hidden; border:1.5px solid var(--brand-soft); box-shadow:0 6px 24px var(--brand-veil);">
-  <summary style="cursor:pointer; background:var(--brand-deep); padding:14px 18px; display:flex; align-items:center; justify-content:space-between; gap:12px;">
-    <span style="display:flex; align-items:center; gap:12px; min-width:0;">
-      <span style="display:inline-flex; align-items:center; justify-content:center; width:40px; height:40px; border-radius:50%; background:var(--action-tint); font-size:1.2rem; flex-shrink:0;">✍️</span>
-      <span style="min-width:0;">
-        <span style="display:block; font-family:'Raleway',sans-serif; font-size:1.05rem; font-weight:800; color:var(--surface); line-height:1.2;">
-          Desafio de escrita
-        </span>
-        <span style="display:block; font-family:'DM Mono',monospace; font-size:0.66rem; letter-spacing:0.08em; text-transform:uppercase; color:var(--action); margin-top:3px;">
-          <% if entry %>
-            enviado · não muda a sua nota
-          <% else %>
-            opcional · não muda a sua nota
-          <% end %>
-        </span>
+<%# Retorno do desafio de escrita da pílula, na tela de resultado. Só aparece se
+    a pessoa escreveu: o desafio é o último passo do quiz (_writing_challenge_step),
+    e quem pulou não recebe convite aqui, porque a nota já soa como "acabou".
+    Dois estados: IA lendo e corrigido. %>
+<div id="desafio" style="margin:22px 0 4px; border-radius:16px; overflow:hidden; border:1.5px solid var(--brand-soft); box-shadow:0 6px 24px var(--brand-veil);">
+  <div style="background:var(--brand-deep); padding:14px 18px; display:flex; align-items:center; gap:12px;">
+    <span style="display:inline-flex; align-items:center; justify-content:center; width:40px; height:40px; border-radius:50%; background:var(--action-tint); font-size:1.2rem; flex-shrink:0;">✍️</span>
+    <span style="min-width:0;">
+      <span style="display:block; font-family:'Raleway',sans-serif; font-size:1.05rem; font-weight:800; color:var(--surface); line-height:1.2;">
+        Desafio de escrita
+      </span>
+      <span style="display:block; font-family:'DM Mono',monospace; font-size:0.66rem; letter-spacing:0.08em; text-transform:uppercase; color:var(--action); margin-top:3px;">
+        enviado · não muda a sua nota
       </span>
     </span>
-    <span class="challenge-chevron" aria-hidden="true"
-          style="color:var(--surface); font-size:0.9rem; transition:transform 0.2s ease; flex-shrink:0;">▾</span>
-  </summary>
+  </div>
 
   <div style="background:var(--surface); padding:18px 18px 20px;">
     <div class="question-text" style="margin-bottom:4px;">
-      <%= sanitize(challenge.content.to_s, tags: %w[p br strong em u], attributes: []) %>
+      <%= sanitize(entry["question_text"].to_s, tags: %w[p br strong em u], attributes: []) %>
     </div>
 
-    <% if entry.nil? %>
-      <p style="font-family:'Plus Jakarta Sans',sans-serif; font-size:0.84rem; color:var(--ink-soft); margin:6px 0 0; line-height:1.5;">
-        Escreva do seu jeito, ou responda por áudio. A IA lê, comenta e guarda o seu texto em "Minhas expressões escritas" 📝
-      </p>
-
-      <%= form_with url: challenge_activity_path(activity), method: :post do %>
-        <%= render "activities/open_answer_field",
-                   question: challenge, activity: activity,
-                   field_name: "challenge_answer", rows: 4,
-                   maxlength: ActivitiesController::CHALLENGE_MAX_CHARS %>
-
-        <div style="display:flex; align-items:center; gap:10px; margin-top:16px; flex-wrap:wrap;">
-          <button type="submit" class="challenge-send"
-                  style="display:inline-flex; align-items:center; gap:8px; font-family:'Plus Jakarta Sans',sans-serif; font-size:0.92rem; font-weight:700; color:var(--surface); background:var(--action); border:none; border-radius:10px; padding:11px 20px; cursor:pointer;">
-            ✨ Enviar meu texto
-          </button>
-          <button type="button" onclick="this.closest('details').open = false"
-                  style="font-family:'Plus Jakarta Sans',sans-serif; font-size:0.85rem; font-weight:600; color:var(--ink-soft); background:var(--line-soft); border:none; border-radius:10px; padding:11px 16px; cursor:pointer;">
-            Agora não
-          </button>
-        </div>
-      <% end %>
-
-    <% else %>
-      <%# Neutro de propósito: o `your-answer` do resto da página é o vermelho de
-          resposta errada, e texto livre não tem "errado" para pintar. %>
-      <div class="answer-item" style="background:var(--surface-2); border-left:3px solid var(--brand-soft); color:var(--ink); margin-top:10px;">
-        <div class="answer-label" style="color:var(--ink-soft);">
-          <i class="bi bi-person"></i> Você escreveu:
-        </div>
-        <%= entry["given_answer"] %>
+    <%# Neutro de propósito: o `your-answer` do resto da página é o vermelho de
+        resposta errada, e texto livre não tem "errado" para pintar. %>
+    <div class="answer-item" style="background:var(--surface-2); border-left:3px solid var(--brand-soft); color:var(--ink); margin-top:10px;">
+      <div class="answer-label" style="color:var(--ink-soft);">
+        <i class="bi bi-person"></i> Você escreveu:
       </div>
+      <%= entry["given_answer"] %>
+    </div>
 
-      <% if entry["ai_pending"] %>
-        <div style="background:var(--warning-tint); border:1.5px dashed var(--warning-border); border-radius:10px; padding:14px 16px; margin-top:10px;">
-          <p style="font-family:'Plus Jakarta Sans',sans-serif; font-size:0.86rem; color:var(--action); margin:0; display:flex; align-items:center; gap:8px;">
-            <span class="loading loading-spinner" style="width:0.9rem; height:0.9rem;" aria-hidden="true"></span>
-            ✨ Recebido! A IA está lendo o seu texto com carinho…
-          </p>
-        </div>
-      <% elsif entry["ai_unavailable"] %>
-        <div style="background:var(--paper); border:1.5px solid var(--line); border-radius:10px; padding:14px 16px; margin-top:10px;">
-          <p style="font-family:'Plus Jakarta Sans',sans-serif; font-size:0.85rem; color:var(--ink-soft); margin:0; display:flex; align-items:center; gap:6px;">
-            <i class="bi bi-exclamation-circle" style="color:var(--action);"></i>
-            <%= entry["ai_feedback"].presence || t('ai.errors.generic') %>
-          </p>
-        </div>
-      <% else %>
-        <% ai_score    = entry["ai_score"].to_i %>
-        <% score_color = ai_score >= 70 ? 'var(--brand)' : (ai_score >= 40 ? 'var(--action)' : 'var(--error)') %>
-        <div style="background:var(--warning-tint); border:1.5px solid var(--warning-border); border-radius:10px; padding:14px 16px; margin-top:10px;">
-          <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:8px;">
-            <span style="font-family:'Plus Jakarta Sans',sans-serif; font-size:0.78rem; font-weight:700; color:var(--action); display:flex; align-items:center; gap:5px;">
-              ✨ <%= t('quiz.ai_feedback') %>
-            </span>
-            <span style="font-family:'DM Mono',monospace; font-size:0.9rem; font-weight:700; color:<%= score_color %>;">
-              <%= ai_score %>/100
-            </span>
-          </div>
-          <p style="font-family:'Plus Jakarta Sans',sans-serif; font-size:0.88rem; color:var(--ink); margin:0; line-height:1.55;">
-            <%= entry["ai_feedback"].presence || t('ai.errors.generic') %>
-          </p>
-        </div>
-      <% end %>
-
-      <% if current_user&.student_like? %>
-        <p style="font-family:'Plus Jakarta Sans',sans-serif; font-size:0.82rem; color:var(--ink-soft); margin:12px 0 0;">
-          📝 Fica guardado em
-          <%= link_to "Minhas expressões escritas", student_dashboard_path(anchor: "open-ended-section"),
-                      style: "color:var(--brand-deep); font-weight:700;" %>
+    <% if entry["ai_pending"] %>
+      <div style="background:var(--warning-tint); border:1.5px dashed var(--warning-border); border-radius:10px; padding:14px 16px; margin-top:10px;">
+        <p style="font-family:'Plus Jakarta Sans',sans-serif; font-size:0.86rem; color:var(--action); margin:0; display:flex; align-items:center; gap:8px;">
+          <span class="loading loading-spinner" style="width:0.9rem; height:0.9rem;" aria-hidden="true"></span>
+          ✨ Recebido! A IA está lendo o seu texto com carinho…
         </p>
-      <% end %>
+      </div>
+    <% elsif entry["ai_unavailable"] %>
+      <div style="background:var(--paper); border:1.5px solid var(--line); border-radius:10px; padding:14px 16px; margin-top:10px;">
+        <p style="font-family:'Plus Jakarta Sans',sans-serif; font-size:0.85rem; color:var(--ink-soft); margin:0; display:flex; align-items:center; gap:6px;">
+          <i class="bi bi-exclamation-circle" style="color:var(--action);"></i>
+          <%= entry["ai_feedback"].presence || t('ai.errors.generic') %>
+        </p>
+      </div>
+    <% else %>
+      <% ai_score    = entry["ai_score"].to_i %>
+      <% score_color = ai_score >= 70 ? 'var(--brand)' : (ai_score >= 40 ? 'var(--action)' : 'var(--error)') %>
+      <div style="background:var(--warning-tint); border:1.5px solid var(--warning-border); border-radius:10px; padding:14px 16px; margin-top:10px;">
+        <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:8px;">
+          <span style="font-family:'Plus Jakarta Sans',sans-serif; font-size:0.78rem; font-weight:700; color:var(--action); display:flex; align-items:center; gap:5px;">
+            ✨ <%= t('quiz.ai_feedback') %>
+          </span>
+          <span style="font-family:'DM Mono',monospace; font-size:0.9rem; font-weight:700; color:<%= score_color %>;">
+            <%= ai_score %>/100
+          </span>
+        </div>
+        <p style="font-family:'Plus Jakarta Sans',sans-serif; font-size:0.88rem; color:var(--ink); margin:0; line-height:1.55;">
+          <%= entry["ai_feedback"].presence || t('ai.errors.generic') %>
+        </p>
+      </div>
+    <% end %>
+
+    <% if current_user&.student_like? %>
+      <p style="font-family:'Plus Jakarta Sans',sans-serif; font-size:0.82rem; color:var(--ink-soft); margin:12px 0 0;">
+        📝 Fica guardado em
+        <%= link_to "Minhas expressões escritas", student_dashboard_path(anchor: "open-ended-section"),
+                    style: "color:var(--brand-deep); font-weight:700;" %>
+      </p>
     <% end %>
   </div>
-</details>
-
-<%= render "activities/audio_recorder_script" if entry.nil? %>
+</div>
