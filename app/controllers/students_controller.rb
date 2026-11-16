@@ -20,8 +20,12 @@ class StudentsController < ApplicationController
 
     # Liga o passo do tour que mostra onde ficam as expressões escritas
     # corrigidas pela IA — só depois de existir alguma para ver.
+    #
+    # Olha as respostas guardadas, e não se a atividade TEM pergunta aberta: na
+    # pílula, a aberta é um desafio opcional, e quem pulou não tem expressão
+    # nenhuma para ver.
     @has_written_expressions = current_user.quiz_attempts
-      .where(activity_id: Question.where(question_type: "open_ended").select(:activity_id))
+      .where(%q{jsonb_path_exists(results, '$.results.* ? (@.question_type == "open_ended")')})
       .exists?
 
     load_completed_exercises if current_user.student?

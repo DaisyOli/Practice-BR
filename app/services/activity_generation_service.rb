@@ -431,7 +431,9 @@ class ActivityGenerationService
         statement:        data["statement"].presence,
         teacher:          @teacher,
         draft:            true,
-        ai_generated:     true
+        ai_generated:     true,
+        # Desde o 1.1 (16/11/2026) a IA só gera no formato pílula.
+        pill:             true
       )
 
       unless activity.save

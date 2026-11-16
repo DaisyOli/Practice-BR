@@ -49,6 +49,25 @@ RSpec.describe "Formato pílula nos prompts de geração" do
     expect(sistema).to include("SOMENTE se o pedido trouxer a transcrição de um vídeo ou áudio de verdade")
   end
 
+  # Ponto 1.2: o que a IA gera nasce pílula, e a aberta vira o desafio de
+  # escrita oferecido depois do resultado.
+  it "a atividade gerada pela IA nasce pílula, com a aberta como desafio" do
+    allow(Anthropic::Client).to receive(:new).and_return(instance_double(Anthropic::Client))
+    dados = {
+      "title" => "Pílula de teste", "description" => "Descrição", "level" => "A1",
+      "exercises" => [
+        { "type" => "multiple_choice", "content" => "Qual?", "options" => %w[a b c d], "correct_answer" => "a" },
+        { "type" => "open_ended", "content" => "Escreva 2 frases sobre você." }
+      ]
+    }
+
+    resultado = ActivityGenerationService.new(prompt: "x", teacher: create(:user, :teacher))
+                                         .send(:build_activity, dados)
+
+    expect(resultado[:activity]).to be_pill
+    expect(resultado[:activity].writing_challenge.content).to eq("Escreva 2 frases sobre você.")
+  end
+
   it "o prompt do vídeo trabalha um trecho curto, não o vídeo inteiro" do
     prompt = ActivityFromVideoService.new(youtube_url: "https://youtu.be/abcdefghijk",
                                           transcript: "texto", teacher: nil).send(:build_prompt)

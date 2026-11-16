@@ -46,15 +46,24 @@
         </div>
       </div>
 
-      <% if grading_pending %>
+      <%# "A nota atualiza sozinha" só quando é verdade: o desafio de escrita da
+          pílula também espera a IA, mas não mexe na nota. %>
+      <% if @quiz_attempt&.score_pending_ai? %>
         <p style="font-family:'Plus Jakarta Sans',sans-serif; font-size:0.82rem; color:var(--action); margin:10px 0 0; display:flex; align-items:center; gap:6px;">
           <i class="bi bi-stars"></i> <%= t('quiz.ai_grading_note') %>
         </p>
       <% end %>
     </div>
 
+    <%# Pílula: o desafio de escrita, opcional, logo depois da nota %>
+    <% if @writing_challenge && @quiz_attempt %>
+      <%= render "activities/writing_challenge",
+                 activity: @activity, attempt: @quiz_attempt, challenge: @writing_challenge %>
+    <% end %>
+
     <%# Detailed results per exercise %>
     <% @quiz_results["results"].each_with_index do |(question_id, result), index| %>
+      <% next if result.is_a?(Hash) && result["challenge"] %>
       <div class="question-card">
         <% if result["ai_pending"] %>
           <div class="question-header" style="background:var(--warning-tint); color:var(--action);">

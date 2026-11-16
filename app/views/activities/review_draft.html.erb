@@ -72,7 +72,8 @@
 
       <div style="display:flex; flex-direction:column; gap:16px;">
 
-        <%# Questões (multiple_choice + fill_in_blank) %>
+        <%# Questões (multiple_choice + fill_in_blank + open_ended) %>
+        <% challenge_id = @activity.writing_challenge&.id %>
         <% @questions.each do |q| %>
           <% exercise_index += 1 %>
           <div style="background:var(--surface-2); border:1px solid var(--line-soft); border-radius:12px; padding:18px 20px;">
@@ -80,7 +81,15 @@
               <span style="font-family:'DM Mono',monospace; font-size:0.72rem; font-weight:700; background:var(--line-soft); color:var(--ink-soft); border-radius:6px; padding:3px 8px; flex-shrink:0; margin-top:2px;">#<%= exercise_index %></span>
               <div style="flex:1;">
                 <span style="font-family:'Plus Jakarta Sans',sans-serif; font-size:0.72rem; font-weight:600; color:var(--ink-soft); background:var(--line-soft); border-radius:20px; padding:2px 9px; display:inline-block; margin-bottom:8px;">
-                  <%= q.question_type == 'multiple_choice' ? 'Múltipla escolha' : 'Preencher lacuna' %>
+                  <% if q.id == challenge_id %>
+                    ✍️ Desafio de escrita · opcional, aparece depois do resultado
+                  <% elsif q.open_ended? %>
+                    Pergunta aberta
+                  <% elsif q.multiple_choice? %>
+                    Múltipla escolha
+                  <% else %>
+                    Preencher lacuna
+                  <% end %>
                 </span>
                 <p style="font-family:'Plus Jakarta Sans',sans-serif; font-size:0.9rem; color:var(--ink); margin:0 0 10px 0; line-height:1.55; font-weight:500;"><%= q.content %></p>
                 <% if q.multiple_choice? && q.options.present? %>

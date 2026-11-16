@@ -122,6 +122,13 @@
             </div>
           <% end %>
 
+          <%# Pílula: o desafio de escrita espera no resultado detalhado %>
+          <% if @quiz_attempt && @activity.writing_challenge && @quiz_attempt.challenge_entry.nil? %>
+            <p style="font-family:'Plus Jakarta Sans',sans-serif; font-size:0.86rem; font-weight:600; color:var(--brand-deep); margin:0 0 14px; line-height:1.45;">
+              ✍️ No resultado tem um desafio de escrita, se você quiser.
+            </p>
+          <% end %>
+
           <%= link_to results_activity_path(@activity), class: "btn-quiz-primary btn-completion-gold", style: "background:var(--brand-bright);" do %>
             <i class="bi bi-clipboard-check"></i> <%= t('quiz.see_detailed_results') %>
           <% end %>
@@ -389,63 +396,10 @@
                   <%= sanitize(question.content.to_s, tags: %w[p br strong em u], attributes: []) %>
                 </div>
 
-                <%# Textarea de resposta %>
-                <%= text_area_tag "answers[#{question.id}]", nil,
-                      id: "open-answer-#{question.id}",
-                      rows: 5,
-                      placeholder: t('quiz.open_answer_placeholder'),
-                      style: "width:100%; font-family:'Plus Jakarta Sans',sans-serif; font-size:0.92rem; padding:10px 12px; border:2px solid var(--line); border-radius:8px; color:var(--ink); background:var(--surface); resize:vertical; box-sizing:border-box; margin-top:8px;",
-                      autocorrect: "off",
-                      spellcheck: "false" %>
-
-                <%# Botão de gravação de áudio %>
-                <div id="audio-recorder-<%= question.id %>" style="margin-top:10px;">
-                  <button type="button"
-                          onclick="startRecording('<%= question.id %>', '<%= transcribe_activity_path(@activity, locale: I18n.locale) %>', '<%= transcribe_status_activity_path(@activity, locale: I18n.locale) %>')"
-                          id="btn-record-<%= question.id %>"
-                          style="display:inline-flex; align-items:center; gap:7px; font-family:'Plus Jakarta Sans',sans-serif; font-size:0.82rem; font-weight:600; color:var(--brand); background:var(--brand-tint); border:1.5px solid var(--brand-bright); border-radius:9px; padding:8px 16px; cursor:pointer;">
-                    🎙️ Responder por áudio
-                  </button>
-                  <button type="button"
-                          onclick="stopRecording('<%= question.id %>')"
-                          id="btn-stop-<%= question.id %>"
-                          style="display:none; align-items:center; gap:7px; font-family:'Plus Jakarta Sans',sans-serif; font-size:0.82rem; font-weight:600; color:var(--surface); background:var(--error); border:none; border-radius:9px; padding:8px 16px; cursor:pointer;">
-                    ⏹ Parar gravação
-                  </button>
-                  <span id="rec-timer-<%= question.id %>"
-                        style="display:none; font-family:'DM Mono',monospace; font-size:0.78rem; color:var(--error); margin-left:8px; vertical-align:middle;">
-                    ● 0:00
-                  </span>
-
-                  <%# Estado: transcrevendo %>
-                  <div id="rec-loading-<%= question.id %>" style="display:none; margin-top:10px; font-family:'Plus Jakarta Sans',sans-serif; font-size:0.82rem; color:var(--ink-soft);">
-                    <span style="display:inline-flex; align-items:center; gap:6px;">
-                      <span style="width:14px; height:14px; border:2px solid var(--line); border-top-color:var(--brand); border-radius:50%; display:inline-block; animation:spin 0.8s linear infinite;"></span>
-                      Transcrevendo seu áudio...
-                    </span>
-                  </div>
-
-                  <%# Preview da transcrição %>
-                  <div id="rec-preview-<%= question.id %>" style="display:none; margin-top:10px; background:var(--success-tint); border:1.5px solid var(--success-border); border-radius:10px; padding:12px 14px;">
-                    <div style="font-family:'DM Mono',monospace; font-size:0.65rem; color:var(--success); text-transform:uppercase; letter-spacing:0.06em; margin-bottom:6px;">Você disse:</div>
-                    <div id="rec-text-<%= question.id %>" style="font-family:'Plus Jakarta Sans',sans-serif; font-size:0.88rem; color:var(--ink); line-height:1.5;"></div>
-                    <div style="display:flex; gap:8px; margin-top:10px;">
-                      <button type="button"
-                              onclick="acceptTranscription('<%= question.id %>')"
-                              style="font-family:'Plus Jakarta Sans',sans-serif; font-size:0.8rem; font-weight:700; color:var(--surface); background:var(--brand); border:none; border-radius:8px; padding:7px 16px; cursor:pointer;">
-                        ✓ Usar esta resposta
-                      </button>
-                      <button type="button"
-                              onclick="reRecord('<%= question.id %>')"
-                              style="font-family:'Plus Jakarta Sans',sans-serif; font-size:0.8rem; font-weight:600; color:var(--ink-soft); background:var(--line-soft); border:none; border-radius:8px; padding:7px 14px; cursor:pointer;">
-                        🔄 Regravar
-                      </button>
-                    </div>
-                  </div>
-
-                  <%# Erro %>
-                  <div id="rec-error-<%= question.id %>" style="display:none; margin-top:8px; font-family:'Plus Jakarta Sans',sans-serif; font-size:0.8rem; color:var(--error);"></div>
-                </div>
+                <%# Textarea de resposta + gravação de áudio %>
+                <%= render "activities/open_answer_field",
+                           question: question, activity: @activity,
+                           field_name: "answers[#{question.id}]" %>
 
                 <p style="font-family:'Plus Jakarta Sans',sans-serif; font-size:0.75rem; color:var(--action); margin-top:8px;">
                   ✨ <%= t('quiz.evaluated_by_ai') %>
@@ -640,153 +594,8 @@
   document.addEventListener('turbo:load', stampStart);
 })();
 
-// ── Gravação de áudio para questões abertas ──
-var _mediaRecorder = null;
-var _audioChunks   = [];
-var _timerInterval = null;
-var _timerSeconds  = 0;
-
-function startRecording(qId, transcribeUrl, statusUrl) {
-  if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
-    showRecError(qId, 'Seu navegador não suporta gravação de áudio.');
-    return;
-  }
-  navigator.mediaDevices.getUserMedia({ audio: true }).then(function(stream) {
-    _audioChunks = [];
-    _timerSeconds = 0;
-
-    var mimeType = MediaRecorder.isTypeSupported('audio/webm') ? 'audio/webm' : 'audio/mp4';
-    _mediaRecorder = new MediaRecorder(stream, { mimeType: mimeType });
-
-    _mediaRecorder.ondataavailable = function(e) {
-      if (e.data.size > 0) _audioChunks.push(e.data);
-    };
-
-    _mediaRecorder.onstop = function() {
-      stream.getTracks().forEach(function(t) { t.stop(); });
-      var blob = new Blob(_audioChunks, { type: mimeType });
-      sendAudio(qId, blob, transcribeUrl, statusUrl, mimeType);
-    };
-
-    _mediaRecorder.start();
-
-    // UI: mostra botão parar + timer
-    document.getElementById('btn-record-' + qId).style.display = 'none';
-    var stopBtn = document.getElementById('btn-stop-' + qId);
-    stopBtn.style.display = 'inline-flex';
-    var timer = document.getElementById('rec-timer-' + qId);
-    timer.style.display = 'inline';
-    hideRecPreview(qId);
-    hideRecError(qId);
-
-    _timerInterval = setInterval(function() {
-      _timerSeconds++;
-      var m = Math.floor(_timerSeconds / 60);
-      var s = _timerSeconds % 60;
-      timer.textContent = '● ' + m + ':' + (s < 10 ? '0' : '') + s;
-      if (_timerSeconds >= 120) stopRecording(qId); // limite de 2 min
-    }, 1000);
-
-  }).catch(function(err) {
-    showRecError(qId, 'Não foi possível acessar o microfone. Verifique as permissões do navegador.');
-  });
-}
-
-function stopRecording(qId) {
-  clearInterval(_timerInterval);
-  document.getElementById('btn-stop-' + qId).style.display = 'none';
-  document.getElementById('rec-timer-' + qId).style.display = 'none';
-  document.getElementById('btn-record-' + qId).style.display = 'none';
-  document.getElementById('rec-loading-' + qId).style.display = 'block';
-  if (_mediaRecorder && _mediaRecorder.state !== 'inactive') _mediaRecorder.stop();
-}
-
-function sendAudio(qId, blob, url, statusUrl, mimeType) {
-  var ext  = mimeType.includes('webm') ? 'webm' : 'm4a';
-  var form = new FormData();
-  form.append('audio', blob, 'recording.' + ext);
-  form.append('authenticity_token', document.querySelector('meta[name="csrf-token"]').content);
-
-  fetch(url, { method: 'POST', body: form })
-    .then(function(r) { return r.json(); })
-    .then(function(data) {
-      if (data.transcription_id) {
-        pollTranscription(qId, statusUrl, data.transcription_id, 0);
-      } else {
-        document.getElementById('rec-loading-' + qId).style.display = 'none';
-        showRecError(qId, data.error || 'Erro ao transcrever.');
-        document.getElementById('btn-record-' + qId).style.display = 'inline-flex';
-      }
-    })
-    .catch(function() {
-      document.getElementById('rec-loading-' + qId).style.display = 'none';
-      showRecError(qId, 'Erro de conexão. Tente digitar sua resposta.');
-      document.getElementById('btn-record-' + qId).style.display = 'inline-flex';
-    });
-}
-
-// A transcrição roda em background (AudioTranscriptionJob) — aqui só
-// consultamos o status a cada 1.5s até ela terminar. Limite de 40 tentativas
-// (~1min) pra não ficar consultando pra sempre se algo travar no worker.
-function pollTranscription(qId, statusUrl, transcriptionId, attempt) {
-  if (attempt > 40) {
-    document.getElementById('rec-loading-' + qId).style.display = 'none';
-    showRecError(qId, 'A transcrição demorou demais. Tente digitar sua resposta.');
-    document.getElementById('btn-record-' + qId).style.display = 'inline-flex';
-    return;
-  }
-
-  // statusUrl já vem com query string (?locale=pt); usa & pra não gerar uma
-  // segunda "?" (que jogaria o id pra dentro do valor de locale e o Rails
-  // nunca leria params[:id]).
-  var sep = statusUrl.indexOf('?') === -1 ? '?' : '&';
-  fetch(statusUrl + sep + 'id=' + transcriptionId)
-    .then(function(r) { return r.json(); })
-    .then(function(data) {
-      if (data.status === 'done') {
-        document.getElementById('rec-loading-' + qId).style.display = 'none';
-        document.getElementById('rec-text-' + qId).textContent = data.text;
-        document.getElementById('rec-preview-' + qId).style.display = 'block';
-      } else if (data.status === 'failed') {
-        document.getElementById('rec-loading-' + qId).style.display = 'none';
-        showRecError(qId, data.error || 'Erro ao transcrever.');
-        document.getElementById('btn-record-' + qId).style.display = 'inline-flex';
-      } else {
-        setTimeout(function() { pollTranscription(qId, statusUrl, transcriptionId, attempt + 1); }, 1500);
-      }
-    })
-    .catch(function() {
-      document.getElementById('rec-loading-' + qId).style.display = 'none';
-      showRecError(qId, 'Erro de conexão. Tente digitar sua resposta.');
-      document.getElementById('btn-record-' + qId).style.display = 'inline-flex';
-    });
-}
-
-function acceptTranscription(qId) {
-  var text = document.getElementById('rec-text-' + qId).textContent;
-  document.getElementById('open-answer-' + qId).value = text;
-  hideRecPreview(qId);
-  document.getElementById('btn-record-' + qId).style.display = 'inline-flex';
-}
-
-function reRecord(qId) {
-  hideRecPreview(qId);
-  document.getElementById('btn-record-' + qId).style.display = 'inline-flex';
-}
-
-function hideRecPreview(qId) {
-  document.getElementById('rec-preview-' + qId).style.display = 'none';
-}
-
-function showRecError(qId, msg) {
-  var el = document.getElementById('rec-error-' + qId);
-  el.textContent = msg;
-  el.style.display = 'block';
-}
-
-function hideRecError(qId) {
-  document.getElementById('rec-error-' + qId).style.display = 'none';
-}
 </script>
+
+<%= render "activities/audio_recorder_script" %>
 
 </div>
