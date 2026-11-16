@@ -46,8 +46,9 @@ class ActivityFromVideoService
 
       INSTRUÇÕES ESPECÍFICAS PARA ATIVIDADE BASEADA EM VÍDEO:
       - Leia a transcrição e identifique o tema, vocabulário e estruturas gramaticais principais
-      - O campo "explanation_text" deve conter a transcrição limpa do vídeo: remova timestamps e marcadores de tempo, mas mantenha o conteúdo falado original com fidelidade. Este texto aparecerá recolhido como "Ver transcrição" na interface do aluno — não o reescreva como texto literário
-      - Crie entre 5 e 8 exercícios variados usando os tipos disponíveis, baseados no conteúdo real da transcrição
+      - O campo "explanation_text" deve conter a transcrição limpa do trecho escolhido: remova timestamps e marcadores de tempo, mas mantenha o conteúdo falado original com fidelidade. Este texto aparecerá recolhido como "Ver transcrição" na interface do aluno — não o reescreva como texto literário
+      - FORMATO PÍLULA: escolha UM trecho do vídeo, de 1 a 3 minutos, que funcione sozinho, e baseie tudo nele. Crie 3 a 5 exercícios fechados + 1 open_ended no fim (o desafio de escrita opcional), com o conteúdo real desse trecho
+      - O "explanation_text" deve conter só a transcrição desse trecho, não a do vídeo inteiro
       - Use vocabulário e expressões que aparecem na transcrição nas questões
       - A "description" deve mencionar o tema do vídeo e o que o aluno vai praticar
       - O campo "statement" (enunciado, exibido antes dos exercícios) deve instruir o aluno a ASSISTIR AO VÍDEO — por exemplo: "Assista ao vídeo e responda às questões." NUNCA escreva "leia a transcrição" no enunciado: o vídeo é o material principal e a transcrição fica só como apoio recolhido

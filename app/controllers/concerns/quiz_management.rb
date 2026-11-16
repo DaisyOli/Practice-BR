@@ -29,6 +29,15 @@ module QuizManagement
     end
   end
 
+  # As perguntas que o aluno responde no quiz. Na pílula, o desafio de escrita
+  # fica de fora: ele é oferecido depois do resultado. A página da atividade e a
+  # revisão de rascunho continuam usando load_questions, com a pergunta inteira.
+  def quiz_questions
+    challenge_id = @activity.writing_challenge&.id
+    questions    = load_questions
+    challenge_id ? questions.reject { |question| question.id == challenge_id } : questions
+  end
+
   def load_completed_exercises
     session[:completed_quizzes] = current_user.quiz_attempts
                                               .select(:activity_id)

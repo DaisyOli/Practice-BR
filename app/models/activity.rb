@@ -103,6 +103,16 @@ class Activity < ApplicationRecord
     activity_ratings.to_a.find { |r| r.user_id == user.id }
   end
 
+  # O desafio de escrita da pílula: a pergunta aberta que não entra no quiz e é
+  # oferecida depois do resultado, fora da nota. A IA põe exatamente uma, no
+  # fim; se vier mais de uma, só a última vira desafio e as outras continuam no
+  # quiz como sempre. nil fora das pílulas.
+  def writing_challenge
+    return nil unless pill?
+
+    questions.where(question_type: "open_ended").order(:created_at, :id).last
+  end
+
   private
 
   def generate_slug

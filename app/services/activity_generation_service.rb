@@ -52,17 +52,31 @@ class ActivityGenerationService
     Os alunos são estrangeiros, muitos franceses. O que ensina de verdade é o CONTRASTE — horário de almoço e de jantar, quanto se chega atrasado sem ser grosseria, beijo/aperto de mão, formalidade no email, "saudade" e o que não tem tradução, feriado que ninguém de fora entende. Uma atividade que compara vale mais que uma que descreve.
 
     ═══════════════════════════════════════════
+    FORMATO PÍLULA — A REGRA MAIS IMPORTANTE
+    ═══════════════════════════════════════════
+    Cada atividade é uma PÍLULA: uma vitória rápida, que o aluno termina em 3 a 5 minutos e da qual sai com vontade de fazer a próxima. Atividade longa espanta — medido na plataforma em novembro de 2026: com 8 exercícios e um texto de várias telas, quem começava não terminava.
+
+    - 3 a 5 exercícios fechados (multiple_choice, fill_in_blank, sentence_ordering, paragraph_ordering, column_matching) + exatamente 1 open_ended no fim, que é o desafio de escrita opcional (ver TIPO 6). O open_ended não conta nos 3 a 5.
+    - 2 ou 3 tipos de exercício fechado, nunca mais: cada tipo novo é um jeito novo de responder que o aluno precisa entender, e isso pesa numa pílula de 3 a 5 minutos. Se o pedido citar tipos, parta deles em vez de somar outros.
+    - UM objetivo por pílula: um ponto gramatical OU uma situação. Se o tema pede mais, fique com o essencial — o resto vira outra pílula.
+    - explanation_text curto, no máximo:
+        A1: 60 palavras · A2: 90 · B1: 130 · B2: 180 · C1: 220
+      Se a atividade funciona sem texto-base, melhor ainda: deixe-o de fora.
+    - Fácil de começar: enunciados de uma frase e nada de pegadinha. Mire na parte de baixo do nível — o aluno deve acertar a maior parte e sentir que avançou. Os distratores continuam plausíveis, mas não traiçoeiros.
+    - Pouco dentro de cada exercício: até 2 lacunas por questão, 3 ou 4 pares na associação, 3 ou 4 frases para ordenar.
+
+    ═══════════════════════════════════════════
     O QUE TORNA UMA ATIVIDADE EXCELENTE
     ═══════════════════════════════════════════
     Antes de escrever, planeje a atividade como uma mini-experiência, não como uma lista de questões soltas:
 
-    1. HISTÓRIA: o explanation_text deve ser um texto VIVO — um diálogo com personalidade, uma mini-crônica, uma troca de mensagens — com personagem(ns) com nome, um fio narrativo com começo/meio/fim e um toque de humor brasileiro. Nunca frases desconexas de exemplo.
+    1. HISTÓRIA: o explanation_text deve ser um texto VIVO e CURTO (dentro do limite do nível) — um diálogo com personalidade, uma mini-crônica, uma troca de mensagens — com personagem(ns) com nome, um fio narrativo com começo/meio/fim e um toque de humor brasileiro. Nunca frases desconexas de exemplo.
     2. COESÃO: todos os exercícios se passam no MESMO universo do texto-base (mesmos personagens, mesma situação). O aluno deve querer reler o texto para responder.
     3. PROGRESSÃO: ordene os exercícios do mais fácil (reconhecimento) ao mais desafiador (inferência/produção).
     4. DISTRATORES INTELIGENTES: nas múltiplas escolhas, as alternativas erradas devem ser erros PLAUSÍVEIS do nível (ser/estar, tempo verbal vizinho, falso cognato, concordância) — nunca opções absurdas ou obviamente erradas.
-    5. LACUNAS COM PROPÓSITO: em fill_in_blank, o contexto torna a resposta deduzível sem entregá-la. Não dê o verbo entre parênteses; deixe marcadores temporais e contextuais guiarem a escolha.
+    5. LACUNAS COM PROPÓSITO: em fill_in_blank, o contexto ajuda a chegar à resposta. Na pílula, pode dar o verbo no infinitivo entre parênteses, com ou sem o tempo — "(tampar — imperativo)": o aluno pratica a FORMA sem precisar adivinhar a palavra, e isso deixa a pílula fácil de começar.
     6. CULTURA VIVA: a atividade se passa num lugar do Brasil que dá para reconhecer — pela fala dos personagens, pelo que comem, pelo que é normal ali. Não basta um detalhe cultural de enfeite: o lugar tem que ser parte da história, não uma nota de rodapé.
-    7. VARIEDADE: use pelo menos 3 tipos de exercício diferentes, escolhendo os que melhor servem ao objetivo pedagógico — sentence_ordering, paragraph_ordering e column_matching são bem-vindos, não só múltipla escolha e lacunas.
+    7. VARIEDADE NA MEDIDA: com 3 a 5 exercícios, use 2 ou 3 tipos diferentes, escolhendo os que melhor servem ao objetivo — sentence_ordering, paragraph_ordering e column_matching são bem-vindos, não só múltipla escolha e lacunas. Variedade não pode virar quantidade.
 
     ═══════════════════════════════════════════
     REGRAS ABSOLUTAS
@@ -70,6 +84,8 @@ class ActivityGenerationService
     1. Responda SOMENTE com JSON válido — sem texto antes, sem texto depois, sem markdown
     2. Use APENAS os 6 tipos de exercício listados abaixo. Qualquer outro tipo causará erro no sistema.
     3. O campo "type" deve ter exatamente um destes valores: "multiple_choice", "fill_in_blank", "sentence_ordering", "paragraph_ordering", "column_matching", "open_ended"
+    4. Respeite o FORMATO PÍLULA: 3 a 5 exercícios fechados, de 2 ou 3 tipos, + 1 open_ended no fim, e o explanation_text dentro do limite de palavras do nível
+    5. O aluno só tem o que está na atividade. Escreva "assista" ou "ouça" (na descrição, no enunciado ou nas questões) SOMENTE se o pedido trouxer a transcrição de um vídeo ou áudio de verdade. Uma cena contada como vídeo, podcast ou áudio de WhatsApp vira texto para LER: "Leia a transcrição do vídeo da Ana e responda." O vídeo de youtube_search_query é um extra sugerido: nada na atividade pode depender dele.
 
     ═══════════════════════════════════════════
     SCHEMA DO JSON
@@ -104,7 +120,7 @@ class ActivityGenerationService
 
     ── TIPO 2: fill_in_blank ────────────────────
     Uso pedagógico: conjugação verbal, preposições, artigos, vocabulário
-    Suporta até 4 lacunas por questão (cada _____ é uma lacuna separada).
+    Suporta até 4 lacunas por questão (cada _____ é uma lacuna separada), mas na pílula use no máximo 2.
 
     Exemplo com 1 lacuna:
     {
@@ -120,15 +136,8 @@ class ActivityGenerationService
       "correct_answers": ["gosto", "orgulhoso"]
     }
 
-    Exemplo com 3 lacunas:
-    {
-      "type": "fill_in_blank",
-      "content": "Ontem nós _____ ao parque, _____ sorvete e _____ muito. (ir / comer / rir — pretérito perfeito)",
-      "correct_answers": ["fomos", "comemos", "rimos"]
-    }
-
     REGRAS:
-    - "content" deve conter EXATAMENTE _____ (5 underscores) para cada lacuna — máximo 4
+    - "content" deve conter EXATAMENTE _____ (5 underscores) para cada lacuna — na pílula, no máximo 2
     - "correct_answers" é um array com uma resposta por lacuna, NA MESMA ORDEM que aparecem no texto
     - O número de itens em "correct_answers" DEVE ser igual ao número de _____ no "content"
     - Pode incluir instruções entre parênteses no final da frase, como nos exemplos acima
@@ -152,14 +161,11 @@ class ActivityGenerationService
 
     Antes de escrever cada questão, verifique: as palavras em "correct_answers[i]" aparecem no texto ao redor do _____ correspondente? Se sim, reescreva a questão usando a opção A ou B acima.
 
-    ⚠️ REGRA ANTI-ÓBVIO — o título não pode dar a resposta:
-    Se o título da atividade é "O Verbo IR" e a lacuna tem "(ir — pretérito perfeito)" entre parênteses, a resposta é mecânica e sem valor pedagógico. Evite isso.
+    PISTA ENTRE PARÊNTESES — liberada na pílula:
+    O verbo no infinitivo, com ou sem o tempo, é bem-vindo: "(tampar — imperativo)". O aluno treina a forma do ponto gramatical da pílula sem travar na escolha da palavra.
 
-    - Use pistas entre parênteses SOMENTE quando a forma é genuinamente irregular ou quando há ambiguidade real entre formas possíveis
-    - Prefira frases onde o contexto semântico + gramatical juntos levam à resposta — não só o reconhecimento automático do padrão
-    - Misture diferentes pontos gramaticais numa mesma atividade em vez de repetir o mesmo padrão óbvio em todas as lacunas
-    - Se você está tentado a escrever "(verbo X — tempo Y)" numa lacuna trivial, reescreva a frase para que o contexto já indique o tempo verbal sem precisar do aviso
-    - Exemplo RUIM: "Ana _____ ao mercado ontem. (ir — pretérito perfeito)" — qualquer aluno que sabe o verbo "ir" responde mecanicamente
+    - Prefira frases em que o contexto também leva à resposta (marcador de tempo, situação), para a pista não ser a única ajuda
+    - Varie as frases e as situações das lacunas, sem repetir o mesmo molde em todas
     - Exemplo BOM: "Quando Ana chegou em casa, ela viu que a geladeira estava vazia. Então ela _____ ao mercado antes do jantar." — o contexto exige raciocínio sobre tempo e sequência
 
     ── TIPO 3: sentence_ordering ────────────────
@@ -172,7 +178,7 @@ class ActivityGenerationService
     }
     REGRAS:
     - "sentence" é a frase COMPLETA e CORRETA — o sistema vai embaralhar as palavras automaticamente
-    - Use frases de 5 a 12 palavras (mais curtas são muito fáceis, mais longas são confusas)
+    - Use frases de 5 a 9 palavras (mais curtas são muito fáceis, mais longas cansam)
     - "instruction" é opcional
 
     ── TIPO 4: paragraph_ordering ───────────────
@@ -190,7 +196,7 @@ class ActivityGenerationService
     }
     REGRAS:
     - "sentences" contém as frases JÁ NA ORDEM CORRETA — o sistema embaralha automaticamente
-    - Use entre 3 e 6 frases
+    - Use 3 ou 4 frases
     - Cada frase deve ser completa e ter sentido sozinha
     - "instruction" é opcional
 
@@ -208,7 +214,7 @@ class ActivityGenerationService
       ]
     }
     REGRAS:
-    - "pairs" deve ter entre 3 e 6 pares
+    - "pairs" deve ter 3 ou 4 pares
     - "left" e "right" devem ser curtos (1-6 palavras)
     - "instruction" é opcional
 
@@ -222,13 +228,13 @@ class ActivityGenerationService
     REGRAS:
     - "content" é o enunciado da proposta de escrita — seja claro sobre extensão esperada e contexto
     - NÃO inclua "options", "correct_answer" nem "correct_answers"
-    - É OPCIONAL — não precisa aparecer em toda atividade
-    - Quando usado, deve ser SEMPRE o ÚLTIMO exercício da lista
-    - Use apenas quando a atividade tiver material suficiente para inspirar a escrita (texto, diálogo ou tema claro)
+    - Inclua SEMPRE exatamente 1, e ele é SEMPRE o ÚLTIMO exercício da lista
+    - É o DESAFIO DE ESCRITA: aparece depois do resultado, como convite opcional — o aluno pode pular. Por isso a proposta precisa ser curta e dar vontade: A1 e A2 pedem 2 a 3 frases; B1 em diante, 3 a 5 frases
+    - Ligue a proposta à situação da pílula, para o aluno escrever com o que acabou de praticar
     - Exemplos de propostas adequadas:
         "Descreva em 3 a 4 frases o que você fez no último final de semana. Use o pretérito perfeito."
         "Com base no diálogo, escreva uma mensagem de WhatsApp de Ana para uma amiga contando sobre o fim de semana."
-        "Você está planejando uma viagem ao Brasil. Escreva um pequeno texto (4-6 frases) descrevendo o que você quer fazer."
+        "Você está planejando uma viagem ao Brasil. Escreva 3 a 5 frases sobre o que você quer fazer."
 
     ═══════════════════════════════════════════
     MAPEAMENTO PEDAGÓGICO
@@ -425,7 +431,9 @@ class ActivityGenerationService
         statement:        data["statement"].presence,
         teacher:          @teacher,
         draft:            true,
-        ai_generated:     true
+        ai_generated:     true,
+        # Desde o 1.1 (16/11/2026) a IA só gera no formato pílula.
+        pill:             true
       )
 
       unless activity.save

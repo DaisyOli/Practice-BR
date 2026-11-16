@@ -20,7 +20,10 @@ class QuizSubmissionService
   private
 
   def process_quiz_submission
-    @questions = @activity.questions
+    # Na pílula, o desafio de escrita não faz parte do quiz: nem entra na nota,
+    # nem conta como "não respondida" (ver Activity#writing_challenge).
+    challenge  = @activity.writing_challenge
+    @questions = challenge ? @activity.questions.where.not(id: challenge.id) : @activity.questions
     @sentence_orderings = @activity.sentence_orderings.any? \
       ? @activity.sentence_orderings.includes(:sentence_words).to_a \
       : []
@@ -260,10 +263,18 @@ class QuizSubmissionService
       end
     end
 
+    # Refazer a pílula não apaga o desafio de escrita já enviado, nem o
+    # comentário da professora sobre ele: o texto do aluno não é do quiz.
+    kept_challenge = @quiz_attempt.persisted? ? @quiz_attempt.challenge_results : {}
+    quiz_results_data["results"].merge!(kept_challenge) if kept_challenge.any?
+
     @quiz_attempt.score            = score
     @quiz_attempt.results          = quiz_results_data
     @quiz_attempt.submitted_at     = Time.current
-    @quiz_attempt.teacher_comments = {} if @quiz_attempt.persisted?
+    if @quiz_attempt.persisted?
+      @quiz_attempt.teacher_comments =
+        (@quiz_attempt.teacher_comments || {}).slice(*kept_challenge.keys.map { |key| "question_#{key}" })
+    end
 
     if @quiz_attempt.save
       AiGradingJob.perform_later(@quiz_attempt.id) if @has_pending_ai_grading

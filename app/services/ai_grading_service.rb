@@ -198,7 +198,8 @@ class AiGradingService
     exercise_count = 0
 
     results_hash.each do |key, entry|
-      next if entry["ai_pending"] || entry["ai_unavailable"]
+      # O desafio de escrita da pílula é corrigido pela IA, mas fica fora da nota.
+      next if entry["ai_pending"] || entry["ai_unavailable"] || entry["challenge"]
 
       weight   = key.to_s.match?(/\A\d+\z/) ? (weights[key.to_i] || 1).to_f : 1.0
       fraction = entry.key?("credit_fraction") ? entry["credit_fraction"].to_f : (entry["is_correct"] ? 1.0 : 0.0)

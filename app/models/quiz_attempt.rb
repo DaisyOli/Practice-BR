@@ -53,6 +53,24 @@ class QuizAttempt < ApplicationRecord
     results["results"].values.any? { |v| v.is_a?(Hash) && v["ai_pending"] }
   end
 
+  # A nota ainda vai mudar? Só se a IA estiver corrigindo uma aberta DO QUIZ. O
+  # desafio de escrita da pílula é corrigido à parte e não mexe na nota.
+  def score_pending_ai?
+    return false unless results&.dig("results").is_a?(Hash)
+    results["results"].values.any? { |v| v.is_a?(Hash) && v["ai_pending"] && !v["challenge"] }
+  end
+
+  # O desafio de escrita da pílula (ver Activity#writing_challenge), guardado
+  # como resposta aberta da tentativa, com a marca "challenge".
+  def challenge_results
+    return {} unless results&.dig("results").is_a?(Hash)
+    results["results"].select { |_k, v| v.is_a?(Hash) && v["challenge"] }
+  end
+
+  def challenge_entry
+    challenge_results.values.first
+  end
+
   def teacher_comment_for(question_id)
     (teacher_comments || {})["question_#{question_id}"].presence
   end

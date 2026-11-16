@@ -99,9 +99,16 @@ RSpec.describe "Primeira experiência no teste", type: :request do
       get student_dashboard_path
       expect(response.body).to include('data-has-written="false"')
 
-      aberta = create(:activity, :B1, draft: false)
-      create(:question, :open_ended, activity: aberta)
-      create(:quiz_attempt, user: trial, activity: aberta)
+      # Desde a pílula (16/11/2026), o que conta é haver uma resposta aberta
+      # GUARDADA, e não a atividade ter pergunta aberta: na pílula, a aberta é
+      # um desafio opcional que o aluno pode pular.
+      aberta   = create(:activity, :B1, draft: false)
+      pergunta = create(:question, :open_ended, activity: aberta)
+      create(:quiz_attempt, user: trial, activity: aberta, results: {
+        "activity_id" => aberta.id, "score" => 90, "total_correct" => 1, "total_questions" => 1,
+        "results" => { pergunta.id.to_s => { "question_type" => "open_ended", "given_answer" => "Acordo cedo e tomo café.",
+                                              "ai_score" => 90, "ai_feedback" => "Muito bem!" } }
+      })
 
       get student_dashboard_path
       expect(response.body).to include('data-has-written="true"')

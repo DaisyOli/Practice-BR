@@ -1,0 +1,61 @@
+<%# Resposta aberta: caixa de texto + resposta por áudio, transcrita pela IA.
+    Usada na pergunta aberta do quiz e no desafio de escrita da pílula. As
+    funções de gravação ficam em _audio_recorder_script, que a página precisa
+    renderizar uma vez. %>
+<%= text_area_tag field_name, nil,
+      id: "open-answer-#{question.id}",
+      rows: local_assigns.fetch(:rows, 5),
+      maxlength: local_assigns[:maxlength],
+      placeholder: t('quiz.open_answer_placeholder'),
+      style: "width:100%; font-family:'Plus Jakarta Sans',sans-serif; font-size:0.92rem; padding:10px 12px; border:2px solid var(--line); border-radius:8px; color:var(--ink); background:var(--surface); resize:vertical; box-sizing:border-box; margin-top:8px;",
+      autocorrect: "off",
+      spellcheck: "false" %>
+
+<%# Botão de gravação de áudio %>
+<div id="audio-recorder-<%= question.id %>" style="margin-top:10px;">
+  <button type="button"
+          onclick="startRecording('<%= question.id %>', '<%= transcribe_activity_path(activity, locale: I18n.locale) %>', '<%= transcribe_status_activity_path(activity, locale: I18n.locale) %>')"
+          id="btn-record-<%= question.id %>"
+          style="display:inline-flex; align-items:center; gap:7px; font-family:'Plus Jakarta Sans',sans-serif; font-size:0.82rem; font-weight:600; color:var(--brand); background:var(--brand-tint); border:1.5px solid var(--brand-bright); border-radius:9px; padding:8px 16px; cursor:pointer;">
+    🎙️ Responder por áudio
+  </button>
+  <button type="button"
+          onclick="stopRecording('<%= question.id %>')"
+          id="btn-stop-<%= question.id %>"
+          style="display:none; align-items:center; gap:7px; font-family:'Plus Jakarta Sans',sans-serif; font-size:0.82rem; font-weight:600; color:var(--surface); background:var(--error); border:none; border-radius:9px; padding:8px 16px; cursor:pointer;">
+    ⏹ Parar gravação
+  </button>
+  <span id="rec-timer-<%= question.id %>"
+        style="display:none; font-family:'DM Mono',monospace; font-size:0.78rem; color:var(--error); margin-left:8px; vertical-align:middle;">
+    ● 0:00
+  </span>
+
+  <%# Estado: transcrevendo %>
+  <div id="rec-loading-<%= question.id %>" style="display:none; margin-top:10px; font-family:'Plus Jakarta Sans',sans-serif; font-size:0.82rem; color:var(--ink-soft);">
+    <span style="display:inline-flex; align-items:center; gap:6px;">
+      <span style="width:14px; height:14px; border:2px solid var(--line); border-top-color:var(--brand); border-radius:50%; display:inline-block; animation:spin 0.8s linear infinite;"></span>
+      Transcrevendo seu áudio...
+    </span>
+  </div>
+
+  <%# Preview da transcrição %>
+  <div id="rec-preview-<%= question.id %>" style="display:none; margin-top:10px; background:var(--success-tint); border:1.5px solid var(--success-border); border-radius:10px; padding:12px 14px;">
+    <div style="font-family:'DM Mono',monospace; font-size:0.65rem; color:var(--success); text-transform:uppercase; letter-spacing:0.06em; margin-bottom:6px;">Você disse:</div>
+    <div id="rec-text-<%= question.id %>" style="font-family:'Plus Jakarta Sans',sans-serif; font-size:0.88rem; color:var(--ink); line-height:1.5;"></div>
+    <div style="display:flex; gap:8px; margin-top:10px;">
+      <button type="button"
+              onclick="acceptTranscription('<%= question.id %>')"
+              style="font-family:'Plus Jakarta Sans',sans-serif; font-size:0.8rem; font-weight:700; color:var(--surface); background:var(--brand); border:none; border-radius:8px; padding:7px 16px; cursor:pointer;">
+        ✓ Usar esta resposta
+      </button>
+      <button type="button"
+              onclick="reRecord('<%= question.id %>')"
+              style="font-family:'Plus Jakarta Sans',sans-serif; font-size:0.8rem; font-weight:600; color:var(--ink-soft); background:var(--line-soft); border:none; border-radius:8px; padding:7px 14px; cursor:pointer;">
+        🔄 Regravar
+      </button>
+    </div>
+  </div>
+
+  <%# Erro %>
+  <div id="rec-error-<%= question.id %>" style="display:none; margin-top:8px; font-family:'Plus Jakarta Sans',sans-serif; font-size:0.8rem; color:var(--error);"></div>
+</div>

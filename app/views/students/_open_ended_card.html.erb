@@ -28,6 +28,16 @@
     </span>
   </div>
 
+  <%# o desafio de escrita da pílula ganha a própria etiqueta %>
+  <% if result["challenge"] %>
+  <div style="margin-bottom:6px;">
+    <span style="font-family:'DM Mono',monospace; font-size:0.62rem; font-weight:700; letter-spacing:0.06em; text-transform:uppercase;
+                 color:var(--action); background:var(--action-tint); border-radius:20px; padding:2px 9px;">
+      ✍️ Desafio de escrita
+    </span>
+  </div>
+  <% end %>
+
   <%# enunciado da questão %>
   <% if question_text.present? %>
   <div style="font-family:'Plus Jakarta Sans',sans-serif; font-size:0.8rem; color:var(--ink-soft);

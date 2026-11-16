@@ -1,0 +1,152 @@
+<%# Gravação de áudio das respostas abertas (_open_answer_field): grava,
+    manda para a transcrição e mostra a prévia. Usado no quiz e no desafio de
+    escrita da pílula, na tela de resultado. %>
+<script>
+// ── Gravação de áudio para questões abertas ──
+var _mediaRecorder = null;
+var _audioChunks   = [];
+var _timerInterval = null;
+var _timerSeconds  = 0;
+
+function startRecording(qId, transcribeUrl, statusUrl) {
+  if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+    showRecError(qId, 'Seu navegador não suporta gravação de áudio.');
+    return;
+  }
+  navigator.mediaDevices.getUserMedia({ audio: true }).then(function(stream) {
+    _audioChunks = [];
+    _timerSeconds = 0;
+
+    var mimeType = MediaRecorder.isTypeSupported('audio/webm') ? 'audio/webm' : 'audio/mp4';
+    _mediaRecorder = new MediaRecorder(stream, { mimeType: mimeType });
+
+    _mediaRecorder.ondataavailable = function(e) {
+      if (e.data.size > 0) _audioChunks.push(e.data);
+    };
+
+    _mediaRecorder.onstop = function() {
+      stream.getTracks().forEach(function(t) { t.stop(); });
+      var blob = new Blob(_audioChunks, { type: mimeType });
+      sendAudio(qId, blob, transcribeUrl, statusUrl, mimeType);
+    };
+
+    _mediaRecorder.start();
+
+    // UI: mostra botão parar + timer
+    document.getElementById('btn-record-' + qId).style.display = 'none';
+    var stopBtn = document.getElementById('btn-stop-' + qId);
+    stopBtn.style.display = 'inline-flex';
+    var timer = document.getElementById('rec-timer-' + qId);
+    timer.style.display = 'inline';
+    hideRecPreview(qId);
+    hideRecError(qId);
+
+    _timerInterval = setInterval(function() {
+      _timerSeconds++;
+      var m = Math.floor(_timerSeconds / 60);
+      var s = _timerSeconds % 60;
+      timer.textContent = '● ' + m + ':' + (s < 10 ? '0' : '') + s;
+      if (_timerSeconds >= 120) stopRecording(qId); // limite de 2 min
+    }, 1000);
+
+  }).catch(function(err) {
+    showRecError(qId, 'Não foi possível acessar o microfone. Verifique as permissões do navegador.');
+  });
+}
+
+function stopRecording(qId) {
+  clearInterval(_timerInterval);
+  document.getElementById('btn-stop-' + qId).style.display = 'none';
+  document.getElementById('rec-timer-' + qId).style.display = 'none';
+  document.getElementById('btn-record-' + qId).style.display = 'none';
+  document.getElementById('rec-loading-' + qId).style.display = 'block';
+  if (_mediaRecorder && _mediaRecorder.state !== 'inactive') _mediaRecorder.stop();
+}
+
+function sendAudio(qId, blob, url, statusUrl, mimeType) {
+  var ext  = mimeType.includes('webm') ? 'webm' : 'm4a';
+  var form = new FormData();
+  form.append('audio', blob, 'recording.' + ext);
+  form.append('authenticity_token', document.querySelector('meta[name="csrf-token"]').content);
+
+  fetch(url, { method: 'POST', body: form })
+    .then(function(r) { return r.json(); })
+    .then(function(data) {
+      if (data.transcription_id) {
+        pollTranscription(qId, statusUrl, data.transcription_id, 0);
+      } else {
+        document.getElementById('rec-loading-' + qId).style.display = 'none';
+        showRecError(qId, data.error || 'Erro ao transcrever.');
+        document.getElementById('btn-record-' + qId).style.display = 'inline-flex';
+      }
+    })
+    .catch(function() {
+      document.getElementById('rec-loading-' + qId).style.display = 'none';
+      showRecError(qId, 'Erro de conexão. Tente digitar sua resposta.');
+      document.getElementById('btn-record-' + qId).style.display = 'inline-flex';
+    });
+}
+
+// A transcrição roda em background (AudioTranscriptionJob) — aqui só
+// consultamos o status a cada 1.5s até ela terminar. Limite de 40 tentativas
+// (~1min) pra não ficar consultando pra sempre se algo travar no worker.
+function pollTranscription(qId, statusUrl, transcriptionId, attempt) {
+  if (attempt > 40) {
+    document.getElementById('rec-loading-' + qId).style.display = 'none';
+    showRecError(qId, 'A transcrição demorou demais. Tente digitar sua resposta.');
+    document.getElementById('btn-record-' + qId).style.display = 'inline-flex';
+    return;
+  }
+
+  // statusUrl já vem com query string (?locale=pt); usa & pra não gerar uma
+  // segunda "?" (que jogaria o id pra dentro do valor de locale e o Rails
+  // nunca leria params[:id]).
+  var sep = statusUrl.indexOf('?') === -1 ? '?' : '&';
+  fetch(statusUrl + sep + 'id=' + transcriptionId)
+    .then(function(r) { return r.json(); })
+    .then(function(data) {
+      if (data.status === 'done') {
+        document.getElementById('rec-loading-' + qId).style.display = 'none';
+        document.getElementById('rec-text-' + qId).textContent = data.text;
+        document.getElementById('rec-preview-' + qId).style.display = 'block';
+      } else if (data.status === 'failed') {
+        document.getElementById('rec-loading-' + qId).style.display = 'none';
+        showRecError(qId, data.error || 'Erro ao transcrever.');
+        document.getElementById('btn-record-' + qId).style.display = 'inline-flex';
+      } else {
+        setTimeout(function() { pollTranscription(qId, statusUrl, transcriptionId, attempt + 1); }, 1500);
+      }
+    })
+    .catch(function() {
+      document.getElementById('rec-loading-' + qId).style.display = 'none';
+      showRecError(qId, 'Erro de conexão. Tente digitar sua resposta.');
+      document.getElementById('btn-record-' + qId).style.display = 'inline-flex';
+    });
+}
+
+function acceptTranscription(qId) {
+  var text = document.getElementById('rec-text-' + qId).textContent;
+  document.getElementById('open-answer-' + qId).value = text;
+  hideRecPreview(qId);
+  document.getElementById('btn-record-' + qId).style.display = 'inline-flex';
+}
+
+function reRecord(qId) {
+  hideRecPreview(qId);
+  document.getElementById('btn-record-' + qId).style.display = 'inline-flex';
+}
+
+function hideRecPreview(qId) {
+  document.getElementById('rec-preview-' + qId).style.display = 'none';
+}
+
+function showRecError(qId, msg) {
+  var el = document.getElementById('rec-error-' + qId);
+  el.textContent = msg;
+  el.style.display = 'block';
+}
+
+function hideRecError(qId) {
+  document.getElementById('rec-error-' + qId).style.display = 'none';
+}
+</script>
