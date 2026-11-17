@@ -95,24 +95,14 @@ class AdaptIntoPillsService
     text
   end
 
-  # Tudo ou nada: se uma pílula não monta, as anteriores são apagadas, para
-  # não sobrar uma série pela metade nos rascunhos.
+  # Tudo ou nada (ActivityGenerationService#build_series): se uma pílula não
+  # monta, nenhuma fica nos rascunhos.
   def build_series(generator, pills)
-    created = []
-    pills.each.with_index(1) do |data, position|
-      result = generator.build_from(data, series_attributes(position))
-      unless result[:success]
-        created.each(&:destroy)
-        return failure("A pílula #{position} não pôde ser montada: #{result[:error]}")
-      end
-      created << result[:activity]
-    end
-
-    { success: true, activity: created.first, activities: created }
+    generator.build_series(pills, base: series_attributes, prefix: "adaptacao-#{@source.id}")
   end
 
-  def series_attributes(position)
-    attrs = { level: @source.level, source_activity: @source, series_position: position }
+  def series_attributes
+    attrs = { level: @source.level, source_activity: @source }
     attrs[:media_url] = @source.media_url if @source.media_url.present?
     if @source.video_url.present?
       attrs[:video_url]                 = @source.video_url

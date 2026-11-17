@@ -28,9 +28,10 @@ RSpec.describe "Geração de atividade por IA em background", type: :request do
       expect(response).to have_http_status(:unprocessable_entity)
     end
 
+    # Desde 17/11, o padrão é "em pílulas", que pede a transcrição com tempos.
     it "enfileira com transcrição presente" do
       post generate_from_video_activities_path,
-           params: { youtube_url: "https://youtu.be/abc", transcript: "Olá, hoje vamos falar de..." }
+           params: { youtube_url: "https://youtu.be/abc", transcript: "0:00\nOlá, hoje vamos falar de..." }
 
       generation = AiGeneration.last
       expect(generation.kind).to eq("video")

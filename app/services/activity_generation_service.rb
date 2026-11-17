@@ -372,16 +372,33 @@ class ActivityGenerationService
     { success: false, error: I18n.t('ai.errors.generic') }
   end
 
-  # As duas portas que o AdaptIntoPillsService usa (ponto 1.4): a mesma leitura
-  # do JSON e a mesma montagem de atividade, para uma pílula adaptada sair
-  # igualzinha a uma gerada. `extra` sobrepõe os campos (nível da original,
-  # série, vídeo).
+  # As portas que a adaptação e o gerador por vídeo usam (ponto 1.4): a mesma
+  # leitura do JSON e a mesma montagem de atividade, para uma pílula de série
+  # sair igualzinha a uma gerada. `extra` sobrepõe os campos (nível, vídeo...).
   def parse_response(text)
     parse_json(strip_markdown(text))
   end
 
   def build_from(data, extra = {})
     build_activity(data, extra)
+  end
+
+  # Uma série de pílulas, tudo ou nada: se uma pílula não monta, as anteriores
+  # são apagadas, para não sobrar série pela metade nos rascunhos. Cada série
+  # ganha uma chave própria, mesmo quando sai da mesma original duas vezes.
+  def build_series(pills, base: {}, prefix: "serie")
+    key     = "#{prefix}-#{SecureRandom.hex(6)}"
+    created = []
+    pills.each.with_index(1) do |data, position|
+      result = build_activity(data, base.merge(series_key: key, series_position: position))
+      unless result[:success]
+        created.each(&:destroy)
+        return { success: false, error: "A pílula #{position} não pôde ser montada: #{result[:error]}" }
+      end
+      created << result[:activity]
+    end
+
+    { success: true, activity: created.first, activities: created }
   end
 
   private

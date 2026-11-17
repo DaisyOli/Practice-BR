@@ -32,10 +32,9 @@ RSpec.describe "Trecho de vídeo na geração" do
     let(:servico) { ActivityFromVideoService.new(youtube_url: "https://youtu.be/abcdefghijk", transcript: transcricao, teacher: nil) }
     let(:transcricao) { "0:00\nOlá!\n0:05\nHoje vamos cozinhar." }
 
-    it "pede os tempos do trecho, só quando a transcrição os tiver" do
-      pedido = servico.send(:build_prompt)
+    it "nas pílulas, pede os tempos de cada trecho" do
+      pedido = servico.build_prompt
       expect(pedido).to include("TRECHO NO PLAYER", '"video_start"', '"video_end"')
-      expect(pedido).to include("Se ela não tiver tempos, omita os dois campos")
     end
 
     it "lê até 20 mil caracteres da transcrição" do

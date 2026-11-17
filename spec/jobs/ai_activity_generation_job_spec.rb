@@ -39,7 +39,8 @@ RSpec.describe AiActivityGenerationJob, type: :job do
     })
     service = instance_double(ActivityFromVideoService, call: { success: false, error: "transcrição ilegível" })
     allow(ActivityFromVideoService).to receive(:new)
-      .with(youtube_url: "https://youtu.be/abc", transcript: "texto longo", teacher: teacher, level_hint: "B1")
+      .with(youtube_url: "https://youtu.be/abc", transcript: "texto longo", teacher: teacher, level_hint: "B1",
+            mode: nil, pill_count: nil)
       .and_return(service)
 
     described_class.perform_now(generation.id)

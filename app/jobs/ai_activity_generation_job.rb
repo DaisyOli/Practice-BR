@@ -35,7 +35,9 @@ class AiActivityGenerationJob < ApplicationJob
                  youtube_url: params["youtube_url"],
                  transcript:  params["transcript"],
                  teacher:     generation.teacher,
-                 level_hint:  params["level_hint"].presence
+                 level_hint:  params["level_hint"].presence,
+                 mode:        params["mode"],
+                 pill_count:  params["pill_count"]
                ).call
              when "agent"
                generate_for_agent(generation, params)
