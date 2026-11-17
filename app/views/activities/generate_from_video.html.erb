@@ -112,7 +112,8 @@
         <span class="step-num">2</span>
         <div style="font-family:'Plus Jakarta Sans',sans-serif; font-size:0.84rem; color:var(--ink); line-height:1.55;">
           <strong>Copie a transcrição</strong> do YouTube: clique em <strong>⋮ → Abrir transcrição</strong>
-          → selecione tudo → copie. Cole no campo abaixo.
+          → selecione tudo → copie. Cole no campo abaixo. <strong>Deixe os tempos (0:05, 1:23...)</strong>:
+          é com eles que a IA marca o trecho que o aluno vai assistir.
         </div>
       </div>
       <div style="display:flex; align-items:flex-start; gap:12px;">
@@ -164,8 +165,9 @@
               rows: 10,
               spellcheck: "false",
               style: "width:100%; padding:13px 16px; border:1.5px solid var(--line); border-radius:12px; font-family:'Plus Jakarta Sans',sans-serif; font-size:0.85rem; color:var(--ink); background:var(--surface); resize:vertical; min-height:160px; box-sizing:border-box; line-height:1.6;" %>
-        <div id="char-counter" style="font-family:'DM Mono',monospace; font-size:0.7rem; color:var(--ink-faint); margin-top:5px; text-align:right;">
-          0 / 8000 caracteres
+        <div id="char-counter" data-max="<%= ActivityFromVideoService::MAX_TRANSCRIPT_CHARS %>"
+             style="font-family:'DM Mono',monospace; font-size:0.7rem; color:var(--ink-faint); margin-top:5px; text-align:right;">
+          0 / <%= number_with_delimiter(ActivityFromVideoService::MAX_TRANSCRIPT_CHARS, delimiter: ".") %> caracteres
         </div>
       </div>
 
@@ -210,11 +212,13 @@ function selectLevel(level) {
 
   var textarea = document.getElementById('transcript');
   var counter  = document.getElementById('char-counter');
+  // O teto vem do servidor (ActivityFromVideoService::MAX_TRANSCRIPT_CHARS).
+  var max = parseInt(counter.dataset.max, 10);
   function updateCounter() {
     var len = textarea.value.length;
-    var capped = Math.min(len, 8000);
-    counter.textContent = capped.toLocaleString('pt-BR') + ' / 8.000 caracteres';
-    counter.style.color = len > 8000 ? 'var(--error)' : 'var(--ink-faint)';
+    var capped = Math.min(len, max);
+    counter.textContent = capped.toLocaleString('pt-BR') + ' / ' + max.toLocaleString('pt-BR') + ' caracteres';
+    counter.style.color = len > max ? 'var(--error)' : 'var(--ink-faint)';
   }
   textarea.addEventListener('input', updateCounter);
   updateCounter();

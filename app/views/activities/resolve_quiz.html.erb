@@ -515,7 +515,8 @@
               <% end %>
 
               <% if @activity.video_url.present? %>
-                <%= render 'activities/video_embed', url: @activity.video_url %>
+                <%= render 'activities/video_embed', url: @activity.video_url,
+                           start_seconds: @activity.video_start_seconds, end_seconds: @activity.video_end_seconds %>
               <% end %>
 
               <% if @activity.explanation_text.present? %>

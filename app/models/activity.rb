@@ -22,7 +22,10 @@ class Activity < ApplicationRecord
   validates :description, presence: true
   validates :level, presence: true
   validates :slug, presence: true, uniqueness: true
-  
+  validates :video_start_seconds, :video_end_seconds,
+            numericality: { only_integer: true, greater_than_or_equal_to: 0 }, allow_nil: true
+  validate  :video_excerpt_consistent
+
   scope :ordered, -> { order(created_at: :desc) }
   scope :by_level, ->(level) { where(level: level) }
   scope :published, -> { where(draft: false) }
@@ -55,6 +58,9 @@ class Activity < ApplicationRecord
   # Mudou de nível, sai do percurso: ele foi montado para um nível, e a mesma
   # posição no nível novo pode já estar ocupada.
   before_save :leave_path, if: -> { will_save_change_to_level? && path_position.present? }
+  # Trocou ou tirou o vídeo: o trecho marcado era do vídeo antigo. Só quando já
+  # havia vídeo: a geração por vídeo grava o trecho antes do link, e ele fica.
+  before_save :reset_video_excerpt, if: -> { will_save_change_to_video_url? && video_url_in_database.present? }
   after_create      :fetch_unsplash_cover
   after_commit      :clear_cache
   # Publicou: o agente do percurso avalia se ela entra no caminho do nível e
@@ -113,7 +119,52 @@ class Activity < ApplicationRecord
     questions.where(question_type: "open_ended").order(:created_at, :id).last
   end
 
+  # Trecho do vídeo (ponto 1.3): o player do YouTube toca só desse ponto até
+  # aquele. O formulário recebe "1:20"; o banco guarda 80. Vazio = vídeo inteiro.
+  def video_start = VideoTimestamp.to_label(video_start_seconds)
+  def video_end   = VideoTimestamp.to_label(video_end_seconds)
+
+  def video_start=(value)
+    assign_video_time(:video_start_seconds, value)
+  end
+
+  def video_end=(value)
+    assign_video_time(:video_end_seconds, value)
+  end
+
+  def video_excerpt?
+    video_start_seconds.present? || video_end_seconds.present?
+  end
+
   private
+
+  def assign_video_time(column, value)
+    parsed = VideoTimestamp.parse(value)
+    if parsed == :invalid
+      (@invalid_video_times ||= []) << column
+    else
+      self[column] = parsed
+    end
+  end
+
+  # Frases inteiras em :base: o app não traduz nome de campo, e "Video start
+  # precisa..." não serviria para a professora.
+  def video_excerpt_consistent
+    Array(@invalid_video_times).uniq.each do |column|
+      campo = column == :video_start_seconds ? "O início do trecho" : "O fim do trecho"
+      errors.add(:base, "#{campo} precisa estar no formato 1:20 (minutos:segundos)")
+    end
+    if video_start_seconds && video_end_seconds && video_end_seconds <= video_start_seconds
+      errors.add(:base, "O fim do trecho precisa vir depois do início")
+    end
+  end
+
+  def reset_video_excerpt
+    return if will_save_change_to_video_start_seconds? || will_save_change_to_video_end_seconds?
+
+    self.video_start_seconds = nil
+    self.video_end_seconds   = nil
+  end
 
   def generate_slug
     return unless title.present?
