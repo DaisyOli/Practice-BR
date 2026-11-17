@@ -63,7 +63,8 @@
 
   <%# ── Catálogo por nível: pra quem não sabe o que já foi feito ── %>
   <% if current_user.teacher? %>
-    <% published_by_level = (@activities_by_level || {}).transform_values { |acts| acts.reject(&:draft?).map(&:title).sort } %>
+    <%# Sem rascunho nem arquivada (1.5): o conteúdo da arquivada vive nas pílulas %>
+    <% published_by_level = (@activities_by_level || {}).transform_values { |acts| acts.reject { |a| a.draft? || a.archived? }.map(&:title).sort } %>
     <details style="background:var(--surface); border:1px solid var(--line); border-radius:14px; margin-bottom:1.5rem;">
       <summary style="cursor:pointer; padding:14px 20px; font-family:'Plus Jakarta Sans',sans-serif; font-size:0.85rem; font-weight:700; color:var(--ink); list-style:none; display:flex; align-items:center; gap:8px;">
         📚 Catálogo por nível — veja o que já existe antes de criar algo novo
@@ -143,6 +144,13 @@
               Manual
             <% end %>
           </div>
+
+          <%# Ponto 1.5: as arquivadas saem da lista e ficam só aqui %>
+          <% arquivadas = params[:arquivadas] == '1' %>
+          <%= link_to activities_path(arquivadas ? {} : { arquivadas: '1' }),
+                style: "padding:6px 11px; font-family:'Plus Jakarta Sans',sans-serif; font-size:0.78rem; font-weight:600; text-decoration:none; border:1.5px solid #{arquivadas ? 'var(--brand-deep)' : 'var(--line)'}; border-radius:8px; background:#{arquivadas ? 'var(--brand-deep)' : 'var(--surface)'}; color:#{arquivadas ? 'var(--surface)' : 'var(--ink-soft)'};" do %>
+            📦 Arquivadas
+          <% end %>
         <% end %>
 
         <%# Filtro de competência: CO | CE | EE — visível para professores e alunos %>
@@ -211,7 +219,11 @@
                 <span style="font-family:'Plus Jakarta Sans',sans-serif; font-size:0.9rem; font-weight:600; color:var(--ink); white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">
                   <%= activity.title %>
                 </span>
-                <% if current_user.teacher? && activity.draft? %>
+                <% if current_user.teacher? && activity.archived? %>
+                  <span style="font-family:'Plus Jakarta Sans',sans-serif; font-size:0.7rem; font-weight:600; background:var(--surface-2); color:var(--ink-soft); border:1.5px solid var(--line); border-radius:20px; padding:2px 8px; white-space:nowrap; flex-shrink:0;">
+                    📦 Arquivada
+                  </span>
+                <% elsif current_user.teacher? && activity.draft? %>
                   <span style="font-family:'Plus Jakarta Sans',sans-serif; font-size:0.7rem; font-weight:600; background:var(--warning-tint); color:var(--action-ink); border:1.5px solid var(--action); border-radius:20px; padding:2px 8px; white-space:nowrap; flex-shrink:0;">
                     Rascunho
                   </span>

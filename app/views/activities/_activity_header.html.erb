@@ -45,9 +45,27 @@
               style: "font-family:'Plus Jakarta Sans',sans-serif; font-size:0.78rem; font-weight:600; color:rgba(255,255,255,0.85); padding:6px 12px; border:1.5px solid rgba(255,255,255,0.25); border-radius:7px; text-decoration:none; background:rgba(255,255,255,0.1);" do %>
           Editar
         <% end %>
+        <%# Ponto 1.5: tirar de circulação sem perder o histórico dos alunos. %>
+        <% if activity.archived? %>
+          <%= button_to "Desarquivar", unarchive_activity_path(activity), method: :post,
+                style: "font-family:'Plus Jakarta Sans',sans-serif; font-size:0.78rem; font-weight:600; color:rgba(255,255,255,0.85); padding:6px 12px; border:1.5px solid rgba(255,255,255,0.25); border-radius:7px; background:rgba(255,255,255,0.1); cursor:pointer;" %>
+        <% elsif !activity.draft? %>
+          <%= button_to "📦 Arquivar", archive_activity_path(activity), method: :post,
+                data: { turbo_confirm: "Arquivar esta atividade? Os alunos deixam de vê-la, e as tentativas, notas e horas de formação continuam guardadas. Dá para desarquivar depois." },
+                style: "font-family:'Plus Jakarta Sans',sans-serif; font-size:0.78rem; font-weight:600; color:rgba(255,255,255,0.85); padding:6px 12px; border:1.5px solid rgba(255,255,255,0.25); border-radius:7px; background:rgba(255,255,255,0.1); cursor:pointer;" %>
+        <% end %>
         <% if current_user.admin? %>
+          <%# O aviso diz o que se perde: excluir apaga as tentativas dos alunos. %>
+          <% tentativas = activity.quiz_attempts.count %>
+          <% aviso_exclusao = if tentativas.zero?
+               "Excluir esta atividade? Nenhum aluno fez ainda, então nenhum histórico se perde."
+             else
+               "Esta atividade tem #{tentativas} #{tentativas == 1 ? 'tentativa' : 'tentativas'} de alunos. " \
+               "Excluir apaga para sempre as notas, os textos escritos e as horas de formação. " \
+               "Para só tirar de circulação, use Arquivar. Excluir mesmo assim?"
+             end %>
           <%= link_to activity_path(activity),
-                data: { turbo_method: :delete, turbo_confirm: t('activities.confirm_delete') },
+                data: { turbo_method: :delete, turbo_confirm: aviso_exclusao },
                 style: "font-family:'Plus Jakarta Sans',sans-serif; font-size:0.78rem; font-weight:600; color:var(--error-border); padding:6px 12px; border:1.5px solid rgba(252,165,165,0.35); border-radius:7px; text-decoration:none; background:rgba(185,28,28,0.2);" do %>
             Excluir
           <% end %>
@@ -72,6 +90,7 @@
       <%= activity.description %>
     </p>
     <%= render "activities/series_banner", activity: activity %>
+    <%= render "activities/archive_notice", activity: activity %>
 
     <% q_count = activity.questions.count %>
     <% total_exercises = activity.sentence_orderings.count + activity.paragraph_orderings.count + activity.column_matchings.count %>

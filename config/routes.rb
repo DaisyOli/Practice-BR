@@ -60,6 +60,8 @@ Rails.application.routes.draw do
       get  :review_draft
       post :publish_draft
       match :adapt, via: [:get, :post]
+      post :archive
+      post :unarchive
       get  :solve,      action: :resolve_quiz
       get  :grading_status
       post :submit,     action: :submit_quiz

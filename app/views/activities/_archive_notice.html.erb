@@ -1,0 +1,20 @@
+<%# Arquivar (ponto 1.5), na visão da dona da atividade: o aviso de que ela
+    está arquivada, ou a sugestão de arquivar a original que já virou pílulas
+    publicadas (o fim natural de "adaptar → revisar → publicar"). %>
+<% if current_user&.teacher? && (activity.teacher == current_user || current_user.admin?) %>
+  <% if activity.archived? %>
+    <div style="margin-top:12px; background:var(--surface-2); border:1px solid var(--line); border-radius:10px; padding:10px 14px; font-family:'Plus Jakarta Sans',sans-serif; font-size:0.82rem; color:var(--ink-soft); line-height:1.5;">
+      📦 <strong style="color:var(--ink);">Arquivada em <%= l(activity.archived_at.to_date, format: :long) %>.</strong>
+      Os alunos não a veem mais, e as tentativas, notas e horas de formação continuam guardadas.
+    </div>
+  <% elsif (pilulas = activity.published_adapted_pills.to_a).any? %>
+    <div style="margin-top:12px; background:var(--brand-mist); border:1px solid var(--brand-soft); border-radius:10px; padding:12px 14px; font-family:'Plus Jakarta Sans',sans-serif; font-size:0.84rem; color:var(--ink); line-height:1.5; display:flex; align-items:center; justify-content:space-between; gap:12px; flex-wrap:wrap;">
+      <span>
+        ✂️ Esta atividade já virou <strong><%= pilulas.size %> <%= pilulas.size == 1 ? 'pílula publicada' : 'pílulas publicadas' %></strong>.
+        Arquivar a original? O histórico dos alunos fica guardado.
+      </span>
+      <%= button_to "📦 Arquivar a original", archive_activity_path(activity), method: :post,
+            style: "font-family:'Plus Jakarta Sans',sans-serif; font-size:0.82rem; font-weight:700; color:var(--surface); background:var(--brand-deep); border:none; border-radius:8px; padding:8px 14px; cursor:pointer; white-space:nowrap;" %>
+    </div>
+  <% end %>
+<% end %>
