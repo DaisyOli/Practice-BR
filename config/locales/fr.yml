@@ -7,6 +7,14 @@ fr:
     wait_title: "L'IA prépare votre activité..."
     wait_hint_video: "Les vidéos avec une longue transcription peuvent prendre une à deux minutes — nous vous amènerons à la révision dès que c'est prêt 🎬"
     wait_hint_prompt: "Cela prend généralement moins d'une minute — nous vous amènerons à la révision dès que c'est prêt ✨"
+    wait_hint_adapt: "Adapter une activité entière prend environ deux minutes — nous vous amènerons à la révision de la première pilule dès que c'est prêt ✂️"
+    fun_phrases_adapt:
+      - "Lecture de l'activité entière, sans se presser... 📖"
+      - "On cherche où couper sans perdre le fil... ✂️"
+      - "Découpage en petites pilules savoureuses... 💊"
+      - "Vos questions sont réutilisées avec soin... ♻️"
+      - "On mesure le texte de chaque pilule... 📏"
+      - "Presque fini ! On numérote la série... 🔢"
     failed_title: "La génération a échoué"
     try_again: "Réessayer"
     fun_phrases_prompt:

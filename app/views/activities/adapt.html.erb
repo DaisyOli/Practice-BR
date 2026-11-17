@@ -1,0 +1,60 @@
+<% content_for :head do %>
+  <title>Adaptar em pílulas · <%= @activity.title %> · Practice-BR</title>
+<% end %>
+
+<%# ✂️ Adaptar em pílulas (ponto 1.4): o que vai acontecer, em linguagem de
+    professora, e o único campo necessário — a transcrição com tempos, quando
+    a atividade tem vídeo. %>
+<div style="max-width:720px; margin:1.5rem auto 3rem; padding:0 1.5rem;">
+
+  <%= link_to "← Voltar para a atividade", activity_path(@activity),
+        style: "font-family:'Plus Jakarta Sans',sans-serif; font-size:0.82rem; font-weight:600; color:var(--ink-soft); text-decoration:none;" %>
+
+  <div style="margin-top:14px; border-radius:20px; overflow:hidden; border:1.5px solid var(--brand-soft); box-shadow:0 6px 24px var(--brand-veil);">
+    <div style="background:var(--brand-deep); padding:22px 26px;">
+      <div style="font-family:'DM Mono',monospace; font-size:0.68rem; letter-spacing:0.08em; text-transform:uppercase; color:var(--action); margin-bottom:6px;">
+        ✂️ Adaptar em pílulas
+      </div>
+      <h1 style="font-family:'Raleway',sans-serif; font-size:1.3rem; font-weight:800; color:var(--surface); margin:0; line-height:1.3;">
+        <%= @activity.title %> · <%= @activity.level %>
+      </h1>
+    </div>
+
+    <div style="background:var(--surface); padding:22px 26px;">
+      <p style="font-family:'Plus Jakarta Sans',sans-serif; font-size:0.9rem; color:var(--ink); margin:0 0 12px; line-height:1.6;">
+        A IA lê a atividade inteira e divide em <strong>1 a 3 pílulas</strong>, de 3 a 5 minutos cada,
+        reaproveitando as suas questões sempre que servirem.
+      </p>
+      <ul style="font-family:'Plus Jakarta Sans',sans-serif; font-size:0.85rem; color:var(--ink-soft); margin:0 0 18px; padding-left:20px; line-height:1.7;">
+        <li>As pílulas viram <strong>rascunhos</strong> para você revisar e publicar, uma por uma.</li>
+        <li>Elas formam uma <strong>série</strong>: quem termina a parte 1 recebe a parte 2 logo em seguida.</li>
+        <li>Esta atividade <strong>continua como está</strong>, com as tentativas e as notas dos alunos.</li>
+        <li>Custa uns <strong>US$ 0,20 a 0,30</strong> e leva cerca de dois minutos.</li>
+      </ul>
+
+      <%= form_with url: adapt_activity_path(@activity), method: :post do %>
+        <% if @activity.video_url.present? %>
+          <div style="margin-bottom:18px;">
+            <label for="transcript"
+                   style="display:block; font-family:'Plus Jakarta Sans',sans-serif; font-size:0.85rem; font-weight:700; color:var(--ink); margin-bottom:4px;">
+              Transcrição do vídeo, com os tempos
+            </label>
+            <p style="font-family:'Plus Jakarta Sans',sans-serif; font-size:0.78rem; color:var(--ink-faint); margin:0 0 8px; line-height:1.5;">
+              No YouTube: <strong style="color:var(--ink-soft);">⋮ abaixo do vídeo → Abrir transcrição</strong>, selecione tudo e copie,
+              <strong style="color:var(--ink-soft);">deixando os tempos (0:05, 1:23...)</strong>. É com eles que cada pílula ganha o seu trecho do vídeo.
+            </p>
+            <%= text_area_tag :transcript, params[:transcript],
+                  id: "transcript", rows: 10, spellcheck: "false",
+                  placeholder: "0:00\nOlá, pessoal...\n0:05\nHoje eu vou mostrar...",
+                  style: "width:100%; padding:12px 14px; border:1.5px solid var(--line); border-radius:12px; font-family:'Plus Jakarta Sans',sans-serif; font-size:0.85rem; color:var(--ink); background:var(--surface); resize:vertical; box-sizing:border-box; line-height:1.6;" %>
+          </div>
+        <% end %>
+
+        <button type="submit"
+                style="display:inline-flex; align-items:center; gap:8px; font-family:'Plus Jakarta Sans',sans-serif; font-size:0.95rem; font-weight:700; color:var(--surface); background:var(--action); border:none; border-radius:12px; padding:12px 24px; cursor:pointer;">
+          ✂️ Adaptar em pílulas
+        </button>
+      <% end %>
+    </div>
+  </div>
+</div>

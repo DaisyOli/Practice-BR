@@ -10,9 +10,9 @@ class ActivitiesController < ApplicationController
   # qualquer request de :resolve_quiz, com ou sem crawler). Por isso as duas
   # condições vão dentro de uma única lambda.
   skip_before_action :authenticate_user!, if: -> { action_name == "resolve_quiz" && crawler_request? }
-  before_action :set_activity, only: [:show, :edit, :update, :destroy, :resolve_quiz, :submit_quiz, :quiz_results, :grading_status, :transcribe_audio, :clear_content, :clear_attempt_history, :review_draft, :publish_draft]
+  before_action :set_activity, only: [:show, :edit, :update, :destroy, :resolve_quiz, :submit_quiz, :quiz_results, :grading_status, :transcribe_audio, :clear_content, :clear_attempt_history, :review_draft, :publish_draft, :adapt]
   before_action :preload_exercise_associations, only: [:show]
-  before_action :authorize_teacher, only: [:new, :create, :edit, :update, :destroy, :generate_with_ai, :generate_from_video, :generation_wait, :generation_status, :review_draft, :publish_draft]
+  before_action :authorize_teacher, only: [:new, :create, :edit, :update, :destroy, :generate_with_ai, :generate_from_video, :generation_wait, :generation_status, :review_draft, :publish_draft, :adapt]
   before_action :check_trial_level_restriction!, only: [:show, :resolve_quiz, :submit_quiz]
 
   # User-Agents dos rastreadores que geram o card de preview de link. Não é
@@ -218,6 +218,32 @@ class ActivitiesController < ApplicationController
     redirect_to generation_wait_activities_path(id: generation.id)
   end
 
+  # ✂️ Adaptar em pílulas (ponto 1.4). GET mostra o que vai acontecer e, se a
+  # atividade tiver vídeo, pede a transcrição com tempos; POST põe a IA para
+  # trabalhar em background e leva para a mesma tela de espera da geração,
+  # que termina na revisão da primeira pílula.
+  def adapt
+    unless owns_activity?
+      return redirect_to activities_path, alert: t('messages.permission_denied')
+    end
+    if @activity.pill?
+      return redirect_to activity_path(@activity), alert: "Esta atividade já é uma pílula."
+    end
+    return if request.get?
+
+    transcript = params[:transcript].to_s.strip
+    if @activity.video_url.present? && transcript.blank?
+      flash.now[:alert] = "Cole a transcrição do vídeo com os tempos, para cada pílula ganhar o seu trecho."
+      return render :adapt, status: :unprocessable_entity
+    end
+
+    generation = AiGeneration.create!(teacher: current_user, kind: "adapt",
+                                      request_params: { source_activity_id: @activity.id,
+                                                        transcript: transcript.presence })
+    AiActivityGenerationJob.perform_later(generation.id)
+    redirect_to generation_wait_activities_path(id: generation.id)
+  end
+
   def review_draft
     unless owns_activity?
       redirect_to activities_path, alert: t('messages.permission_denied') and return
@@ -234,7 +260,9 @@ class ActivitiesController < ApplicationController
     end
 
     if @activity.update(draft: false, published_at: Time.current)
-      notify_students_of_new_activity(@activity)
+      # Série: só a parte 1 avisa os alunos. As outras chegam pela "Próxima
+      # atividade", logo depois da anterior; três avisos seriam barulho.
+      notify_students_of_new_activity(@activity) unless @activity.series? && @activity.series_position > 1
       redirect_to activity_path(@activity), notice: "Atividade publicada com sucesso!"
     else
       redirect_to review_draft_activity_path(@activity),

@@ -1,0 +1,29 @@
+<%# Série de pílulas (ponto 1.4), na visão da professora: em que parte esta
+    pílula está, de que atividade veio e as outras partes, rascunhos incluídos. %>
+<% if activity.series? && current_user&.teacher? %>
+  <% parts = activity.series_parts(published_only: false).to_a %>
+  <div style="margin-top:12px; background:var(--action-tint); border:1px solid var(--action-border); border-radius:10px; padding:10px 14px; font-family:'Plus Jakarta Sans',sans-serif; font-size:0.82rem; color:var(--ink); line-height:1.5;">
+    ✂️ <strong><%= activity.series_label(published_only: false) || "Pílula única da série" %></strong>
+    <% if activity.source_activity %>
+      · adaptada de
+      <%= link_to "«#{activity.source_activity.title}»", activity_path(activity.source_activity),
+                  style: "color:var(--brand-deep); font-weight:700;" %>
+    <% end %>
+
+    <% if parts.size > 1 %>
+      <div style="margin-top:8px; display:flex; gap:6px; flex-wrap:wrap;">
+        <% parts.each_with_index do |part, i| %>
+          <% if part == activity %>
+            <span style="font-weight:700; color:var(--surface); background:var(--brand-deep); border-radius:14px; padding:2px 10px;">
+              Parte <%= i + 1 %>
+            </span>
+          <% else %>
+            <%= link_to "Parte #{i + 1}#{' · rascunho' if part.draft?}",
+                        part.draft? ? review_draft_activity_path(part) : activity_path(part),
+                        style: "font-weight:600; color:var(--brand-deep); background:var(--surface); border:1px solid var(--brand-soft); border-radius:14px; padding:2px 10px; text-decoration:none;" %>
+          <% end %>
+        <% end %>
+      </div>
+    <% end %>
+  </div>
+<% end %>

@@ -17,6 +17,22 @@ RSpec.describe AiActivityGenerationJob, type: :job do
     expect(generation.activity).to eq(activity)
   end
 
+  # Ponto 1.4: "Adaptar em pílulas". A geração aponta para a primeira pílula.
+  it "usa o AdaptIntoPillsService para kind adapt" do
+    original = create(:activity, teacher: teacher)
+    primeira = create(:activity, teacher: teacher)
+    generation = AiGeneration.create!(teacher: teacher, kind: "adapt", request_params: {
+      "source_activity_id" => original.id, "transcript" => "0:00 Olá"
+    })
+    allow(AdaptIntoPillsService).to receive(:new)
+      .with(source: original, teacher: teacher, transcript: "0:00 Olá")
+      .and_return(instance_double(AdaptIntoPillsService, call: { success: true, activity: primeira, activities: [primeira] }))
+
+    described_class.perform_now(generation.id)
+
+    expect(generation.reload).to have_attributes(status: "done", activity: primeira)
+  end
+
   it "usa o service de vídeo para kind video" do
     generation = AiGeneration.create!(teacher: teacher, kind: "video", request_params: {
       "youtube_url" => "https://youtu.be/abc", "transcript" => "texto longo", "level_hint" => "B1"

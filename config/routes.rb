@@ -59,6 +59,7 @@ Rails.application.routes.draw do
     member do
       get  :review_draft
       post :publish_draft
+      match :adapt, via: [:get, :post]
       get  :solve,      action: :resolve_quiz
       get  :grading_status
       post :submit,     action: :submit_quiz
