@@ -34,6 +34,13 @@
 
     <% if current_user.teacher? && activity.teacher == current_user %>
       <div style="display:flex; gap:8px;">
+        <%# Ponto 1.4: atividade longa vira série de pílulas (a original fica). %>
+        <% unless activity.pill? %>
+          <%= link_to adapt_activity_path(activity),
+                style: "font-family:'Plus Jakarta Sans',sans-serif; font-size:0.78rem; font-weight:700; color:var(--brand-deep); padding:6px 12px; border:1.5px solid var(--action); border-radius:7px; text-decoration:none; background:var(--action-tint);" do %>
+            ✂️ Adaptar em pílulas
+          <% end %>
+        <% end %>
         <%= link_to edit_activity_path(activity),
               style: "font-family:'Plus Jakarta Sans',sans-serif; font-size:0.78rem; font-weight:600; color:rgba(255,255,255,0.85); padding:6px 12px; border:1.5px solid rgba(255,255,255,0.25); border-radius:7px; text-decoration:none; background:rgba(255,255,255,0.1);" do %>
           Editar
@@ -64,6 +71,7 @@
     <p style="font-family:'Plus Jakarta Sans',sans-serif; font-size:0.9rem; color:var(--ink-soft); margin:0; line-height:1.65;">
       <%= activity.description %>
     </p>
+    <%= render "activities/series_banner", activity: activity %>
 
     <% q_count = activity.questions.count %>
     <% total_exercises = activity.sentence_orderings.count + activity.paragraph_orderings.count + activity.column_matchings.count %>

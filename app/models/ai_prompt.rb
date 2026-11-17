@@ -63,6 +63,15 @@ class AiPrompt < ApplicationRecord
         placeholders: %w[pedido regiao ancoras]
       },
 
+      "activity_adaptation.instructions" => {
+        group:   "Agente de conteúdo",
+        label:   "Adaptar em pílulas",
+        hint:    "Como a IA divide uma atividade longa em 1 a 3 pílulas, reaproveitando os seus exercícios. Vai junto das instruções principais, que continuam valendo. O app lê a resposta no formato {\"pills\": [...]}.",
+        default: -> { AdaptIntoPillsService::INSTRUCTIONS },
+        placeholders: %w[original nivel video],
+        markers:      %w[pills]
+      },
+
       "ai_grading.system" => {
         group:   "Correção de respostas",
         label:   "Moldura da correção",

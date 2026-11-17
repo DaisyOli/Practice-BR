@@ -14,6 +14,13 @@ class Activity < ApplicationRecord
   # destroy batia na FK fk_rails_7941c1ead7 e estourava 500.
   has_many :ai_generations, dependent: :nullify
 
+  # Pílulas em série (ponto 1.4): a atividade longa de onde a pílula veio, pelo
+  # botão "Adaptar em pílulas", e as pílulas que saíram dela. Apagar a original
+  # não apaga as pílulas: só desfaz o vínculo (a FK também faz isso no banco).
+  belongs_to :source_activity, class_name: "Activity", optional: true
+  has_many :adapted_pills, class_name: "Activity", foreign_key: :source_activity_id,
+           inverse_of: :source_activity, dependent: :nullify
+
   has_one_attached :audio_file
   has_one_attached :image_file
   has_one_attached :video_file
@@ -134,6 +141,30 @@ class Activity < ApplicationRecord
 
   def video_excerpt?
     video_start_seconds.present? || video_end_seconds.present?
+  end
+
+  def series?
+    source_activity_id.present? && series_position.present?
+  end
+
+  # As partes da série, em ordem. Para o aluno, só as publicadas.
+  def series_parts(published_only: true)
+    return Activity.none unless series?
+
+    parts = Activity.where(source_activity_id: source_activity_id).where.not(series_position: nil)
+    parts = parts.published if published_only
+    parts.order(:series_position, :id)
+  end
+
+  # "Parte 2 de 3". Conta pela posição entre as partes que existem, e não pelo
+  # número gravado: uma parte descartada na revisão não deixa buraco. nil fora
+  # de série ou quando só sobrou uma parte.
+  def series_label(published_only: true)
+    parts = series_parts(published_only: published_only).to_a
+    index = parts.index(self)
+    return nil if index.nil? || parts.size < 2
+
+    "Parte #{index + 1} de #{parts.size}"
   end
 
   private

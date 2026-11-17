@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.1].define(version: 2026_11_16_120000) do
+ActiveRecord::Schema[7.1].define(version: 2026_11_17_100000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
 
@@ -66,8 +66,11 @@ ActiveRecord::Schema[7.1].define(version: 2026_11_16_120000) do
     t.boolean "pill", default: false, null: false
     t.integer "video_start_seconds"
     t.integer "video_end_seconds"
+    t.bigint "source_activity_id"
+    t.integer "series_position"
     t.index ["level", "path_position"], name: "index_activities_on_level_and_path_position", unique: true, where: "(path_position IS NOT NULL)"
     t.index ["slug"], name: "index_activities_on_slug", unique: true
+    t.index ["source_activity_id"], name: "index_activities_on_source_activity_id"
     t.index ["teacher_id"], name: "index_activities_on_teacher_id"
   end
 
@@ -446,6 +449,7 @@ ActiveRecord::Schema[7.1].define(version: 2026_11_16_120000) do
 
   add_foreign_key "active_storage_attachments", "active_storage_blobs", column: "blob_id"
   add_foreign_key "active_storage_variant_records", "active_storage_blobs", column: "blob_id"
+  add_foreign_key "activities", "activities", column: "source_activity_id", on_delete: :nullify
   add_foreign_key "activities", "users", column: "teacher_id"
   add_foreign_key "activity_ratings", "activities"
   add_foreign_key "activity_ratings", "users"

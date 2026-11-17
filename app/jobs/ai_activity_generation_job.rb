@@ -39,6 +39,13 @@ class AiActivityGenerationJob < ApplicationJob
                ).call
              when "agent"
                generate_for_agent(generation, params)
+             when "adapt"
+               # A geração aponta para a primeira pílula: é a revisão que abre.
+               AdaptIntoPillsService.new(
+                 source:     Activity.find_by(id: params["source_activity_id"]),
+                 teacher:    generation.teacher,
+                 transcript: params["transcript"]
+               ).call
              else
                ActivityGenerationService.new(prompt: params["prompt"], teacher: generation.teacher).call
              end

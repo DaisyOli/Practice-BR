@@ -7,6 +7,14 @@ pt:
     wait_title: "A IA está montando sua atividade..."
     wait_hint_video: "Vídeos com transcrição longa podem levar um ou dois minutos — te levamos para a revisão assim que terminar 🎬"
     wait_hint_prompt: "Isso costuma levar menos de um minuto — te levamos para a revisão assim que terminar ✨"
+    wait_hint_adapt: "Adaptar uma atividade inteira leva uns dois minutos — te levamos para a revisão da primeira pílula assim que terminar ✂️"
+    fun_phrases_adapt:
+      - "Lendo a atividade inteira com calma... 📖"
+      - "Procurando onde cortar sem perder o fio da história... ✂️"
+      - "Separando em pílulas pequenas e gostosas... 💊"
+      - "Reaproveitando as suas questões com carinho... ♻️"
+      - "Medindo o texto de cada pílula... 📏"
+      - "Quase lá! Numerando a série... 🔢"
     failed_title: "A geração não deu certo"
     try_again: "Tentar de novo"
     fun_phrases_prompt:

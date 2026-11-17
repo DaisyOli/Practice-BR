@@ -125,12 +125,18 @@ class StudentDashboardPresenter
     return @best_candidate if defined?(@best_candidate)
 
     @best_candidate =
-      # Primeiro o percurso do nível, para todo aluno: é a ordem pedagógica que
+      # Antes de tudo, a série de pílulas (ponto 1.4): quem acabou de fazer uma
+      # parte recebe a seguinte, para continuar a mesma história ou o mesmo
+      # vídeo. A alternância de suporte lá embaixo faria o contrário.
+      #
+      # Depois, o percurso do nível, para todo aluno: é a ordem pedagógica que
       # a Daisy montou, e quem chega começa pelo mais simples. Terminado o
       # percurso, o teste segue a mesma escolha do "Comece por aqui" e dos
       # emails; o aluno pagante volta ao sorteio por nível com alternância de
       # suporte, abaixo.
-      if (path = user.next_path_activity)
+      if (part = next_series_part)
+        part
+      elsif (path = user.next_path_activity)
         path
       elsif user.trial?
         user.suggested_first_activity
@@ -141,6 +147,19 @@ class StudentDashboardPresenter
       else
         pending_activities.first
       end
+  end
+
+  # A parte seguinte da série da última atividade feita, se ainda não foi feita
+  # e se abre para esta pessoa (no teste, só o nível dela abre).
+  def next_series_part
+    activity = last_attempt&.activity
+    return nil unless activity&.series?
+
+    part = activity.series_parts
+                   .where("series_position > ?", activity.series_position)
+                   .where.not(id: completed_ids)
+                   .first
+    part unless user.locked_activity?(part)
   end
 
   # Uma consulta só para todas as atividades candidatas, em vez de uma por

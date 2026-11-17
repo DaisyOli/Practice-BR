@@ -36,6 +36,14 @@ en:
     wait_title: "The AI is building your activity..."
     wait_hint_video: "Videos with long transcripts can take a minute or two — we'll take you to the review as soon as it's ready 🎬"
     wait_hint_prompt: "This usually takes less than a minute — we'll take you to the review as soon as it's ready ✨"
+    wait_hint_adapt: "Adapting a whole activity takes about two minutes — we'll take you to the review of the first pill as soon as it's ready ✂️"
+    fun_phrases_adapt:
+      - "Reading the whole activity carefully... 📖"
+      - "Finding where to cut without losing the thread... ✂️"
+      - "Splitting it into small, tasty pills... 💊"
+      - "Reusing your questions with care... ♻️"
+      - "Measuring the text of each pill... 📏"
+      - "Almost there! Numbering the series... 🔢"
     failed_title: "Generation failed"
     try_again: "Try again"
     fun_phrases_prompt:

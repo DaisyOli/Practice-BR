@@ -29,6 +29,13 @@ RSpec.describe "Formato pílula nos prompts de geração" do
     expect(sistema).to include("na pílula, no máximo 2")
   end
 
+  # A adaptação real de 17/11 pôs a própria resposta entre parênteses,
+  # "(provador / tamanho)": a IA estendeu a pista do verbo para substantivos.
+  it "a pista é o verbo, nunca a palavra que entra pronta na lacuna" do
+    expect(sistema).to include("A pista NUNCA é a própria resposta")
+    expect(sistema).to include("a palavra que entra pronta na lacuna nunca vai entre parênteses")
+  end
+
   # Decisão da Daisy (16/11): na pílula, o verbo entre parênteses ajuda. O
   # prompt antigo proibia em três lugares e usava isso como "exemplo ruim".
   it "libera o verbo entre parênteses, sem regra antiga dizendo o contrário" do

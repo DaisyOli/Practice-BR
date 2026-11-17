@@ -74,7 +74,7 @@ class ActivityGenerationService
     2. COESÃO: todos os exercícios se passam no MESMO universo do texto-base (mesmos personagens, mesma situação). O aluno deve querer reler o texto para responder.
     3. PROGRESSÃO: ordene os exercícios do mais fácil (reconhecimento) ao mais desafiador (inferência/produção).
     4. DISTRATORES INTELIGENTES: nas múltiplas escolhas, as alternativas erradas devem ser erros PLAUSÍVEIS do nível (ser/estar, tempo verbal vizinho, falso cognato, concordância) — nunca opções absurdas ou obviamente erradas.
-    5. LACUNAS COM PROPÓSITO: em fill_in_blank, o contexto ajuda a chegar à resposta. Na pílula, pode dar o verbo no infinitivo entre parênteses, com ou sem o tempo — "(tampar — imperativo)": o aluno pratica a FORMA sem precisar adivinhar a palavra, e isso deixa a pílula fácil de começar.
+    5. LACUNAS COM PROPÓSITO: em fill_in_blank, o contexto ajuda a chegar à resposta. Na pílula, pode dar o verbo no infinitivo entre parênteses, com ou sem o tempo — "(tampar — imperativo)": o aluno pratica a FORMA sem precisar adivinhar a palavra, e isso deixa a pílula fácil de começar. Só o verbo: a palavra que entra pronta na lacuna nunca vai entre parênteses.
     6. CULTURA VIVA: a atividade se passa num lugar do Brasil que dá para reconhecer — pela fala dos personagens, pelo que comem, pelo que é normal ali. Não basta um detalhe cultural de enfeite: o lugar tem que ser parte da história, não uma nota de rodapé.
     7. VARIEDADE NA MEDIDA: com 3 a 5 exercícios, use 2 ou 3 tipos diferentes, escolhendo os que melhor servem ao objetivo — sentence_ordering, paragraph_ordering e column_matching são bem-vindos, não só múltipla escolha e lacunas. Variedade não pode virar quantidade.
 
@@ -163,6 +163,7 @@ class ActivityGenerationService
 
     PISTA ENTRE PARÊNTESES — liberada na pílula:
     O verbo no infinitivo, com ou sem o tempo, é bem-vindo: "(tampar — imperativo)". O aluno treina a forma do ponto gramatical da pílula sem travar na escolha da palavra.
+    A pista NUNCA é a própria resposta. "(provador / tamanho)" numa lacuna que pede "provador" e "tamanho" não é pista: o aluno só copia. Substantivo, adjetivo e expressão não vão entre parênteses; o contexto da frase é que leva até eles.
 
     - Prefira frases em que o contexto também leva à resposta (marcador de tempo, situação), para a pista não ser a única ajuda
     - Varie as frases e as situações das lacunas, sem repetir o mesmo molde em todas
@@ -371,6 +372,18 @@ class ActivityGenerationService
     { success: false, error: I18n.t('ai.errors.generic') }
   end
 
+  # As duas portas que o AdaptIntoPillsService usa (ponto 1.4): a mesma leitura
+  # do JSON e a mesma montagem de atividade, para uma pílula adaptada sair
+  # igualzinha a uma gerada. `extra` sobrepõe os campos (nível da original,
+  # série, vídeo).
+  def parse_response(text)
+    parse_json(strip_markdown(text))
+  end
+
+  def build_from(data, extra = {})
+    build_activity(data, extra)
+  end
+
   private
 
   # Vai na mensagem do usuário, e não no SYSTEM_PROMPT, por dois motivos: o
@@ -418,12 +431,12 @@ class ActivityGenerationService
     JSON.parse(text)
   end
 
-  def build_activity(data)
+  def build_activity(data, extra = {})
     error_message = nil
     activity_record = nil
 
     ActiveRecord::Base.transaction do
-      activity = Activity.new(
+      activity = Activity.new({
         title:            data["title"],
         description:      data["description"],
         level:            data["level"],
@@ -434,7 +447,7 @@ class ActivityGenerationService
         ai_generated:     true,
         # Desde o 1.1 (16/11/2026) a IA só gera no formato pílula.
         pill:             true
-      )
+      }.merge(extra))
       assign_video_excerpt(activity, data)
 
       unless activity.save
