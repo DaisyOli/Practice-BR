@@ -10,9 +10,9 @@ class ActivitiesController < ApplicationController
   # qualquer request de :resolve_quiz, com ou sem crawler). Por isso as duas
   # condições vão dentro de uma única lambda.
   skip_before_action :authenticate_user!, if: -> { action_name == "resolve_quiz" && crawler_request? }
-  before_action :set_activity, only: [:show, :edit, :update, :destroy, :resolve_quiz, :submit_quiz, :quiz_results, :grading_status, :transcribe_audio, :clear_content, :clear_attempt_history, :review_draft, :publish_draft, :adapt]
+  before_action :set_activity, only: [:show, :edit, :update, :destroy, :resolve_quiz, :submit_quiz, :quiz_results, :grading_status, :transcribe_audio, :clear_content, :clear_attempt_history, :review_draft, :publish_draft, :adapt, :archive, :unarchive]
   before_action :preload_exercise_associations, only: [:show]
-  before_action :authorize_teacher, only: [:new, :create, :edit, :update, :destroy, :generate_with_ai, :generate_from_video, :generation_wait, :generation_status, :review_draft, :publish_draft, :adapt]
+  before_action :authorize_teacher, only: [:new, :create, :edit, :update, :destroy, :generate_with_ai, :generate_from_video, :generation_wait, :generation_status, :review_draft, :publish_draft, :adapt, :archive, :unarchive]
   before_action :check_trial_level_restriction!, only: [:show, :resolve_quiz, :submit_quiz]
 
   # User-Agents dos rastreadores que geram o card de preview de link. Não é
@@ -49,6 +49,7 @@ class ActivitiesController < ApplicationController
     if current_user.student_like? && @activity.draft?
       redirect_to student_dashboard_path, alert: "Esta atividade ainda não está disponível." and return
     end
+    return redirect_away_from_archived if current_user.student_like? && @activity.archived?
     viewing_results    = params[:show_score] == 'true' && session[:quiz_attempt_id].present?
     already_attempted  = current_user.student? && current_user.quiz_attempts.exists?(activity_id: @activity.id)
     if current_user.student? && current_user.daily_limit_reached? && !viewing_results && !already_attempted
@@ -75,6 +76,8 @@ class ActivitiesController < ApplicationController
   end
 
   def submit_quiz
+    return redirect_away_from_archived if current_user&.student_like? && @activity.archived?
+
     result = QuizSubmissionService.new(
       activity: @activity,
       user: current_user,
@@ -227,6 +230,24 @@ class ActivitiesController < ApplicationController
     })
     AiActivityGenerationJob.perform_later(generation.id)
     redirect_to generation_wait_activities_path(id: generation.id)
+  end
+
+  # 📦 Arquivar (ponto 1.5): tira a atividade de circulação para os alunos, e as
+  # tentativas, notas, textos e horas de formação ficam. É o caminho no lugar de
+  # excluir, que apaga tudo isso para sempre.
+  def archive
+    return redirect_to(activities_path, alert: t('messages.permission_denied')) unless owns_activity?
+
+    @activity.archive!
+    redirect_to activity_path(@activity),
+                notice: "Atividade arquivada. Os alunos não a veem mais, e o histórico continua guardado. Ela fica no filtro \"Arquivadas\"."
+  end
+
+  def unarchive
+    return redirect_to(activities_path, alert: t('messages.permission_denied')) unless owns_activity?
+
+    @activity.unarchive!
+    redirect_to activity_path(@activity), notice: "Atividade de volta em circulação."
   end
 
   # ✂️ Adaptar em pílulas (ponto 1.4). GET mostra o que vai acontecer e, se a
@@ -398,6 +419,18 @@ class ActivitiesController < ApplicationController
   # rascunhos de IA de qualquer professora para revisão).
   def owns_activity?
     @activity.teacher == current_user || current_user&.admin?
+  end
+
+  # Atividade arquivada (1.5): o aluno que chega por um link antigo vai para a
+  # versão nova, se ela virou pílulas; senão, para o painel. Os resultados que
+  # ele já tinha continuam abrindo pela tela de resultado.
+  def redirect_away_from_archived
+    pilula = @activity.published_adapted_pills.first
+    if pilula
+      redirect_to solve_activity_path(pilula), notice: "Esta atividade ganhou uma versão mais curta, em pílulas. Comece por aqui 🌱"
+    else
+      redirect_to student_dashboard_path, alert: "Esta atividade saiu de circulação."
+    end
   end
 
   # A geração pertence à professora; o admin também pode acompanhar

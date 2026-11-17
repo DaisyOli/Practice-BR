@@ -36,7 +36,11 @@ class Activity < ApplicationRecord
 
   scope :ordered, -> { order(created_at: :desc) }
   scope :by_level, ->(level) { where(level: level) }
-  scope :published, -> { where(draft: false) }
+  # "Publicada" é o que o aluno pode ver: nem rascunho, nem arquivada (1.5).
+  # O app inteiro decide o que mostrar por aqui (listas, painel, percurso,
+  # lembretes, agentes), então arquivar some de todos esses lugares de uma vez.
+  scope :published, -> { where(draft: false, archived_at: nil) }
+  scope :archived,  -> { where.not(archived_at: nil) }
 
   # Percurso do nível: até 10 atividades em ordem, escolhidas no painel admin
   # (Admin::PathController). As 3 primeiras são a vitrine do teste — quem testa
@@ -168,6 +172,27 @@ class Activity < ApplicationRecord
     return nil if index.nil? || parts.size < 2
 
     "Parte #{index + 1} de #{parts.size}"
+  end
+
+  # Arquivar (ponto 1.5): sai de circulação para os alunos e sai do percurso,
+  # mas as tentativas, notas, textos e horas de formação ficam. Desarquivar
+  # devolve à circulação (o percurso, se for o caso, se remonta no painel).
+  def archived?
+    archived_at.present?
+  end
+
+  def archive!
+    update!(archived_at: Time.current, path_position: nil)
+  end
+
+  def unarchive!
+    update!(archived_at: nil)
+  end
+
+  # As pílulas que saíram desta atividade e já estão com os alunos: é a deixa
+  # para sugerir arquivar a original.
+  def published_adapted_pills
+    adapted_pills.published.order(:series_position, :id)
   end
 
   private

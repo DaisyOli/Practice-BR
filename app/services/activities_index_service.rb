@@ -26,6 +26,10 @@ class ActivitiesIndexService
       # .page para a view poder chamar total_pages mesmo na coleção vazia
       return Activity.none.page(@params[:page]).per(9) unless @current_user.level_assigned?
       activities = Activity.published.where(level: @current_user.accessible_levels)
+    elsif @params[:arquivadas] == '1'
+      # Ponto 1.5: as arquivadas só aparecem neste filtro, para a dona (e para o
+      # admin, que pode arquivar a de qualquer uma).
+      activities = @current_user.admin? ? Activity.archived : Activity.archived.where(teacher: @current_user)
     else
       # Professora vê as publicadas de todo mundo + os próprios rascunhos.
       # Rascunho é privado: o de outra professora não aparece (e os botões

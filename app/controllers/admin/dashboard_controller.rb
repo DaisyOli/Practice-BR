@@ -18,7 +18,7 @@ module Admin
         teachers:            User.teachers.count,
         students:            User.students.count,
         trials_active:       User.trials.where("trial_expires_at > ?", Time.current).where("trial_activities_used < 3").count,
-        activities_published: Activity.where(draft: false).count
+        activities_published: Activity.published.count # sem rascunho nem arquivada
       }
     end
 
@@ -30,7 +30,7 @@ module Admin
         {
           teacher:              teacher,
           activities_total:     activity_ids.size,
-          activities_published: Activity.where(id: activity_ids, draft: false).count,
+          activities_published: Activity.published.where(id: activity_ids).count,
           students_count:       User.where(invited_by_id: teacher.id, role: "student").count,
           total_attempts:       attempts.count,
           avg_score:            attempts.average(:score)&.round(1),
