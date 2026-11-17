@@ -9,6 +9,12 @@
 
 <% url = url.to_s.strip %>
 
+<%# Trecho (ponto 1.3): só para YouTube. Vazio = vídeo inteiro.
+    Uso: render 'activities/video_embed', url: ..., start_seconds: 80, end_seconds: 225 %>
+<% start_seconds = local_assigns[:start_seconds] %>
+<% end_seconds   = local_assigns[:end_seconds] %>
+<% excerpt       = { start: start_seconds, end: end_seconds }.compact %>
+
 <% embed_type = if url.match?(/youtube\.com|youtu\.be/) then :youtube
                 elsif url.match?(/vimeo\.com/) then :vimeo
                 elsif url.match?(/\.(mp4|webm|ogg)(\?.*)?$/i) then :direct
@@ -23,13 +29,26 @@
 
 <% if embed_type == :youtube && yt_id %>
   <div style="position:relative; padding-bottom:56.25%; height:0; overflow:hidden; border-radius:10px;">
-    <iframe src="https://www.youtube.com/embed/<%= yt_id %>"
+    <iframe src="https://www.youtube.com/embed/<%= yt_id %><%= "?#{excerpt.to_query}" if excerpt.any? %>"
             style="position:absolute; top:0; left:0; width:100%; height:100%; border:0;"
             allowfullscreen
             allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture">
     </iframe>
   </div>
-  <%= render 'activities/video_embed_link', url: url, link_label: (defined?(link_label) ? link_label : nil) %>
+  <% if excerpt.any? %>
+    <p style="font-family:'Plus Jakarta Sans',sans-serif; font-size:0.8rem; color:var(--ink-soft); margin:8px 0 0; line-height:1.45;">
+      🎬
+      <% if end_seconds %>
+        Só um pedaço do vídeo: de <strong style="color:var(--ink);"><%= VideoTimestamp.to_label(start_seconds || 0) %></strong>
+        a <strong style="color:var(--ink);"><%= VideoTimestamp.to_label(end_seconds) %></strong>. O player para sozinho no fim.
+      <% else %>
+        Comece a partir de <strong style="color:var(--ink);"><%= VideoTimestamp.to_label(start_seconds) %></strong>.
+      <% end %>
+    </p>
+  <% end %>
+  <%# No YouTube, o link abre já no começo do trecho %>
+  <% link_url = start_seconds ? "https://www.youtube.com/watch?v=#{yt_id}&t=#{start_seconds}s" : url %>
+  <%= render 'activities/video_embed_link', url: link_url, link_label: (defined?(link_label) ? link_label : nil) %>
 
 <% elsif embed_type == :vimeo && vimeo_id %>
   <div style="position:relative; padding-bottom:56.25%; height:0; overflow:hidden; border-radius:10px;">

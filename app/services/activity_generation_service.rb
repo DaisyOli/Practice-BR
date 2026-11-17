@@ -435,6 +435,7 @@ class ActivityGenerationService
         # Desde o 1.1 (16/11/2026) a IA só gera no formato pílula.
         pill:             true
       )
+      assign_video_excerpt(activity, data)
 
       unless activity.save
         error_message = activity.errors.full_messages.join(", ")
@@ -457,6 +458,26 @@ class ActivityGenerationService
     else
       { success: false, error: error_message || "Erro desconhecido ao salvar atividade" }
     end
+  end
+
+  # O trecho escolhido pela IA na geração por vídeo (ponto 1.3): "video_start" e
+  # "video_end", tirados das marcações de tempo da transcrição. Só vale se fizer
+  # sentido (fim depois do início, no máximo MAX_EXCERPT_SECONDS); senão o vídeo
+  # toca inteiro, como antes, e a geração segue.
+  MAX_EXCERPT_SECONDS = 6 * 60
+
+  def assign_video_excerpt(activity, data)
+    start  = VideoTimestamp.parse(data["video_start"])
+    finish = VideoTimestamp.parse(data["video_end"])
+    return unless start.is_a?(Integer) && finish.is_a?(Integer)
+
+    unless finish > start && finish - start <= MAX_EXCERPT_SECONDS
+      Rails.logger.warn "ActivityGenerationService: trecho de vídeo ignorado (#{data['video_start']} a #{data['video_end']})"
+      return
+    end
+
+    activity.video_start_seconds = start
+    activity.video_end_seconds   = finish
   end
 
   def build_exercise(activity, ex)

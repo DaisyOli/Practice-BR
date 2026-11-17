@@ -296,6 +296,10 @@ class ActivitiesController < ApplicationController
       end
       
       redirect_to activity_path(@activity, ultimo_conteudo: ultimo_conteudo), notice: t('messages.activity_updated')
+    elsif params[:activity].key?(:video_start) || params[:activity].key?(:video_end)
+      # O trecho se edita no bloco do vídeo, na página da atividade: o erro
+      # volta para lá, e não para a tela de edição geral.
+      redirect_to activity_path(@activity, anchor: "video"), alert: @activity.errors.full_messages.to_sentence
     else
       render :edit, status: :unprocessable_entity
     end
@@ -409,7 +413,7 @@ class ActivitiesController < ApplicationController
   end
 
   def activity_params
-    params.require(:activity).permit(:title, :description, :level, :media_url, :video_url, :explanation_text, :explanation_is_transcript, :statement, :audio_file, :image_file, :video_file)
+    params.require(:activity).permit(:title, :description, :level, :media_url, :video_url, :video_start, :video_end, :explanation_text, :explanation_is_transcript, :statement, :audio_file, :image_file, :video_file)
   end
   
   def authorize_teacher
