@@ -15,8 +15,9 @@ class Activity < ApplicationRecord
   has_many :ai_generations, dependent: :nullify
 
   # Pílulas em série (ponto 1.4): a atividade longa de onde a pílula veio, pelo
-  # botão "Adaptar em pílulas", e as pílulas que saíram dela. Apagar a original
-  # não apaga as pílulas: só desfaz o vínculo (a FK também faz isso no banco).
+  # botão "Adaptar em pílulas", e as pílulas que saíram dela. Serve só para o
+  # "adaptada de"; a série em si é a `series_key`. Apagar a original não apaga
+  # as pílulas nem desfaz a série: só some o "adaptada de".
   belongs_to :source_activity, class_name: "Activity", optional: true
   has_many :adapted_pills, class_name: "Activity", foreign_key: :source_activity_id,
            inverse_of: :source_activity, dependent: :nullify
@@ -143,15 +144,17 @@ class Activity < ApplicationRecord
     video_start_seconds.present? || video_end_seconds.present?
   end
 
+  # A série é a `series_key`, e não a atividade original: assim ela sobrevive
+  # à original apagada, e o gerador por vídeo faz séries sem original.
   def series?
-    source_activity_id.present? && series_position.present?
+    series_key.present? && series_position.present?
   end
 
   # As partes da série, em ordem. Para o aluno, só as publicadas.
   def series_parts(published_only: true)
     return Activity.none unless series?
 
-    parts = Activity.where(source_activity_id: source_activity_id).where.not(series_position: nil)
+    parts = Activity.where(series_key: series_key).where.not(series_position: nil)
     parts = parts.published if published_only
     parts.order(:series_position, :id)
   end

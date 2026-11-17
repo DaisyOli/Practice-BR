@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.1].define(version: 2026_11_17_100000) do
+ActiveRecord::Schema[7.1].define(version: 2026_11_17_120000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
 
@@ -68,7 +68,9 @@ ActiveRecord::Schema[7.1].define(version: 2026_11_17_100000) do
     t.integer "video_end_seconds"
     t.bigint "source_activity_id"
     t.integer "series_position"
+    t.string "series_key"
     t.index ["level", "path_position"], name: "index_activities_on_level_and_path_position", unique: true, where: "(path_position IS NOT NULL)"
+    t.index ["series_key"], name: "index_activities_on_series_key"
     t.index ["slug"], name: "index_activities_on_slug", unique: true
     t.index ["source_activity_id"], name: "index_activities_on_source_activity_id"
     t.index ["teacher_id"], name: "index_activities_on_teacher_id"

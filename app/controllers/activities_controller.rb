@@ -209,10 +209,21 @@ class ActivitiesController < ApplicationController
       return render :generate_from_video, status: :unprocessable_entity
     end
 
+    # Em pílulas (padrão) ou vídeo inteiro; nas pílulas, a quantidade é da
+    # professora (2 a 5) ou da IA. Ver ActivityFromVideoService.
+    mode = ActivityFromVideoService::MODES.include?(params[:mode]) ? params[:mode] : "pills"
+    if mode == "pills" && !ActivityFromVideoService.timestamps?(params[:transcript])
+      flash.now[:alert] = "Para dividir em pílulas, cole a transcrição com os tempos (0:05, 1:23...). " \
+                          "Ou escolha \"Vídeo inteiro\", que não precisa deles."
+      return render :generate_from_video, status: :unprocessable_entity
+    end
+
     generation = AiGeneration.create!(teacher: current_user, kind: "video", request_params: {
       youtube_url: url,
       transcript:  params[:transcript].to_s,
-      level_hint:  params[:level_hint].presence
+      level_hint:  params[:level_hint].presence,
+      mode:        mode,
+      pill_count:  params[:pill_count].presence
     })
     AiActivityGenerationJob.perform_later(generation.id)
     redirect_to generation_wait_activities_path(id: generation.id)

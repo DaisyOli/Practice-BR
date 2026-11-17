@@ -9,8 +9,8 @@ RSpec.describe "Adaptar em pílulas", type: :request do
   let(:original) { create(:activity, :B1, teacher: teacher, draft: false, title: "Atividade longa") }
 
   def parte(posicao, **attrs)
-    create(:activity, :B1, teacher: teacher, pill: true, ai_generated: true,
-                           source_activity: original, series_position: posicao, **attrs)
+    create(:activity, :B1, teacher: teacher, pill: true, ai_generated: true, source_activity: original,
+                           series_key: "adaptacao-teste", series_position: posicao, **attrs)
   end
 
   describe "a professora" do

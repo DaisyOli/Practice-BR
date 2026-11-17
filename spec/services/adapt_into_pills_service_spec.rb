@@ -46,6 +46,8 @@ RSpec.describe AdaptIntoPillsService do
     expect(partes.map(&:series_position)).to eq([1, 2])
     expect(partes).to all(have_attributes(source_activity_id: original.id, level: "B2",
                                           pill: true, draft: true, ai_generated: true))
+    expect(partes.map(&:series_key).uniq.size).to eq(1)
+    expect(partes.first.series_key).to start_with("adaptacao-#{original.id}-")
     expect(resultado[:activity]).to eq(partes.first)
     expect(partes.first.writing_challenge.content).to eq("Conte uma viagem sua.")
     expect(original.reload.adapted_pills.count).to eq(2)

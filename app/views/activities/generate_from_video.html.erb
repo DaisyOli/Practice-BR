@@ -171,6 +171,44 @@
         </div>
       </div>
 
+      <%# Formato (17/11/2026): série de pílulas, cada uma com o seu trecho, ou
+          uma pílula só sobre o vídeo inteiro. Ver ActivityFromVideoService. %>
+      <% modo = params[:mode].presence_in(ActivityFromVideoService::MODES) || "pills" %>
+      <style>
+        .video-mode-card { display:flex; gap:12px; align-items:flex-start; padding:14px 16px; border:1.5px solid var(--line); border-radius:12px; background:var(--surface); cursor:pointer; }
+        .video-mode-card:has(input:checked) { border-color:var(--brand); background:var(--brand-mist); }
+        .video-mode-card input[type="radio"] { margin-top:4px; accent-color:var(--brand); }
+      </style>
+      <div style="margin-bottom:22px;">
+        <div style="font-family:'Plus Jakarta Sans',sans-serif; font-size:0.82rem; font-weight:600; color:var(--ink); margin-bottom:10px;">
+          Formato
+        </div>
+        <div style="display:grid; gap:10px;">
+          <label class="video-mode-card">
+            <%= radio_button_tag :mode, "pills", modo == "pills" %>
+            <span style="font-family:'Plus Jakarta Sans',sans-serif; font-size:0.84rem; color:var(--ink-soft); line-height:1.5;">
+              <strong style="color:var(--ink); font-size:0.9rem;">✂️ Em pílulas</strong>
+              <span style="font-size:0.7rem; font-weight:700; color:var(--brand-deep); background:var(--brand-tint); border-radius:10px; padding:1px 8px; margin-left:4px;">recomendado</span><br>
+              A IA escolhe as partes boas do vídeo e faz uma série: quem termina uma pílula recebe a próxima.
+              Cada uma toca só o seu trecho, por isso precisa da transcrição com os tempos.
+              <span style="display:flex; align-items:center; gap:8px; margin-top:8px; color:var(--ink);">
+                Quantas pílulas:
+                <%= select_tag :pill_count,
+                      options_for_select([["A IA decide (1 a 3)", ""]] + ActivityFromVideoService::PILL_RANGE.map { |n| [n.to_s, n.to_s] }, params[:pill_count]),
+                      style: "padding:5px 10px; border:1.5px solid var(--line); border-radius:8px; font-family:'Plus Jakarta Sans',sans-serif; font-size:0.82rem; color:var(--ink); background:var(--surface);" %>
+              </span>
+            </span>
+          </label>
+          <label class="video-mode-card">
+            <%= radio_button_tag :mode, "whole", modo == "whole" %>
+            <span style="font-family:'Plus Jakarta Sans',sans-serif; font-size:0.84rem; color:var(--ink-soft); line-height:1.5;">
+              <strong style="color:var(--ink); font-size:0.9rem;">🎬 Vídeo inteiro</strong><br>
+              Uma pílula só, sobre o vídeo todo, sem cortar. Para vídeos curtos, de até uns 4 minutos.
+            </span>
+          </label>
+        </div>
+      </div>
+
       <%# Nível %>
       <div style="margin-bottom:28px;">
         <label style="display:block; font-family:'Plus Jakarta Sans',sans-serif; font-size:0.82rem; font-weight:600; color:var(--ink); margin-bottom:10px;">
