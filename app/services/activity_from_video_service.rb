@@ -30,7 +30,7 @@ class ActivityFromVideoService
 
   def initialize(youtube_url:, transcript:, teacher:, level_hint: nil, mode: "pills", pill_count: nil)
     @youtube_url = youtube_url.to_s.strip
-    @transcript  = transcript.to_s.strip[0, MAX_TRANSCRIPT_CHARS]
+    @transcript  = VideoTranscript.clean(transcript)[0, MAX_TRANSCRIPT_CHARS]
     @teacher     = teacher
     @level_hint  = level_hint.presence || "adequado ao vocabulário e estruturas do vídeo (infira o nível CEFR)"
     @mode        = MODES.include?(mode.to_s) ? mode.to_s : "pills"

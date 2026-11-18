@@ -38,7 +38,7 @@ class AdaptIntoPillsService
   def initialize(source:, teacher:, transcript: nil)
     @source     = source
     @teacher    = teacher
-    @transcript = transcript.to_s.strip.first(ActivityFromVideoService::MAX_TRANSCRIPT_CHARS).presence
+    @transcript = VideoTranscript.clean(transcript).first(ActivityFromVideoService::MAX_TRANSCRIPT_CHARS).presence
   end
 
   def call

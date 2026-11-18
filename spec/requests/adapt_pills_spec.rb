@@ -48,6 +48,14 @@ RSpec.describe "Adaptar em pílulas", type: :request do
       expect(response).to have_http_status(:unprocessable_entity)
     end
 
+    it "a transcrição copiada do YouTube chega limpa à geração" do
+      original.update!(video_url: "https://www.youtube.com/watch?v=abcdefghijk")
+
+      post adapt_activity_path(original), params: { transcript: "6:126 minutos e 12 segundoso orelhão" }
+
+      expect(AiGeneration.last.request_params["transcript"]).to eq("6:12 o orelhão")
+    end
+
     it "pílula não tem o botão" do
       pilula = create(:activity, :B1, teacher: teacher, draft: false, pill: true)
 

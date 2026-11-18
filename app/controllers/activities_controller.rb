@@ -213,7 +213,10 @@ class ActivitiesController < ApplicationController
       return render :generate_from_video, status: :unprocessable_entity
     end
 
-    if params[:transcript].to_s.strip.blank?
+    # A cópia do YouTube gruda cada tempo na fala ("6:126 minutos e 12
+    # segundoso orelhão"); a limpeza devolve "6:12 o orelhão". Ver VideoTranscript.
+    transcript = VideoTranscript.clean(params[:transcript])
+    if transcript.blank?
       flash.now[:alert] = "A transcrição está vazia. Cole o texto da transcrição do vídeo."
       return render :generate_from_video, status: :unprocessable_entity
     end
@@ -221,7 +224,7 @@ class ActivitiesController < ApplicationController
     # Em pílulas (padrão) ou vídeo inteiro; nas pílulas, a quantidade é da
     # professora (2 a 5) ou da IA. Ver ActivityFromVideoService.
     mode = ActivityFromVideoService::MODES.include?(params[:mode]) ? params[:mode] : "pills"
-    if mode == "pills" && !ActivityFromVideoService.timestamps?(params[:transcript])
+    if mode == "pills" && !ActivityFromVideoService.timestamps?(transcript)
       flash.now[:alert] = "Para dividir em pílulas, cole a transcrição com os tempos (0:05, 1:23...). " \
                           "Ou escolha \"Vídeo inteiro\", que não precisa deles."
       return render :generate_from_video, status: :unprocessable_entity
@@ -229,7 +232,7 @@ class ActivitiesController < ApplicationController
 
     generation = AiGeneration.create!(teacher: current_user, kind: "video", request_params: {
       youtube_url: url,
-      transcript:  params[:transcript].to_s,
+      transcript:  transcript,
       level_hint:  params[:level_hint].presence,
       mode:        mode,
       pill_count:  params[:pill_count].presence
@@ -269,7 +272,7 @@ class ActivitiesController < ApplicationController
     end
     return if request.get?
 
-    transcript = params[:transcript].to_s.strip
+    transcript = VideoTranscript.clean(params[:transcript])
     if @activity.video_url.present? && transcript.blank?
       flash.now[:alert] = "Cole a transcrição do vídeo com os tempos, para cada pílula ganhar o seu trecho."
       return render :adapt, status: :unprocessable_entity

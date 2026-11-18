@@ -36,6 +36,18 @@ RSpec.describe "Gerador por vídeo: formato", type: :request do
     expect(response.body).to include("com os tempos")
   end
 
+  # Relato da Daisy (18/11/2026): a cópia do YouTube gruda cada tempo na fala,
+  # e o formulário recusava a transcrição por "não ter tempos".
+  it "aceita a transcrição copiada do YouTube e guarda a versão limpa" do
+    copia = "0:000 segundosOlá, pessoal!\n1:301 minuto e 30 segundosAgora a receita."
+
+    expect {
+      post generate_from_video_activities_path, params: { youtube_url: url, transcript: copia, mode: "pills" }
+    }.to have_enqueued_job(AiActivityGenerationJob)
+
+    expect(AiGeneration.last.request_params["transcript"]).to eq("0:00 Olá, pessoal!\n1:30 Agora a receita.")
+  end
+
   it "vídeo inteiro não precisa dos tempos" do
     expect {
       post generate_from_video_activities_path, params: { youtube_url: url, transcript: "Olá! Agora a receita.", mode: "whole" }
