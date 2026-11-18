@@ -13,5 +13,6 @@ pin "@rails/ujs", to: "@rails--ujs.js" # @7.1.3
 pin "sortable", to: "vendor/sortable.min.js", preload: true
 pin_all_from "app/javascript/vendor", under: "vendor"
 pin "quiz_results", to: "quiz_results.js", preload: true
+pin "answer_event", to: "answer_event.js"
 pin "student_dashboard", to: "student_dashboard.js"
 pin "teacher_dashboard", to: "teacher_dashboard.js"

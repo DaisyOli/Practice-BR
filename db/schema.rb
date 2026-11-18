@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.1].define(version: 2026_11_17_140000) do
+ActiveRecord::Schema[7.1].define(version: 2026_11_17_160000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
 
@@ -100,6 +100,21 @@ ActiveRecord::Schema[7.1].define(version: 2026_11_17_140000) do
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.text "rationale"
+  end
+
+  create_table "activity_visits", force: :cascade do |t|
+    t.bigint "user_id", null: false
+    t.bigint "activity_id", null: false
+    t.string "token", null: false
+    t.integer "furthest_step", default: 1, null: false
+    t.integer "total_steps", null: false
+    t.datetime "answered_at"
+    t.datetime "submitted_at"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["activity_id"], name: "index_activity_visits_on_activity_id"
+    t.index ["token"], name: "index_activity_visits_on_token", unique: true
+    t.index ["user_id"], name: "index_activity_visits_on_user_id"
   end
 
   create_table "ai_generations", force: :cascade do |t|
@@ -456,6 +471,8 @@ ActiveRecord::Schema[7.1].define(version: 2026_11_17_140000) do
   add_foreign_key "activities", "users", column: "teacher_id"
   add_foreign_key "activity_ratings", "activities"
   add_foreign_key "activity_ratings", "users"
+  add_foreign_key "activity_visits", "activities", on_delete: :cascade
+  add_foreign_key "activity_visits", "users", on_delete: :cascade
   add_foreign_key "ai_generations", "activities"
   add_foreign_key "ai_generations", "users", column: "teacher_id"
   add_foreign_key "ai_prompt_versions", "ai_prompts"

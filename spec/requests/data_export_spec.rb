@@ -94,6 +94,18 @@ RSpec.describe "Exportação de dados", type: :request do
       expect(avaliacao["comentario"]).to eq("gostei")
     end
 
+    it "traz até onde a pessoa chegou em cada atividade aberta" do
+      ActivityVisit.record!(user: aluno, activity: atividade, token: SecureRandom.uuid, step: 2, answered: true)
+
+      get data_export_download_path
+
+      abertura = exportado["aberturas_de_atividades"].first
+      expect(abertura["atividade"]).to eq("Feira livre")
+      expect(abertura["chegou_ate"]).to eq("1 de 1")
+      expect(abertura["comecou_a_responder_em"]).to be_present
+      expect(abertura).not_to have_key("enviada_em")
+    end
+
     it "registra a existência da notificação mas não a credencial" do
       create(:push_subscription, user: aluno, endpoint: "https://push.exemplo/abc", auth_key: "chave-secreta")
 
@@ -152,7 +164,8 @@ RSpec.describe "Exportação de dados", type: :request do
         "audio_transcriptions" => :respostas_em_audio,
         "activity_ratings"     => :avaliacoes_que_voce_deu,
         "push_subscriptions"   => :notificacoes,
-        "trial_events"         => :registros_do_teste
+        "trial_events"         => :registros_do_teste,
+        "activity_visits"      => :aberturas_de_atividades
       }
 
       esquecidas = tabelas_com_dono - cobertas.keys

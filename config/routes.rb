@@ -67,6 +67,7 @@ Rails.application.routes.draw do
       post :submit,     action: :submit_quiz
       get  :submit,     to: redirect { |params, _req| "/activities/#{params[:slug]}/solve" }
       get  :results,    action: :quiz_results
+      post :visit,      controller: :activity_visits, action: :create
       post :transcribe,        action: :transcribe_audio
       get  :transcribe_status, action: :transcription_status
       match "clear/:content", action: :clear_content, via: [:patch, :post], as: :clear_content,
