@@ -249,9 +249,10 @@ class ActivitiesController < ApplicationController
   def archive
     return redirect_to(activities_path, alert: t('messages.permission_denied')) unless owns_activity?
 
-    @activity.archive!
-    redirect_to activity_path(@activity),
-                notice: "Atividade arquivada. Os alunos não a veem mais, e o histórico continua guardado. Ela fica no filtro \"Arquivadas\"."
+    pilula = @activity.archive!
+    aviso  = "Atividade arquivada. Os alunos não a veem mais, e o histórico continua guardado. Ela fica no filtro \"Arquivadas\"."
+    aviso += " #{path_handoff_notice(pilula)}" if pilula
+    redirect_to activity_path(@activity), notice: aviso
   end
 
   def unarchive
@@ -306,7 +307,7 @@ class ActivitiesController < ApplicationController
       # Série: só a parte 1 avisa os alunos. As outras chegam pela "Próxima
       # atividade", logo depois da anterior; três avisos seriam barulho.
       notify_students_of_new_activity(@activity) unless @activity.series? && @activity.series_position > 1
-      redirect_to activity_path(@activity), notice: "Atividade publicada com sucesso!"
+      redirect_to activity_path(@activity), notice: ["Atividade publicada com sucesso!", archive_adapted_original].compact.join(" ")
     else
       redirect_to review_draft_activity_path(@activity),
                   alert: "Erro ao publicar: #{@activity.errors.full_messages.join(', ')}"
@@ -430,6 +431,26 @@ class ActivitiesController < ApplicationController
   # rascunhos de IA de qualquer professora para revisão).
   def owns_activity?
     @activity.teacher == current_user || current_user&.admin?
+  end
+
+  # Publicou a última parte de uma série adaptada (pedido da Daisy,
+  # 18/11/2026): a original sai de circulação sozinha, sem ela ter de ir
+  # procurá-la. Só quando a série está completa (nenhuma parte em rascunho),
+  # para o aluno não perder conteúdo no meio, e só se quem publica pode
+  # arquivar a original. Devolve a frase do aviso, ou nil.
+  def archive_adapted_original
+    original = @activity.source_activity
+    return nil if original.nil? || original.archived? || original.draft?
+    return nil unless original.teacher == current_user || current_user&.admin?
+    return nil unless original.adapted_series_complete?
+
+    pilula = original.archive!
+    frase  = "A série está completa: a original «#{original.title}» foi arquivada, e o histórico dos alunos continua guardado."
+    pilula ? "#{frase} #{path_handoff_notice(pilula)}" : frase
+  end
+
+  def path_handoff_notice(pilula)
+    "A #{pilula.series_label(published_only: false) || 'pílula'} «#{pilula.title}» entrou no lugar dela no percurso do #{pilula.level} (posição #{pilula.path_position})."
   end
 
   # Atividade arquivada (1.5): o aluno que chega por um link antigo vai para a

@@ -272,8 +272,22 @@ class Activity < ApplicationRecord
     archived_at.present?
   end
 
+  # Se a atividade estava no percurso e já virou pílulas publicadas, a parte 1
+  # entra no lugar dela (pedido da Daisy, 18/11/2026): arquivar a #166, a 1ª do
+  # A1, deixaria o percurso sem porta de entrada. Devolve a pílula que entrou
+  # no percurso, ou nil.
   def archive!
-    update!(archived_at: Time.current, path_position: nil)
+    transaction do
+      posicao = path_position
+      update!(archived_at: Time.current, path_position: nil)
+      hand_path_slot_to_first_pill(posicao) if posicao
+    end
+  end
+
+  # A série que saiu desta atividade está toda publicada? É a hora de arquivar
+  # a original sozinha (publish_draft).
+  def adapted_series_complete?
+    adapted_pills.any? && adapted_pills.where(draft: true).none?
   end
 
   def unarchive!
@@ -287,6 +301,16 @@ class Activity < ApplicationRecord
   end
 
   private
+
+  # A parte 1 publicada das pílulas que saíram desta atividade, no mesmo nível,
+  # assume a posição. Se ela já está no percurso, nada muda.
+  def hand_path_slot_to_first_pill(posicao)
+    pilula = published_adapted_pills.where(level: level).first
+    return nil if pilula.nil? || pilula.path_position.present?
+
+    pilula.update!(path_position: posicao)
+    pilula
+  end
 
   def size_summary
     @size_summary ||= begin
