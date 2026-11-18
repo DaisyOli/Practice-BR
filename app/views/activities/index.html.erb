@@ -125,6 +125,11 @@
         <input type="text" name="search" value="<%= params[:search] %>"
                placeholder="Buscar atividades..."
                class="act-search">
+        <%# A busca leva junto os filtros que ficam fora deste formulário (até
+            18/11/2026, buscar zerava a visualização, a origem e a competência). %>
+        <% %w[view origem competencia arquivadas].each do |filtro| %>
+          <%= hidden_field_tag filtro, params[filtro], id: nil if params[filtro].present? %>
+        <% end %>
 
         <button type="submit"
                 style="background:var(--brand-deep); color:var(--surface); font-family:'Plus Jakarta Sans',sans-serif; font-size:0.82rem; font-weight:600; padding:8px 16px; border:none; border-radius:8px; cursor:pointer;">
@@ -150,7 +155,9 @@
 
           <%# Ponto 1.5: as arquivadas saem da lista e ficam só aqui %>
           <% arquivadas = params[:arquivadas] == '1' %>
-          <%= link_to activities_path(arquivadas ? {} : { arquivadas: '1' }),
+          <%# Sair das arquivadas diz "0" de propósito: um endereço sem filtro
+              devolveria o último filtro lembrado, que é o das arquivadas. %>
+          <%= link_to activities_path(arquivadas: arquivadas ? '0' : '1'),
                 style: "padding:6px 11px; font-family:'Plus Jakarta Sans',sans-serif; font-size:0.78rem; font-weight:600; text-decoration:none; border:1.5px solid #{arquivadas ? 'var(--brand-deep)' : 'var(--line)'}; border-radius:8px; background:#{arquivadas ? 'var(--brand-deep)' : 'var(--surface)'}; color:#{arquivadas ? 'var(--surface)' : 'var(--ink-soft)'};" do %>
             📦 Arquivadas
           <% end %>
@@ -168,7 +175,7 @@
         </div>
 
         <% if params[:level].present? || params[:search].present? || params[:origem].present? || params[:competencia].present? || (params[:sort].present? && params[:sort] != 'recentes') %>
-          <%= link_to "✕ Limpar", activities_path,
+          <%= link_to "✕ Limpar", activities_path(limpar: 1),
                 style: "font-family:'Plus Jakarta Sans',sans-serif; font-size:0.78rem; color:var(--ink-faint); text-decoration:none;" %>
         <% end %>
       </div>

@@ -20,7 +20,12 @@ class ActivitiesController < ApplicationController
   # preview mostra só título/descrição/capa, nunca as perguntas da atividade.
   CRAWLER_USER_AGENTS = /facebookexternalhit|Facebot|WhatsApp|Twitterbot|LinkedInBot|Slackbot|TelegramBot|Discordbot|SkypeUriPreview|Google-InspectionTool|Pinterest/i
 
+  # Os filtros que a lista de atividades lembra entre uma visita e outra.
+  LIST_FILTERS = %w[level sort search view origem competencia arquivadas].freeze
+
   def index
+    return if restore_list_filters
+
     service_result = ActivitiesIndexService.new(params: params, current_user: current_user).call
     @activities        = service_result[:activities]
     @current_level     = service_result[:current_level]
@@ -492,6 +497,29 @@ class ActivitiesController < ApplicationController
 
   def set_activity
     @activity = Activity.find_by!(slug: params[:slug])
+  end
+
+  # A lista lembra o último filtro (pedido da Daisy, 18/11/2026). Ela filtrava
+  # o A1 por "Mais longas", abria uma atividade, cortava, voltava pelo
+  # "← Atividades", e a lista voltava zerada. Agora, chegar sem filtro nenhum
+  # (o voltar, o menu, o redirecionamento depois de arquivar) devolve o último
+  # usado; "✕ Limpar" (?limpar=1) esquece. A página não é lembrada: depois de
+  # cortar, a ordem muda, e a página 1 é a que faz sentido.
+  def restore_list_filters
+    if params[:limpar].present?
+      session.delete(:activities_filters)
+      redirect_to activities_path
+      return true
+    end
+
+    escolhidos = request.query_parameters.slice(*LIST_FILTERS)
+    if escolhidos.empty? && params[:page].blank? && session[:activities_filters].present?
+      redirect_to activities_path(session[:activities_filters])
+      return true
+    end
+
+    session[:activities_filters] = escolhidos.compact_blank.presence if escolhidos.any?
+    false
   end
 
   # Série de pílulas (18/11/2026). No quiz, quem abre a parte 2 sem ter feito a
