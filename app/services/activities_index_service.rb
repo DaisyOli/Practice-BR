@@ -37,13 +37,13 @@ class ActivitiesIndexService
       activities = Activity.published.or(Activity.where(draft: true, teacher: @current_user))
     end
 
-    activities = activities.includes(:activity_ratings)
+    # with_size e os anexos de vídeo e áudio: o tempo de cada cartão sem uma
+    # consulta por cartão (ponto 2.2, telas da professora em 18/11/2026).
+    activities = activities.includes(:activity_ratings).with_size
+                           .with_attached_video_file
+                           .with_attached_audio_file
 
-    if @params[:view] == 'grid'
-      activities = activities.with_attached_image_file
-                             .with_attached_video_file
-                             .with_attached_audio_file
-    end
+    activities = activities.with_attached_image_file if @params[:view] == 'grid'
 
     activities = activities.where(level: @params[:level]) if @params[:level].present?
     activities = activities.where("title ILIKE ?", "%#{@params[:search]}%") if @params[:search].present?
@@ -65,6 +65,11 @@ class ActivitiesIndexService
       activities.left_joins(:quiz_attempts)
                 .group('activities.id')
                 .order('COUNT(quiz_attempts.id) DESC')
+    when 'duracao'
+      # "⏱ Mais longas", para achar o que cortar (pedido da Daisy, 18/11/2026).
+      # O tempo sai das palavras do texto e do trecho do vídeo, contados em
+      # Ruby, então a ordem também; são poucas centenas de atividades.
+      Kaminari.paginate_array(activities.to_a.sort_by { |activity| [-activity.estimated_minutes, activity.id] })
     else # 'recentes' ou padrão
       activities.order(created_at: :desc)
     end

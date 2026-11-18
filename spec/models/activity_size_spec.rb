@@ -147,6 +147,27 @@ RSpec.describe "Activity: tempo e tamanho", type: :model do
     end
   end
 
+  describe "#pill_excess" do
+    it "lista o que passa do tamanho de pílula, com os limites do prompt" do
+      atividade.update!(level: "A1", statement: palavras(80), video_url: "https://youtu.be/abcdefghijk")
+      6.times { create(:question, :multiple_choice, activity: atividade) }
+      2.times { create(:question, :open_ended, activity: atividade) }
+
+      expect(fresca.pill_excess).to eq([
+        "6 exercícios fechados (pílula: até 5)", "2 questões abertas (pílula: 1, opcional)",
+        "80 palavras de texto (A1: até 60)", "vídeo inteiro (pílula: um trecho)"
+      ])
+    end
+
+    it "vazio quando a atividade já cabe numa pílula" do
+      atividade.update!(statement: palavras(90), video_url: "https://youtu.be/abcdefghijk", video_start: "0:10", video_end: "1:00")
+      5.times { create(:question, :multiple_choice, activity: atividade) }
+      create(:question, :open_ended, activity: atividade)
+
+      expect(fresca.pill_excess).to eq([])
+    end
+  end
+
   it "#writing_challenge? concorda com #writing_challenge" do
     atividade.update!(pill: true)
     create(:question, :open_ended, activity: atividade)

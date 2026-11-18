@@ -92,19 +92,26 @@
     <%= render "activities/series_banner", activity: activity %>
     <%= render "activities/archive_notice", activity: activity %>
 
-    <% q_count = activity.questions.count %>
-    <% total_exercises = activity.sentence_orderings.count + activity.paragraph_orderings.count + activity.column_matchings.count %>
-    <% if q_count > 0 || total_exercises > 0 %>
-      <div style="display:flex; gap:18px; flex-wrap:wrap; margin-top:14px; padding-top:14px; border-top:1px solid var(--line-soft);">
-        <% if q_count > 0 %>
+    <%# Tempo e tamanho (ponto 2.2), para todos os perfis. Para a professora, o
+        que passa do tamanho de pílula: a lista do que cortar à mão (18/11/2026). %>
+    <% if activity.exercise_count > 0 %>
+      <% excesso = current_user.teacher? && !activity.pill? ? activity.pill_excess : [] %>
+      <div style="margin-top:14px; padding-top:14px; border-top:1px solid var(--line-soft);">
+        <div style="display:flex; gap:18px; flex-wrap:wrap;">
           <span style="font-family:'Plus Jakarta Sans',sans-serif; font-size:0.78rem; color:var(--ink-faint); display:flex; align-items:center; gap:5px;">
-            <i class="bi bi-check2-square"></i> <%= q_count %> <%= q_count == 1 ? 'questão' : 'questões' %>
+            <i class="bi bi-clock"></i> ~<%= activity.estimated_minutes %> min
           </span>
-        <% end %>
-        <% if total_exercises > 0 %>
           <span style="font-family:'Plus Jakarta Sans',sans-serif; font-size:0.78rem; color:var(--ink-faint); display:flex; align-items:center; gap:5px;">
-            <i class="bi bi-puzzle"></i> <%= total_exercises %> <%= total_exercises == 1 ? 'exercício' : 'exercícios' %>
+            <i class="bi bi-check2-square"></i> <%= pluralize(activity.exercise_count, "exercício", plural: "exercícios") %>
           </span>
+          <% if activity.writing_challenge? %>
+            <span style="font-family:'Plus Jakarta Sans',sans-serif; font-size:0.78rem; color:var(--ink-faint);">✍️ + desafio opcional</span>
+          <% end %>
+        </div>
+        <% if excesso.any? %>
+          <div style="margin-top:10px; font-family:'Plus Jakarta Sans',sans-serif; font-size:0.8rem; color:var(--ink-soft); line-height:1.5;">
+            ✂️ Acima do tamanho de pílula: <%= excesso.join(" · ") %>
+          </div>
         <% end %>
       </div>
     <% end %>

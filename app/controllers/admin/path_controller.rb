@@ -11,7 +11,8 @@ module Admin
   class PathController < BaseController
     def index
       @levels = User::CEFR_LEVELS.map do |level|
-        activities = Activity.published.where(level: level).order(:title).to_a
+        activities = Activity.published.where(level: level).order(:title)
+                             .with_size.with_attached_video_file.with_attached_audio_file.to_a
         {
           level:      level,
           activities: activities,
@@ -121,7 +122,6 @@ module Admin
     def traits_for(activities)
       ids        = activities.map(&:id)
       open_ended = Question.where(activity_id: ids, question_type: "open_ended").distinct.pluck(:activity_id).to_set
-      questions  = Question.where(activity_id: ids).group(:activity_id).count
       media      = ActiveStorage::Attachment.where(record_type: "Activity", record_id: ids,
                                                    name: %w[video_file audio_file])
                                             .pluck(:record_id, :name).to_h
@@ -132,7 +132,8 @@ module Admin
         tags << "✍️ aberta" if open_ended.include?(a.id)
         tags << "🎬 vídeo"  if media[a.id] == "video_file" || a.video_url.present?
         tags << "🎧 áudio"  if media[a.id] == "audio_file"
-        tags << "#{questions[a.id].to_i} questões"
+        # Tempo e tamanho (ponto 2.2): o mesmo número do cartão do aluno.
+        tags << "⏱ ~#{a.estimated_minutes} min · #{a.exercise_count} ex"
         tags << "⭐ #{ratings[a.id].to_f.round(1)}" if ratings[a.id]
         [a.id, tags.join(" · ")]
       end

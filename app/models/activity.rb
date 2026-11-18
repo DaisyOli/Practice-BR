@@ -187,6 +187,25 @@ class Activity < ApplicationRecord
     size_summary[:challenge]
   end
 
+  # O tamanho de pílula: os mesmos números do FORMATO PÍLULA no prompt de
+  # geração (ActivityGenerationService, ponto 1.1).
+  PILL_MAX_EXERCISES = 5
+  PILL_MAX_WORDS     = { "A1" => 60, "A2" => 90, "B1" => 130, "B2" => 180, "C1" => 220 }.freeze
+
+  # O que passa do tamanho de pílula, para a professora cortar à mão (pedido
+  # da Daisy, 18/11/2026: adaptar cada uma com a IA sai caro, e nem toda longa
+  # precisa virar série). Frases curtas; vazia = já cabe numa pílula.
+  def pill_excess
+    s = size_summary
+    limite = PILL_MAX_WORDS.fetch(level, PILL_MAX_WORDS["B1"])
+    excesso = []
+    excesso << "#{s[:closed]} exercícios fechados (pílula: até #{PILL_MAX_EXERCISES})" if s[:closed] > PILL_MAX_EXERCISES
+    excesso << "#{s[:writings]} questões abertas (pílula: 1, opcional)" if s[:writings] > 1
+    excesso << "#{s[:words]} palavras de texto (#{level}: até #{limite})" if s[:words] > limite
+    excesso << "vídeo inteiro (pílula: um trecho)" if video_url.present? && !(video_start_seconds && video_end_seconds)
+    excesso
+  end
+
   def reload(*)
     @size_summary = nil
     super
@@ -275,11 +294,13 @@ class Activity < ApplicationRecord
       challenge = pill? && c[:open_ended].positive?
       escritas  = c[:open_ended] - (challenge ? 1 : 0)
       fechados  = c[:questions] - c[:open_ended] + c[:orderings] + c[:matchings]
+      palavras  = reading_words
       minutos   = fechados * MINUTES_PER_EXERCISE +
                   escritas * MINUTES_PER_WRITING +
-                  reading_words * MINUTES_PER_100_WORDS / 100.0 +
+                  palavras * MINUTES_PER_100_WORDS / 100.0 +
                   media_minutes
-      { exercises: fechados + escritas, minutes: [minutos.ceil, MIN_MINUTES].max, challenge: challenge }
+      { exercises: fechados + escritas, minutes: [minutos.ceil, MIN_MINUTES].max, challenge: challenge,
+        closed: fechados, writings: escritas, words: palavras }
     end
   end
 
