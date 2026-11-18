@@ -37,6 +37,8 @@ class WeeklyReminderJob < ApplicationJob
                          .order(created_at: :desc)
                          .limit(MAX_ACTIVITIES)
                          .to_a
+      # Série: a parte por onde a pessoa entra, nunca a 3 antes da 1.
+      pending = pending.map { |activity| activity.series_entry_for(completed_ids) }.uniq
 
       featured = []
       if pending.count < 3
@@ -49,6 +51,7 @@ class WeeklyReminderJob < ApplicationJob
                             .where.not(id: completed_ids + pending.map(&:id))
                             .limit(3)
                             .to_a
+        featured = featured.map { |activity| activity.series_entry_for(completed_ids) }.uniq - pending
       end
 
       next if pending.empty? && featured.empty?

@@ -23,7 +23,7 @@ class AdaptIntoPillsService
     - Cada pílula cobre UMA parte da original, em ordem e sem repetir o conteúdo de outra. O explanation_text dela é só a sua parte, cortada ou resumida para caber no limite. Ela precisa funcionar sozinha: quem chegar direto na segunda pílula entende sem ter feito a primeira.
     - REAPROVEITE os exercícios da original sempre que servirem à parte: copie, encurte (até 2 lacunas, 3 ou 4 pares, 3 ou 4 frases para ordenar) ou simplifique. Crie exercício novo só quando faltar.
     - Desafio de escrita (o open_ended no fim): aproveite a pergunta aberta da original se ela couber na parte; senão, crie uma ligada à parte.
-    - Cada pílula tem título próprio, sem "Parte 1" ou numeração: a plataforma numera a série.
+    - O título de cada pílula começa pelo MESMO nome curto da série, seguido de dois-pontos e do título próprio da pílula, com até 80 caracteres no total. Exemplo: "A invenção do orelhão: A jornada de Chu Ming Silveira" e "A invenção do orelhão: Um desafio contra o barulho". Sem "Parte 1" ou numeração: a plataforma numera a série.
     {{video}}
 
     FORMATO DA RESPOSTA

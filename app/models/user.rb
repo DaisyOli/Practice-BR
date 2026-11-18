@@ -472,6 +472,7 @@ class User < ApplicationRecord
       Activity.published.where(level: level)
               .where.not(id: quiz_attempts.select(:activity_id))
               .order(created_at: :desc).first
+              &.series_entry_for(quiz_attempts.pluck(:activity_id))
   end
 
   # A próxima atividade do percurso do nível que a pessoa ainda não fez, ou nil
@@ -480,9 +481,11 @@ class User < ApplicationRecord
   def next_path_activity
     return nil if level.blank?
 
+    # Série no percurso: entra pela primeira parte que a pessoa não fez.
     Activity.published.where(level: level).in_path
             .where.not(id: quiz_attempts.select(:activity_id))
             .first
+            &.series_entry_for(quiz_attempts.pluck(:activity_id))
   end
 
   # Peso decrescente por distância do nível declarado: favorece o nível do

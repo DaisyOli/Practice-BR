@@ -73,6 +73,8 @@ class ActivitiesController < ApplicationController
     else
       session.delete(:show_score_data) if session[:show_score_data]&.dig("activity_id") == @activity.id
     end
+
+    load_series_context if current_user.student_like? && @activity.series?
   end
 
   def submit_quiz
@@ -469,6 +471,26 @@ class ActivitiesController < ApplicationController
 
   def set_activity
     @activity = Activity.find_by!(slug: params[:slug])
+  end
+
+  # Série de pílulas (18/11/2026). No quiz, quem abre a parte 2 sem ter feito a
+  # 1 recebe um aviso leve, sem trava. Na nota, logo depois do envio, vem a
+  # curiosidade da continuação (o botão fica no fim do resultado detalhado) ou
+  # a festa de série completa.
+  def load_series_context
+    done  = current_user.quiz_attempts.pluck(:activity_id)
+    entry = @activity.series_entry_for(done)
+
+    if @show_score
+      if entry == @activity
+        total = @activity.series_parts.count
+        @series_complete = total if total >= 2
+      else
+        @series_next = entry
+      end
+    elsif entry != @activity && entry.series_position < @activity.series_position
+      @series_start = entry
+    end
   end
 
   def crawler_request?

@@ -50,6 +50,13 @@ class Activity < ApplicationRecord
   PATH_SLOTS  = 10
   TRIAL_SLOTS = 3
   scope :in_path, -> { where.not(path_position: nil).order(:path_position) }
+  # A ordem das listas do aluno (18/11/2026): as mais novas primeiro, e as
+  # partes de uma série juntas e em sequência. Antes, a lista não tinha ordem
+  # nenhuma, e a parte 3 da série da Chu Ming aparecia antes da parte 1.
+  scope :in_student_order, -> {
+    order(Arel.sql("MIN(activities.created_at) OVER (PARTITION BY COALESCE(activities.series_key, activities.id::text)) DESC, " \
+                   "activities.series_position ASC NULLS FIRST, activities.id ASC"))
+  }
 
   # Grava o percurso de um nível na ordem de `ids`. Limpa e regrava numa
   # transação, para nunca esbarrar no índice único no meio de uma troca de
@@ -226,6 +233,17 @@ class Activity < ApplicationRecord
     return nil if index.nil? || parts.size < 2
 
     "Parte #{index + 1} de #{parts.size}"
+  end
+
+  # Por onde a pessoa entra na série (pedido da Daisy, 18/11/2026): a primeira
+  # parte publicada que ela ainda não fez. Oferecer a parte 2 ou a 3 a quem
+  # não fez a 1 não faz sentido. Todo lugar que sugere uma atividade passa por
+  # aqui: painel, resultado, "Comece por aqui", percurso e emails. Fora de
+  # série, ou com a série toda feita, devolve a própria atividade.
+  def series_entry_for(done_ids)
+    return self unless series?
+
+    series_parts.where.not(id: done_ids).first || self
   end
 
   # Arquivar (ponto 1.5): sai de circulação para os alunos e sai do percurso,

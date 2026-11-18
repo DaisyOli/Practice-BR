@@ -36,6 +36,13 @@
               <span style="font-family:'Plus Jakarta Sans',sans-serif; font-size:0.7rem; font-weight:600; background:var(--sky-tint); color:var(--sky); border:1.5px solid var(--sky-bright); padding:3px 8px; border-radius:20px; display:inline-flex; align-items:center; gap:3px;">
                 <i class="bi <%= cont_badge[:icon] %>" style="font-size:0.72rem;"></i> <%= cont_badge[:label] %>
               </span>
+              <%# Série: a parte seguinte da que a pessoa acabou de fazer é
+                  "Continuação"; as outras partes levam só a posição. %>
+              <% if (serie = continue_activity.series_label) %>
+                <span style="font-family:'Plus Jakarta Sans',sans-serif; font-size:0.7rem; font-weight:700; background:var(--action-tint); color:var(--brand-deep); padding:3px 8px; border-radius:20px; white-space:nowrap;">
+                  <%= local_assigns[:series_continuation] ? "🎬 Continuação · #{serie}" : "✂️ #{serie}" %>
+                </span>
+              <% end %>
             </div>
 
             <div class="continue-card-title">

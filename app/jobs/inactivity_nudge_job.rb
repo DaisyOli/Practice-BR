@@ -58,6 +58,7 @@ class InactivityNudgeJob < ApplicationJob
             .where.not(id: done)
             .order(created_at: :desc)
             .first
+            &.series_entry_for(done) # a mais nova pode ser a parte 3 de uma série
   end
 
   def copy_for(language)
