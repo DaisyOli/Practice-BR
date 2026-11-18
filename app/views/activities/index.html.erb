@@ -44,7 +44,9 @@
         Todas as Atividades
       </h1>
       <p style="font-family:'Plus Jakarta Sans',sans-serif; font-size:0.85rem; color:var(--ink-soft);">
-        <%= @activities.count %> <%= @activities.count == 1 ? 'atividade encontrada' : 'atividades encontradas' %>
+        <%# total_count: o total encontrado. O .count de antes contava só a
+            página (no máximo 9) e quebrava com as colunas de tamanho. %>
+        <%= @activities.total_count %> <%= @activities.total_count == 1 ? 'atividade encontrada' : 'atividades encontradas' %>
       </p>
     </div>
     <% if current_user.teacher? %>
@@ -117,6 +119,7 @@
           <option value="antigos"  <%= 'selected' if params[:sort] == 'antigos' %>>Mais antigos</option>
           <option value="titulo"   <%= 'selected' if params[:sort] == 'titulo' %>>Título A–Z</option>
           <option value="tentativas" <%= 'selected' if params[:sort] == 'tentativas' %>>Mais tentativas</option>
+          <option value="duracao" <%= 'selected' if params[:sort] == 'duracao' %>>⏱ Mais longas</option>
         </select>
 
         <input type="text" name="search" value="<%= params[:search] %>"
@@ -238,11 +241,9 @@
                   </span>
                 <% end %>
               </div>
-              <% if activity.content_type.present? %>
-                <div style="font-family:'Plus Jakarta Sans',sans-serif; font-size:0.75rem; color:var(--ink-faint); margin-top:2px;">
-                  <%= type_labels[activity.content_type] || activity.content_type.humanize %>
-                </div>
-              <% end %>
+              <div style="font-family:'Plus Jakarta Sans',sans-serif; font-size:0.75rem; color:var(--ink-faint); margin-top:2px;">
+                ⏱ <%= activity_size_text(activity) %><% if activity.content_type.present? %> · <%= type_labels[activity.content_type] || activity.content_type.humanize %><% end %>
+              </div>
             </div>
 
             <div class="act-col-date" style="font-family:'DM Mono',monospace; font-size:0.75rem; color:var(--ink-soft); white-space:nowrap;">
@@ -337,6 +338,15 @@
                     <%= @attempt_stats[:unique_users][activity.id] || 0 %>
                   </div>
                   <div style="font-family:'Plus Jakarta Sans',sans-serif; font-size:0.68rem; color:var(--ink-faint); margin-top:2px;">estudantes</div>
+                </div>
+                <%# Tempo e tamanho (ponto 2.2): o mesmo número que o aluno vê no cartão dele. %>
+                <div>
+                  <div style="font-family:'DM Mono',monospace; font-size:0.95rem; font-weight:700; color:var(--ink-soft); line-height:1;">
+                    ~<%= activity.estimated_minutes %> min
+                  </div>
+                  <div style="font-family:'Plus Jakarta Sans',sans-serif; font-size:0.68rem; color:var(--ink-faint); margin-top:2px;">
+                    <%= pluralize(activity.exercise_count, "exercício", plural: "exercícios") %>
+                  </div>
                 </div>
                 <% if activity.ratings_count > 0 %>
                   <div>
