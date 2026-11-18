@@ -73,6 +73,12 @@ class StudentDashboardPresenter
       end
   end
 
+  # O "Continue estudando" é a parte seguinte da série que a pessoa acabou de
+  # fazer? O cartão então diz "Continuação".
+  def series_continuation?
+    continue_activity.present? && continue_activity.id == next_series_part&.id
+  end
+
   private
 
   def filtered?
@@ -124,29 +130,34 @@ class StudentDashboardPresenter
   def best_candidate
     return @best_candidate if defined?(@best_candidate)
 
-    @best_candidate =
-      # Antes de tudo, a série de pílulas (ponto 1.4): quem acabou de fazer uma
-      # parte recebe a seguinte, para continuar a mesma história ou o mesmo
-      # vídeo. A alternância de suporte lá embaixo faria o contrário.
-      #
-      # Depois, o percurso do nível, para todo aluno: é a ordem pedagógica que
-      # a Daisy montou, e quem chega começa pelo mais simples. Terminado o
-      # percurso, o teste segue a mesma escolha do "Comece por aqui" e dos
-      # emails; o aluno pagante volta ao sorteio por nível com alternância de
-      # suporte, abaixo.
-      if (part = next_series_part)
-        part
-      elsif (path = user.next_path_activity)
-        path
-      elsif user.trial?
-        user.suggested_first_activity
-      elsif last_support && pending_activities.any?
-        names = attachment_names_for(pending_activities.map(&:id))
-        pending_activities.find { |act| support_of(act, names) != last_support } ||
-          pending_activities.first
-      else
+    # Qualquer que seja a escolha, a série entra pela primeira parte que a
+    # pessoa ainda não fez (series_entry_for).
+    @best_candidate = raw_candidate&.series_entry_for(completed_ids)
+  end
+
+  def raw_candidate
+    # Antes de tudo, a série de pílulas (ponto 1.4): quem acabou de fazer uma
+    # parte recebe a seguinte, para continuar a mesma história ou o mesmo
+    # vídeo. A alternância de suporte lá embaixo faria o contrário.
+    #
+    # Depois, o percurso do nível, para todo aluno: é a ordem pedagógica que
+    # a Daisy montou, e quem chega começa pelo mais simples. Terminado o
+    # percurso, o teste segue a mesma escolha do "Comece por aqui" e dos
+    # emails; o aluno pagante volta ao sorteio por nível com alternância de
+    # suporte, abaixo.
+    if (part = next_series_part)
+      part
+    elsif (path = user.next_path_activity)
+      path
+    elsif user.trial?
+      user.suggested_first_activity
+    elsif last_support && pending_activities.any?
+      names = attachment_names_for(pending_activities.map(&:id))
+      pending_activities.find { |act| support_of(act, names) != last_support } ||
         pending_activities.first
-      end
+    else
+      pending_activities.first
+    end
   end
 
   # A parte seguinte da série da última atividade feita, se ainda não foi feita

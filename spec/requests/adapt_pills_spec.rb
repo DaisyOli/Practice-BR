@@ -109,7 +109,7 @@ RSpec.describe "Adaptar em pílulas", type: :request do
       post submit_activity_path(p1), params: { answers: { q1.id.to_s => "Brasília" } }
       get results_activity_path(p1)
 
-      expect(response.body).to include("Continuar · Parte 2 de 2", "A segunda parte")
+      expect(response.body).to include("🎬 Conheça a continuação · Parte 2 de 2", "A segunda parte")
     end
 
     it "o quiz mostra em que parte o aluno está" do

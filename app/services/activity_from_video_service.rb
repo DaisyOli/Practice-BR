@@ -134,7 +134,7 @@ class ActivityFromVideoService
       - Cada trecho vira uma pílula no FORMATO PÍLULA (3 a 5 exercícios fechados + 1 open_ended no fim, o desafio de escrita opcional), com o conteúdo real daquele trecho. Ela precisa funcionar sozinha: quem chegar direto na segunda entende sem ter feito a primeira.
       - TRECHO NO PLAYER: cada pílula tem os campos "video_start" (a marcação da primeira fala do trecho) e "video_end" (a marcação da primeira fala DEPOIS do trecho), no formato m:ss, por exemplo "video_start": "1:20", "video_end": "3:45". Use apenas marcações que aparecem na transcrição.
       #{shared_rules}
-      - Todas as pílulas no mesmo nível, e cada uma com título próprio, sem "Parte 1" ou numeração: a plataforma numera a série.
+      - Todas as pílulas no mesmo nível. O título de cada pílula começa pelo MESMO nome curto da série, seguido de dois-pontos e do título próprio da pílula, com até 80 caracteres no total. Exemplo: "A invenção do orelhão: A jornada de Chu Ming Silveira" e "A invenção do orelhão: Um desafio contra o barulho". Sem "Parte 1" ou numeração: a plataforma numera a série.
 
       FORMATO DA RESPOSTA
       Somente JSON, sem texto antes ou depois: {"pills": [pílula 1, pílula 2, ...]}. Cada pílula é um objeto no SCHEMA DO JSON das instruções (title, description, level, explanation_text, statement, exercises), mais "video_start" e "video_end".

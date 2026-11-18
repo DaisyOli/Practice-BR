@@ -57,7 +57,8 @@ class StudentsController < ApplicationController
     activities = Activity.published
                         .where(level: level)
                         .where.not(id: completed_ids)
-                        .with_questions_count
+                        .with_size
+                        .in_student_order
                         .with_attached_image_file
                         .with_attached_video_file
                         .with_attached_audio_file
@@ -132,7 +133,8 @@ class StudentsController < ApplicationController
     @pending_activities = Activity.published
                                   .by_level(@current_level)
                                   .where.not(id: completed_ids)
-                                  .with_questions_count
+                                  .with_size
+                                  .in_student_order
                                   .with_attached_image_file
                                   .with_attached_video_file
                                   .with_attached_audio_file
@@ -142,7 +144,8 @@ class StudentsController < ApplicationController
     @completed_activities = Activity.published
                                     .by_level(@current_level)
                                     .where(id: completed_ids)
-                                    .with_questions_count
+                                    .with_size
+                                    .in_student_order
                                     .with_attached_image_file
                                     .with_attached_video_file
                                     .with_attached_audio_file

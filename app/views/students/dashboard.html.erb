@@ -50,6 +50,7 @@
     <div class="dash-mid-grid" style="margin-bottom:1.5rem;">
       <%= render 'students/dashboard/continue_studying',
             continue_activity:       dash.continue_activity,
+            series_continuation:     dash.series_continuation?,
             last_completed_activity: dash.last_completed_activity %>
 
       <%= render 'students/dashboard/progress',
