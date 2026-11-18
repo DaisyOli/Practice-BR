@@ -62,11 +62,17 @@ class Activity < ApplicationRecord
       end
     end
   end
-  scope :with_questions_count, -> {
-    left_outer_joins(:questions)
-      .group(:id)
-      .select('activities.*, COUNT(questions.id) AS questions_count')
-  }
+  # O tamanho de cada atividade da lista numa consulta só (ponto 2.2). Sem
+  # isto, cada cartão faria as próprias contagens. Os métodos de tamanho e
+  # tempo usam estes números quando eles vêm; senão, contam sozinhos.
+  SIZE_COUNTS = {
+    "questions_count"  => "SELECT COUNT(*) FROM questions q WHERE q.activity_id = activities.id",
+    "open_ended_count" => "SELECT COUNT(*) FROM questions q WHERE q.activity_id = activities.id AND q.question_type = 'open_ended'",
+    "orderings_count"  => "(SELECT COUNT(*) FROM sentence_orderings o WHERE o.activity_id = activities.id) + " \
+                          "(SELECT COUNT(*) FROM paragraph_orderings o WHERE o.activity_id = activities.id)",
+    "matchings_count"  => "SELECT COUNT(*) FROM column_matchings m WHERE m.activity_id = activities.id"
+  }.freeze
+  scope :with_size, -> { select("activities.*", *SIZE_COUNTS.map { |name, sql| "(#{sql}) AS #{name}" }) }
 
   before_validation :generate_slug, if: :should_generate_slug?
   # Mudou de nível, sai do percurso: ele foi montado para um nível, e a mesma
@@ -139,6 +145,46 @@ class Activity < ApplicationRecord
     questions.size + sentence_orderings.size + paragraph_orderings.size + column_matchings.size
   end
 
+  # ── Tamanho e tempo, para os cartões (ponto 2.2) ──────────────────────
+  # "~N min · M exercícios" antes de começar. Calibrado em 18/11/2026 com 89
+  # tentativas reais (7 pessoas, sem as contas de teste), mirando a pessoa
+  # típica (a mediana), e não a média, que quem demora muito puxa para cima.
+  # - A conta antiga (1,5 min por questão) ficava 4,3 min abaixo do real na
+  #   mediana. Esta fica a 0,1 min.
+  # - Numa tentativa isolada, qualquer conta erra uns 6 a 7 min: entre duas
+  #   pessoas, uma leva o dobro da outra. Por isso o "~".
+  # - Escrever, ler e o vídeo pesam; o exercício fechado é rápido.
+  MINUTES_PER_EXERCISE  = 0.75 # lacuna, escolha, ordenar, ligar colunas
+  MINUTES_PER_WRITING   = 4    # questão aberta dentro do quiz
+  MINUTES_PER_100_WORDS = 2    # ler o texto de apoio
+  # Vídeo sem trecho marcado (a duração não é conhecida). Os vídeos inteiros
+  # das atividades antigas somavam isto, e não a duração deles: a pessoa
+  # responde enquanto assiste, ou não assiste tudo. Por isso o trecho marcado
+  # conta a própria duração, sem passar deste teto (sem dado ainda: nenhuma
+  # tentativa com trecho até 18/11).
+  MINUTES_WHOLE_VIDEO   = 5
+  MINUTES_AUDIO         = 3    # áudio anexado (a duração também não é conhecida; sem dado)
+  MIN_MINUTES           = 2
+
+  # Os exercícios que valem nota: o "1 de N" sem o desafio de escrita.
+  def exercise_count
+    size_summary[:exercises]
+  end
+
+  def estimated_minutes
+    size_summary[:minutes]
+  end
+
+  # O mesmo que `writing_challenge.present?`, sem buscar a questão.
+  def writing_challenge?
+    size_summary[:challenge]
+  end
+
+  def reload(*)
+    @size_summary = nil
+    super
+  end
+
   # Trecho do vídeo (ponto 1.3): o player do YouTube toca só desse ponto até
   # aquele. O formulário recebe "1:20"; o banco guarda 80. Vazio = vídeo inteiro.
   def video_start = VideoTimestamp.to_label(video_start_seconds)
@@ -204,6 +250,51 @@ class Activity < ApplicationRecord
   end
 
   private
+
+  def size_summary
+    @size_summary ||= begin
+      c = size_counts
+      challenge = pill? && c[:open_ended].positive?
+      escritas  = c[:open_ended] - (challenge ? 1 : 0)
+      fechados  = c[:questions] - c[:open_ended] + c[:orderings] + c[:matchings]
+      minutos   = fechados * MINUTES_PER_EXERCISE +
+                  escritas * MINUTES_PER_WRITING +
+                  reading_words * MINUTES_PER_100_WORDS / 100.0 +
+                  media_minutes
+      { exercises: fechados + escritas, minutes: [minutos.ceil, MIN_MINUTES].max, challenge: challenge }
+    end
+  end
+
+  def size_counts
+    if has_attribute?(:matchings_count)
+      { questions: self[:questions_count].to_i, open_ended: self[:open_ended_count].to_i,
+        orderings: self[:orderings_count].to_i, matchings: self[:matchings_count].to_i }
+    else
+      { questions: questions.size, open_ended: questions.where(question_type: "open_ended").count,
+        orderings: sentence_orderings.size + paragraph_orderings.size, matchings: column_matchings.size }
+    end
+  end
+
+  # O texto que a pessoa lê. A transcrição do vídeo fica de fora: o tempo dela
+  # já está no do vídeo.
+  def reading_words
+    texto = [statement, (explanation_text unless explanation_is_transcript?)].compact.join(" ")
+    ActionView::Base.full_sanitizer.sanitize(texto).split.size
+  end
+
+  def media_minutes
+    if video_url.present?
+      return MINUTES_WHOLE_VIDEO unless video_start_seconds && video_end_seconds
+
+      [(video_end_seconds - video_start_seconds) / 60.0, MINUTES_WHOLE_VIDEO].min
+    elsif video_file.attached? || media_url.to_s.match?(/youtube\.com|youtu\.be|vimeo\.com|\.(mp4|webm|ogg)(\?.*)?$/i)
+      MINUTES_WHOLE_VIDEO
+    elsif audio_file.attached?
+      MINUTES_AUDIO
+    else
+      0
+    end
+  end
 
   def assign_video_time(column, value)
     parsed = VideoTimestamp.parse(value)

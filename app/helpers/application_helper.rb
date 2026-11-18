@@ -46,6 +46,12 @@ module ApplicationHelper
     comps
   end
 
+  # "~5 min · 4 exercícios" (ponto 2.2), para os lugares de uma linha só. Os
+  # cartões com ícones usam students/_activity_size.
+  def activity_size_text(activity)
+    "~#{activity.estimated_minutes} min · #{pluralize(activity.exercise_count, 'exercício', plural: 'exercícios')}"
+  end
+
   def activity_media_badge(activity)
     if activity.image_file.attached? || (activity.media_url.present? && !activity.media_url.match?(/youtube\.com|youtu\.be/))
       { icon: 'bi-image', label: 'Imagem' }

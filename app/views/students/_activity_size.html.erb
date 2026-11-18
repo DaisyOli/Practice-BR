@@ -1,0 +1,15 @@
+<%# Tempo e tamanho no cartão, antes de começar (ponto 2.2): "~5 min",
+    "4 exercícios" e, na pílula, o aviso de que a escrita é opcional. A conta
+    está em Activity#estimated_minutes. %>
+<% chip = "font-family:'Plus Jakarta Sans',sans-serif; font-size:0.77rem; color:var(--ink-faint); display:flex; align-items:center; gap:4px;" %>
+<span style="<%= chip %>">
+  <i class="bi bi-clock" style="color:<%= icon_color %>;"></i>
+  ~<%= activity.estimated_minutes %> min
+</span>
+<span style="<%= chip %>">
+  <i class="bi bi-patch-question" style="color:<%= icon_color %>;"></i>
+  <%= pluralize(activity.exercise_count, "exercício", plural: "exercícios") %>
+</span>
+<% if activity.writing_challenge? %>
+  <span style="<%= chip %>">✍️ + desafio opcional</span>
+<% end %>

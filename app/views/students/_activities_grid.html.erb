@@ -1,7 +1,6 @@
 <% activities.each do |activity| %>
   <% completed = session[:completed_quizzes]&.include?(activity.id) %>
   <% m = cefr_colors(activity.level) %>
-  <% question_count = activity.questions_count.to_i %>
   <% cover = activity_cover(activity) %>
   <% act_comps = activity_competencies(activity, @open_ended_activity_ids || Set.new, @av_activity_ids || Set.new) %>
 
@@ -52,14 +51,7 @@
       </p>
 
       <div style="display:flex; gap:12px; flex-wrap:wrap; margin-bottom:14px;">
-        <span style="font-family:'Plus Jakarta Sans',sans-serif; font-size:0.77rem; color:var(--ink-faint); display:flex; align-items:center; gap:4px;">
-          <i class="bi bi-patch-question" style="color:<%= m[:border] %>;"></i>
-          <%= question_count %> <%= question_count == 1 ? 'questão' : 'questões' %>
-        </span>
-        <span style="font-family:'Plus Jakarta Sans',sans-serif; font-size:0.77rem; color:var(--ink-faint); display:flex; align-items:center; gap:4px;">
-          <i class="bi bi-clock" style="color:<%= m[:border] %>;"></i>
-          ~<%= [1, (question_count * 1.5).round].max %> min
-        </span>
+        <%= render 'students/activity_size', activity: activity, icon_color: m[:border] %>
         <span style="font-family:'Plus Jakarta Sans',sans-serif; font-size:0.77rem; color:var(--ink-faint); display:flex; align-items:center; gap:4px;">
           <i class="bi bi-bar-chart-line" style="color:<%= m[:border] %>;"></i>
           <%= m[:label] %>

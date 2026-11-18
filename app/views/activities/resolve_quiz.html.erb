@@ -42,6 +42,12 @@
         <%= @activity.level %>
       </span>
     <% end %>
+    <%# Quanto tempo leva (ponto 2.2): quem chega pelo email não viu o cartão. %>
+    <% unless @show_score %>
+      <span style="font-family:'Plus Jakarta Sans',sans-serif; font-size:0.75rem; font-weight:600; color:var(--ink-faint); display:inline-flex; align-items:center; gap:4px;">
+        <i class="bi bi-clock"></i> ~<%= @activity.estimated_minutes %> min
+      </span>
+    <% end %>
     <%# Série de pílulas (ponto 1.4) %>
     <% if (serie = @activity.series_label) %>
       <span style="font-family:'Plus Jakarta Sans',sans-serif; font-size:0.75rem; font-weight:700; background:var(--action-tint); color:var(--brand-deep); padding:3px 12px; border-radius:20px;">

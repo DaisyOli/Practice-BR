@@ -8,7 +8,6 @@
         <% cont_meta  = cefr_colors(continue_activity.level) %>
         <% cont_cover = activity_cover(continue_activity) %>
         <% cont_badge = activity_media_badge(continue_activity) %>
-        <% cont_q     = continue_activity.try(:questions_count).to_i %>
         <% cont_started = QuizAttempt.where(user: current_user, activity: continue_activity).exists? %>
 
         <div class="continue-card" id="tour-continue">
@@ -51,16 +50,11 @@
               <div style="flex:1;"></div>
             <% end %>
 
-            <% if cont_q > 0 %>
+            <%# Até 18/11/2026 esta linha nunca aparecia: ela lia uma contagem que a
+                consulta deste cartão não traz, e o zero a escondia. %>
+            <% if continue_activity.exercise_count > 0 %>
               <div style="display:flex; gap:12px; flex-wrap:wrap; margin-bottom:12px;">
-                <span style="font-family:'Plus Jakarta Sans',sans-serif; font-size:0.77rem; color:var(--ink-faint); display:flex; align-items:center; gap:4px;">
-                  <i class="bi bi-patch-question" style="color:<%= cont_meta[:border] %>;"></i>
-                  <%= cont_q %> <%= cont_q == 1 ? 'questão' : 'questões' %>
-                </span>
-                <span style="font-family:'Plus Jakarta Sans',sans-serif; font-size:0.77rem; color:var(--ink-faint); display:flex; align-items:center; gap:4px;">
-                  <i class="bi bi-clock" style="color:<%= cont_meta[:border] %>;"></i>
-                  ~<%= [1, (cont_q * 1.5).round].max %> min
-                </span>
+                <%= render 'students/activity_size', activity: continue_activity, icon_color: cont_meta[:border] %>
               </div>
             <% end %>
 
