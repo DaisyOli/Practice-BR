@@ -20,6 +20,10 @@
                     @activity.column_matchings.size +
                     (@writing_challenge ? 1 : 0) # pílula: o desafio é o último passo
 
+  # Medição de até onde a pessoa chega (ponto 2.1): só alunos e teste. A
+  # professora testando a própria atividade não entra na conta.
+  visit_token = current_user.student_like? ? SecureRandom.uuid : nil
+
   has_material = @activity.statement.present? ||
                  @activity.media_url.present? ||
                  @activity.video_url.present? ||
@@ -161,6 +165,7 @@
           }) do |f| %>
 
         <%= hidden_field_tag :started_at, '', id: 'started_at_field' %>
+        <%= hidden_field_tag :visit_token, visit_token if visit_token %>
 
         <%# Aparece só quando o quiz-rescue devolveu respostas de um envio que falhou %>
         <div data-quiz-rescue-target="notice"
@@ -466,8 +471,13 @@
     <% end %>
 
     <%# quiz-progress controller wraps material panel + form so it can reach all targets %>
-    <div data-controller="quiz-progress"
+    <div data-controller="quiz-progress<%= ' quiz-visit' if visit_token %>"
          data-quiz-progress-total-value="<%= total_exercises %>"
+         <% if visit_token %>
+           data-quiz-visit-url-value="<%= visit_activity_path(@activity) %>"
+           data-quiz-visit-token-value="<%= visit_token %>"
+           data-action="quiz-progress:step->quiz-visit#advance"
+         <% end %>
          style="flex:1; min-height:0; display:flex; flex-direction:column; width:100%; max-width:1100px; overflow:hidden;">
 
       <% if has_material %>

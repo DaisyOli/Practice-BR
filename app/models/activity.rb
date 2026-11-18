@@ -8,6 +8,8 @@ class Activity < ApplicationRecord
   has_many :paragraph_orderings, dependent: :destroy
   has_many :column_matchings, dependent: :destroy
   has_many :activity_ratings, dependent: :destroy
+  # Até onde cada aluno chegou (ponto 2.1). Medição: vai junto com a atividade.
+  has_many :activity_visits, dependent: :delete_all
   # Registro da geração por IA que criou esta atividade. Ao apagar a atividade,
   # zeramos o vínculo (activity_id -> NULL) em vez de barrar: o AiGeneration já
   # é `belongs_to :activity, optional: true` e serve de histórico. Sem isto, o
@@ -129,6 +131,12 @@ class Activity < ApplicationRecord
     return nil unless pill?
 
     questions.where(question_type: "open_ended").order(:created_at, :id).last
+  end
+
+  # Quantos passos o quiz tem: todas as questões (o desafio da pílula é o
+  # último passo), as ordenações e as ligações de colunas. É o "1 de N" da tela.
+  def quiz_step_count
+    questions.size + sentence_orderings.size + paragraph_orderings.size + column_matchings.size
   end
 
   # Trecho do vídeo (ponto 1.3): o player do YouTube toca só desse ponto até

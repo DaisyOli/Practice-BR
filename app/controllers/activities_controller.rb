@@ -85,6 +85,12 @@ class ActivitiesController < ApplicationController
       session: session
     ).call
 
+    # Medição (ponto 2.1): esta abertura da página terminou em envio. Se o
+    # aviso do navegador ainda não chegou, a linha nasce aqui.
+    if result[:success] && current_user.student_like?
+      ActivityVisit.record!(user: current_user, activity: @activity, token: params[:visit_token], submitted: true)
+    end
+
     if result[:success] && result[:show_score]
       session[:show_score_data] = {
         score: result[:score],

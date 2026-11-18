@@ -27,6 +27,7 @@ class DataExportService
     dados[:atividades_respondidas] = atividades_respondidas
     dados[:respostas_em_audio]     = respostas_em_audio
     dados[:avaliacoes_que_voce_deu] = avaliacoes
+    dados[:aberturas_de_atividades] = aberturas_de_atividades
     dados[:notificacoes]           = notificacoes
     dados[:registros_do_teste]     = registros_do_teste if @user.trial_events.exists?
     dados[:atividades_criadas]     = atividades_criadas if @user.teacher?
@@ -99,6 +100,19 @@ class DataExportService
         situacao:         transcricao.status,
         criada_em:        transcricao.created_at&.iso8601,
         observacao:       "A gravação em si foi apagada logo depois de gerar este texto."
+      }.compact
+    end
+  end
+
+  # Até onde a pessoa chegou cada vez que abriu uma atividade (ponto 2.1).
+  def aberturas_de_atividades
+    @user.activity_visits.includes(:activity).order(:created_at).map do |abertura|
+      {
+        atividade:               abertura.activity&.title,
+        aberta_em:               abertura.created_at&.iso8601,
+        chegou_ate:              "#{abertura.furthest_step} de #{abertura.total_steps}",
+        comecou_a_responder_em:  abertura.answered_at&.iso8601,
+        enviada_em:              abertura.submitted_at&.iso8601
       }.compact
     end
   end

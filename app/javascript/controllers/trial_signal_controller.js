@@ -1,4 +1,5 @@
 import { Controller } from "@hotwired/stimulus"
+import { isAnswerEvent } from "answer_event"
 
 // Avisa o servidor quando há uma pessoa de verdade usando o teste: um toque, uma
 // tecla ou uma rolagem. O robô do antivírus de email pede a página, mas não faz
@@ -8,7 +9,6 @@ import { Controller } from "@hotwired/stimulus"
 // Sem o evento "scroll": o próprio tour rola a página sozinho, e isso contaria como
 // pessoa. A rolagem de verdade aparece aqui como toque ou roda do mouse.
 const HUMAN_EVENTS = ["pointerdown", "keydown", "touchstart", "wheel"]
-const ANSWER_TARGETS = "input, textarea, select, button, label, [draggable='true'], [data-action]"
 
 export default class extends Controller {
   static values = { url: String, pending: Array }
@@ -41,10 +41,10 @@ export default class extends Controller {
     if (this.form) this.send("activity")
   }
 
-  // Tocar num ponto vazio do formulário não é começar a responder.
+  // A regra do que é responder fica em answer_event.js, junto com a medição
+  // de até onde a pessoa chegou.
   onAnswer(event) {
-    if (event.type === "pointerdown" && !event.target.closest(ANSWER_TARGETS)) return
-    if (event.target.closest("[type='submit']")) return
+    if (!isAnswerEvent(event)) return
     this.send("answer")
   }
 

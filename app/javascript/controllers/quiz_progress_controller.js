@@ -109,6 +109,8 @@ export default class extends Controller {
     this.updateProgress()
     this.updateQuestionsVisibility()
     this.updateNavigation()
+    // A medição (quiz_visit_controller) escuta: até onde a pessoa chegou.
+    this.dispatch("step", { detail: { current: this.currentValue } })
   }
 
   scrollToTop() {
